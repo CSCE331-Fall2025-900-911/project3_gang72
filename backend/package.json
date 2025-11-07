@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/CSCE331-Fall2025-900-911/project3_gang72#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "pg": "^8.16.3"
