@@ -13,6 +13,7 @@ app.use(express.json());
 let empCtrl;
 let reportCtrl;
 let invCtrl;
+let menuCtrl;
 try {
   empCtrl = require('./src/controllers/employeeController');
 } catch (e) {
@@ -31,6 +32,13 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
 } catch (e) {
   console.error('Failed to require inventoryController:', e && e.stack ? e.stack : e);
+  process.exit(1);
+}
+
+try {
+  menuCtrl = require('./src/controllers/menuController');
+} catch (e) {
+  console.error('Failed to require menuController:', e && e.stack ? e.stack : e);
   process.exit(1);
 }
 
@@ -72,6 +80,15 @@ app.delete('/api/ingredients/:id', invCtrl.deleteIngredientHandler);
 app.put('/api/ingredients/:id/quantity', invCtrl.setIngredientQuantityHandler);
 app.get('/api/ingredients/:id/quantity', invCtrl.getIngredientQuantityHandler);
 
+//Menu routes
+app.get('/api/menu', menuCtrl.getItemsHandler);
+app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler);
+app.get('/api/categories', menuCtrl.getCategories);
+app.get('/api/ingredients', menuCtrl.getIngredients);
+app.post('/api/items', menuCtrl.addItem);
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+
