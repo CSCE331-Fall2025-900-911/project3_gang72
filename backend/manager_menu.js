@@ -14,6 +14,7 @@ let empCtrl;
 let reportCtrl;
 let invCtrl;
 let menuCtrl;
+let orderCtrl;
 try {
   empCtrl = require('./src/controllers/employeeController');
 } catch (e) {
@@ -39,6 +40,13 @@ try {
   menuCtrl = require('./src/controllers/menuController');
 } catch (e) {
   console.error('Failed to require menuController:', e && e.stack ? e.stack : e);
+  process.exit(1);
+}
+
+try {
+  orderCtrl = require('./src/controllers/orderController');
+} catch (e) {
+  console.error('Failed to require orderController:', e && e.stack ? e.stack : e);
   process.exit(1);
 }
 
@@ -86,6 +94,11 @@ app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler);
 app.get('/api/categories', menuCtrl.getCategories);
 app.get('/api/ingredients', menuCtrl.getIngredients);
 app.post('/api/items', menuCtrl.addItem);
+
+
+//Orders Routes
+app.post('/api/orders', orderCtrl.createOrder);
+app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
