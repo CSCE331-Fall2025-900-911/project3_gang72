@@ -22,7 +22,7 @@ SELECT
 FROM receipt r
 LEFT JOIN orders o ON r.receipt_id = o.receipt_id
 LEFT JOIN item i ON o.item_id = i.item_id
-WHERE r.order_date = '2025-08-20'
+WHERE r.order_date = CURRENT_DATE
 GROUP BY r.order_time
 ORDER BY hour;
 `;
