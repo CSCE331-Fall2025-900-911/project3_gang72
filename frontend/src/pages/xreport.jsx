@@ -47,6 +47,15 @@ export default function XReport() {
         return `${h}:00 ${ampm}`;
     };
 
+    const getCurrentDate = () => {
+        return new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
     // Calculate totals
     const totalOrders = reportData.reduce((sum, item) => sum + (item.order_count || 0), 0);
     const totalSales = reportData.reduce((sum, item) => sum + (item.gross_sales || 0), 0);
@@ -56,8 +65,8 @@ export default function XReport() {
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2>X-Report (Hourly Sales)</h2>
-                    <p className="text-muted mb-0">Testing Date: August 20, 2025</p>
+                    <h2>X-Report (Hourly Sales Today)</h2>
+                    <p className="text-muted mb-0">{getCurrentDate()}</p>
                 </div>
                 <button className="btn btn-primary" onClick={fetchXReport} disabled={loading}>
                     {loading ? 'Loading...' : 'Refresh'}
@@ -101,7 +110,7 @@ export default function XReport() {
             {/* Chart */}
             <div className="card mb-4">
                 <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">Hourly Sales Chart</h5>
+                    <h5 className="mb-0">Orders per Hour Chart</h5>
                 </div>
                 <div className="card-body">
                     {loading ? (
@@ -114,18 +123,18 @@ export default function XReport() {
                         <div style={{ height: '400px', overflowX: 'auto' }}>
                             <svg width="100%" height="400" viewBox="0 0 900 400">
                                 {/* Y-axis label */}
-                                <text x="10" y="20" fontSize="12" fill="#666" fontWeight="bold">Gross Sales ($)</text>
+                                <text x="10" y="20" fontSize="12" fill="#666" fontWeight="bold">Number of Orders</text>
                                 
                                 {/* Grid lines */}
-                                {[0, 1, 2, 3, 4].map(i => {
-                                    const y = 350 - (i * 70);
-                                    const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
-                                    const gridValue = (maxSales / 4) * i;
+                                {[0, 1, 2, 3, 4, 5].map(i => {
+                                    const maxOrders = Math.max(...reportData.map(d => d.order_count || 0), 1);
+                                    const gridValue = Math.ceil((maxOrders / 5) * i);
+                                    const y = 350 - ((gridValue / maxOrders) * 300);
                                     return (
                                         <g key={i}>
                                             <line x1="60" y1={y} x2="880" y2={y} stroke="#e0e0e0" strokeWidth="1" />
                                             <text x="45" y={y + 4} fontSize="10" fill="#999" textAnchor="end">
-                                                ${gridValue.toFixed(0)}
+                                                {gridValue}
                                             </text>
                                         </g>
                                     );
@@ -133,10 +142,10 @@ export default function XReport() {
 
                                 {/* Line path */}
                                 {(() => {
-                                    const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
+                                    const maxOrders = Math.max(...reportData.map(d => d.order_count || 0), 1);
                                     const points = reportData.map((item, idx) => {
                                         const x = idx * (800 / (reportData.length - 1 || 1)) + 80;
-                                        const y = 350 - ((item.gross_sales || 0) / maxSales) * 300;
+                                        const y = 350 - ((item.order_count || 0) / maxOrders) * 300;
                                         return `${x},${y}`;
                                     }).join(' ');
                                     
@@ -154,9 +163,9 @@ export default function XReport() {
 
                                 {/* Data points and markers */}
                                 {reportData.map((item, idx) => {
-                                    const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
+                                    const maxOrders = Math.max(...reportData.map(d => d.order_count || 0), 1);
                                     const x = idx * (800 / (reportData.length - 1 || 1)) + 80;
-                                    const y = 350 - ((item.gross_sales || 0) / maxSales) * 300;
+                                    const y = 350 - ((item.order_count || 0) / maxOrders) * 300;
 
                                     return (
                                         <g key={idx}>
@@ -178,7 +187,7 @@ export default function XReport() {
                                                 fill="#333"
                                                 fontWeight="bold"
                                             >
-                                                ${(item.gross_sales || 0).toFixed(0)}
+                                                {item.order_count || 0}
                                             </text>
                                             {/* Hour label */}
                                             <text
@@ -190,16 +199,6 @@ export default function XReport() {
                                                 transform={`rotate(-45, ${x}, 370)`}
                                             >
                                                 {formatTime(item.hour)}
-                                            </text>
-                                            {/* Order count */}
-                                            <text
-                                                x={x}
-                                                y={385}
-                                                fontSize="9"
-                                                textAnchor="middle"
-                                                fill="#999"
-                                            >
-                                                ({item.order_count})
                                             </text>
                                         </g>
                                     );
@@ -229,22 +228,28 @@ export default function XReport() {
                                         <th>Order Count</th>
                                         <th>Gross Sales</th>
                                         <th>Total Tips</th>
+                                        <th>Average Sale</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td>{formatTime(item.hour)}</td>
-                                            <td>{item.order_count}</td>
-                                            <td>{formatCurrency(item.gross_sales)}</td>
-                                            <td>{formatCurrency(item.total_tips)}</td>
-                                        </tr>
-                                    ))}
+                                    {reportData.map((item, idx) => {
+                                        const avgSale = item.order_count > 0 ? item.gross_sales / item.order_count : 0;
+                                        return (
+                                            <tr key={idx}>
+                                                <td>{formatTime(item.hour)}</td>
+                                                <td>{item.order_count}</td>
+                                                <td>{formatCurrency(item.gross_sales)}</td>
+                                                <td>{formatCurrency(item.total_tips)}</td>
+                                                <td>{formatCurrency(avgSale)}</td>
+                                            </tr>
+                                        );
+                                    })}
                                     <tr className="table-primary fw-bold">
                                         <td>TOTAL</td>
                                         <td>{totalOrders}</td>
                                         <td>{formatCurrency(totalSales)}</td>
                                         <td>{formatCurrency(totalTips)}</td>
+                                        <td>{formatCurrency(totalOrders > 0 ? totalSales / totalOrders : 0)}</td>
                                     </tr>
                                 </tbody>
                             </table>
