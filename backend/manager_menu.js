@@ -1,129 +1,153 @@
-// require('dotenv').config();
+// backend/manager_menu.js
+require('dotenv').config();
 
 const express = require('express');
-const path = require('path');
+const cors = require('cors');
+const path = require("path");
 const app = express();
+const router = express.Router();
 const PORT = process.env.PORT || 3000;
 
-// middlewares
+app.use(cors());
 app.use(express.json());
 
-// controllers (require and validate handlers)
-let empCtrl;
-let reportCtrl;
-let invCtrl;
-let menuCtrl;
+// Load controllers safely
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl;
+
 try {
   empCtrl = require('./src/controllers/employeeController');
-} catch (e) {
-  console.error('Failed to require employeeController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   reportCtrl = require('./src/controllers/ReportController');
-} catch (e) {
-  console.error('Failed to require ReportController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   invCtrl = require('./src/controllers/inventoryController');
-} catch (e) {
-  console.error('Failed to require inventoryController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   menuCtrl = require('./src/controllers/menuController');
+  orderCtrl = require('./src/controllers/orderController');
 } catch (e) {
-  console.error('Failed to require menuController:', e && e.stack ? e.stack : e);
+  console.error('Controller load error:', e);
   process.exit(1);
 }
 
-// auth and oauth controllers (optional)
-let authCtrl;
-try {
-  authCtrl = require('./src/controllers/authController');
-} catch (e) {
-  console.warn('No authController found; /api/auth/google will not be mounted.');
-}
-let oauthCtrl;
-try {
-  oauthCtrl = require('./src/controllers/oauthController');
-} catch (e) {
-  console.warn('No oauthController found; /auth/google and /oauth2/callback will not be mounted.');
-}
+console.log('employeeController exports:', Object.keys(empCtrl));
+console.log('reportController exports:', Object.keys(reportCtrl));
+console.log('inventoryController exports:', Object.keys(invCtrl));
+console.log('orderController exports:', Object.keys(orderCtrl));
 
-console.log('authController exports:', authCtrl && Object.keys(authCtrl));
-console.log('type verifyTokenHandler:', authCtrl && typeof authCtrl.verifyTokenHandler);
-
-// debug: print available exports and types before mounting routes
-console.log('employeeController exports:', empCtrl && Object.keys(empCtrl));
-console.log('type getEmployeesHandler:', empCtrl && typeof empCtrl.getEmployeesHandler);
-console.log('type addEmployeeHandler:', empCtrl && typeof empCtrl.addEmployeeHandler);
-console.log('reportController exports:', reportCtrl && Object.keys(reportCtrl));
-console.log('type xReportHandler:', reportCtrl && typeof reportCtrl.xReportHandler);
-console.log('type dailySummaryHandler:', reportCtrl && typeof reportCtrl.dailySummaryHandler);
-console.log('inventoryController exports:', invCtrl && Object.keys(invCtrl));
-console.log('type getIngredientsHandler:', invCtrl && typeof invCtrl.getIngredientsHandler);
-
-
-// Serve frontend static files (if built) and fallback to index.html for SPA routes
-const staticDir = path.join(__dirname, '..', 'frontend', 'dist');
-if (staticDir) {
-  app.use(express.static(staticDir));
-  // Fallback for SPA routes: serve index.html for non-API/auth requests
-  app.use((req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/auth') || req.path.startsWith('/oauth2')) return next();
-    res.sendFile(path.join(staticDir, 'index.html'));
-  });
-}
-
-// API routes
-app.get('/api/employees', empCtrl.getEmployeesHandler);
+// ===== Employee Routes =====
+app.get('/api/employees', empCtrl.getEmployeesHandler || orderCtrl.getEmployees);
 app.post('/api/employees', empCtrl.addEmployeeHandler);
 
+// Update employee
+app.put('/api/employees/:id', async (req, res) => {
+  const empId = Number(req.params.id);
+  const { firstName, lastName, password } = req.body;
+  const { pool } = require('./db');
+
+  try {
+    const client = await pool.connect();
+    let updateFields = [];
+    let values = [];
+    let paramCount = 1;
+
+    if (firstName) {
+      updateFields.push(`first_name = $${paramCount++}`);
+      values.push(firstName);
+    }
+    if (lastName) {
+      updateFields.push(`last_name = $${paramCount++}`);
+      values.push(lastName);
+    }
+    if (password) {
+      updateFields.push(`password = $${paramCount++}`);
+      values.push(password);
+    }
+
+    values.push(empId);
+    const sql = `UPDATE employee SET ${updateFields.join(', ')} WHERE employee_id = $${paramCount}`;
+    await client.query(sql, values);
+    client.release();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating employee:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete employee
+app.delete('/api/employees/:id', async (req, res) => {
+  const empId = Number(req.params.id);
+  const { pool } = require('./db');
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM employee WHERE employee_id = $1', [empId]);
+    client.release();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting employee:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ===== Reports (using orderController functions) =====
+app.get('/api/reports/popular-items', orderCtrl.getMostPopularItems);
+app.get('/api/reports/revenue', orderCtrl.getTotalRevenue);
+app.get('/api/reports/total-orders', orderCtrl.getTotalOrders);
+app.get('/api/reports/avg-order-value', orderCtrl.getAvgOrderValue);
+app.get('/api/reports/peak-hours', orderCtrl.getPeakHours);
+app.get('/api/reports/orders-by-hour', orderCtrl.getOrdersByHour);
+app.get('/api/reports/order-volume', orderCtrl.getOrderVolume);
+app.get('/api/reports/revenue-chart', orderCtrl.getRevenueChart);
+app.get('/api/reports/aov-by-category', orderCtrl.getAOVByCategory);
+
+// Report endpoints
 app.get('/api/x-report', reportCtrl.xReportHandler);
-// daily summary handler - support multiple export names for compatibility
-const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport || reportCtrl.runDailySummary;
+app.get('/api/z-report', reportCtrl.zReportHandler);
+const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport;
 if (typeof dailyHandler === 'function') {
   app.get('/api/daily-summary', dailyHandler);
 } else {
-  console.warn('No daily summary handler exported from ReportController; /api/daily-summary not mounted. Exported keys:', reportCtrl && Object.keys(reportCtrl));
+  console.warn('⚠️ No daily summary handler found.');
 }
 
-// Inventory routes
-app.get('/api/ingredients', invCtrl.getIngredientsHandler);
+// ===== Inventory =====
+app.get('/api/ingredients', invCtrl.getIngredientsHandler || orderCtrl.getIngredients);
 app.post('/api/ingredients', invCtrl.addIngredientHandler);
 app.delete('/api/ingredients/:id', invCtrl.deleteIngredientHandler);
 app.put('/api/ingredients/:id/quantity', invCtrl.setIngredientQuantityHandler);
 app.get('/api/ingredients/:id/quantity', invCtrl.getIngredientQuantityHandler);
 
-// Google auth verification endpoint (expects JSON body { id_token: string })
-if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
-  app.post('/api/auth/google', authCtrl.verifyTokenHandler);
-} else {
-  console.warn('/api/auth/google not mounted because authController.verifyTokenHandler is not available');
-}
-
-// Authorization-code flow endpoints (popup/redirect)
-if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
-  app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
-}
-if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
-  app.get('/oauth2/callback', oauthCtrl.oauthCallbackHandler);
-}
-
-//Menu routes
-app.get('/api/menu', menuCtrl.getItemsHandler);
-app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler);
+// ===== Menu =====
+app.get('/api/menu', menuCtrl.getItemsHandler || orderCtrl.getMenu);
+app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler || orderCtrl.updateItemPrice);
 app.get('/api/categories', menuCtrl.getCategories);
-app.get('/api/ingredients', menuCtrl.getIngredients);
 app.post('/api/items', menuCtrl.addItem);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// ===== Orders =====
+app.post('/api/orders', orderCtrl.createOrder);
+app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
+
+// ===== Sales =====
+app.get('/api/sales', orderCtrl.getSales);
+
+// Serve frontend
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log('Available endpoints:');
+  console.log('  GET  /api/employees');
+  console.log('  GET  /api/ingredients');
+  console.log('  GET  /api/menu');
+  console.log('  GET  /api/sales');
+  console.log('  GET  /api/reports/popular-items');
+  console.log('  GET  /api/reports/revenue');
+  console.log('  GET  /api/reports/total-orders');
+  console.log('  GET  /api/reports/avg-order-value');
+  console.log('  GET  /api/reports/peak-hours');
+  console.log('  GET  /api/reports/orders-by-hour');
+  console.log('  GET  /api/reports/order-volume');
+  console.log('  GET  /api/reports/revenue-chart');
+  console.log('  GET  /api/reports/aov-by-category');
+});
