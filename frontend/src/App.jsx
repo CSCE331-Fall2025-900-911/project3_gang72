@@ -9,6 +9,8 @@ import Cashier from "./pages/cashier";
 import Kiosk from "./pages/kiosk";
 import Menu from "./pages/menu";
 import Items from "./pages/items";
+import XReport from "./pages/xreport";
+import ZReport from "./pages/zreport";
 import './App.css'
 
 function App() {
@@ -23,7 +25,9 @@ function App() {
             <Route path="employees" element={<Employees />} />
             <Route path="ingredients" element={<Ingredients />} />
             <Route path="sales" element={<Sales />} />
-            <Route path = "items" element={<Items/>} />
+            <Route path="items" element={<Items/>} />
+            <Route path="xreport" element={<XReport />} />
+            <Route path="zreport" element={<ZReport />} />
           </Route>
           <Route path="/cashier" element={<Cashier />} />
           <Route path="/kiosk" element={<Kiosk />} />

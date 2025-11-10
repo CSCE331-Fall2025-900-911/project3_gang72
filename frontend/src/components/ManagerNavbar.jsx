@@ -30,6 +30,12 @@ export default function ManagerNavbar() {
                         <li className="nav-item">
                             <Link className="nav-link" to="/manager/items">Items</Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/manager/xreport">X-Report</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/manager/zreport">Z-Report</Link>
+                        </li>
                     </ul>
                 </div>
             </div>
