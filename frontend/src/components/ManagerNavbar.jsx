@@ -27,6 +27,9 @@ export default function ManagerNavbar() {
                         <li className="nav-item">
                             <Link className="nav-link" to="/manager/sales">Sales</Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/manager/items">Items</Link>
+                        </li>
                     </ul>
                 </div>
             </div>
