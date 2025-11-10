@@ -1,88 +1,51 @@
-// require('dotenv').config();
+// backend/manager_menu.js
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
 const path = require("path");
 const app = express();
+const router = express.Router();
 const PORT = process.env.PORT || 3000;
 
-// middlewares
 app.use(cors());
 app.use(express.json());
 
-// controllers (require and validate handlers)
-let empCtrl;
-let reportCtrl;
-let invCtrl;
-let menuCtrl;
-let orderCtrl;
+// Load controllers safely
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
-} catch (e) {
-  console.error('Failed to require employeeController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   reportCtrl = require('./src/controllers/ReportController');
-} catch (e) {
-  console.error('Failed to require ReportController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   invCtrl = require('./src/controllers/inventoryController');
-} catch (e) {
-  console.error('Failed to require inventoryController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   menuCtrl = require('./src/controllers/menuController');
-} catch (e) {
-  console.error('Failed to require menuController:', e && e.stack ? e.stack : e);
-  process.exit(1);
-}
-
-try {
   orderCtrl = require('./src/controllers/orderController');
 } catch (e) {
-  console.error('Failed to require orderController:', e && e.stack ? e.stack : e);
+  console.error('Controller load error:', e);
   process.exit(1);
 }
 
-// Root endpoint
-// app.get('/', (req, res) => {
-//   res.send('POS Manager API running');
-// });
+console.log('employeeController exports:', Object.keys(empCtrl));
+console.log('reportController exports:', Object.keys(reportCtrl));
+console.log('inventoryController exports:', Object.keys(invCtrl));
+console.log('orderController exports:', Object.keys(orderCtrl));
 
-// debug: print available exports and types before mounting routes
-console.log('employeeController exports:', empCtrl && Object.keys(empCtrl));
-console.log('type getEmployeesHandler:', empCtrl && typeof empCtrl.getEmployeesHandler);
-console.log('type addEmployeeHandler:', empCtrl && typeof empCtrl.addEmployeeHandler);
-console.log('reportController exports:', reportCtrl && Object.keys(reportCtrl));
-console.log('type xReportHandler:', reportCtrl && typeof reportCtrl.xReportHandler);
-console.log('type dailySummaryHandler:', reportCtrl && typeof reportCtrl.dailySummaryHandler);
-console.log('inventoryController exports:', invCtrl && Object.keys(invCtrl));
-console.log('type getIngredientsHandler:', invCtrl && typeof invCtrl.getIngredientsHandler);
-
-// API routes
-app.get('/api/employees', empCtrl.getEmployeesHandler);
+// ===== Employee Routes =====
+app.get('/api/employees', empCtrl.getEmployeesHandler || orderCtrl.getEmployees);
 app.post('/api/employees', empCtrl.addEmployeeHandler);
-// Add to your server.js or index.js
 
 // Update employee
 app.put('/api/employees/:id', async (req, res) => {
   const empId = Number(req.params.id);
   const { firstName, lastName, password } = req.body;
-  
+  const { pool } = require('./db');
+
   try {
     const client = await pool.connect();
     let updateFields = [];
     let values = [];
     let paramCount = 1;
-    
+
     if (firstName) {
       updateFields.push(`first_name = $${paramCount++}`);
       values.push(firstName);
@@ -95,13 +58,12 @@ app.put('/api/employees/:id', async (req, res) => {
       updateFields.push(`password = $${paramCount++}`);
       values.push(password);
     }
-    
+
     values.push(empId);
-    
     const sql = `UPDATE employee SET ${updateFields.join(', ')} WHERE employee_id = $${paramCount}`;
     await client.query(sql, values);
     client.release();
-    
+
     res.json({ success: true });
   } catch (err) {
     console.error('Error updating employee:', err);
@@ -112,53 +74,79 @@ app.put('/api/employees/:id', async (req, res) => {
 // Delete employee
 app.delete('/api/employees/:id', async (req, res) => {
   const empId = Number(req.params.id);
-  
+  const { pool } = require('./db');
   try {
     const client = await pool.connect();
     await client.query('DELETE FROM employee WHERE employee_id = $1', [empId]);
     client.release();
-    
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting employee:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
-// Report routes
+
+// ===== Reports (using orderController functions) =====
+app.get('/api/reports/popular-items', orderCtrl.getMostPopularItems);
+app.get('/api/reports/revenue', orderCtrl.getTotalRevenue);
+app.get('/api/reports/total-orders', orderCtrl.getTotalOrders);
+app.get('/api/reports/avg-order-value', orderCtrl.getAvgOrderValue);
+app.get('/api/reports/peak-hours', orderCtrl.getPeakHours);
+app.get('/api/reports/orders-by-hour', orderCtrl.getOrdersByHour);
+app.get('/api/reports/order-volume', orderCtrl.getOrderVolume);
+app.get('/api/reports/revenue-chart', orderCtrl.getRevenueChart);
+app.get('/api/reports/aov-by-category', orderCtrl.getAOVByCategory);
+
+// Legacy report endpoints (if reportCtrl has these)
 app.get('/api/x-report', reportCtrl.xReportHandler);
-const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport || reportCtrl.runDailySummary;
+const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport;
 if (typeof dailyHandler === 'function') {
   app.get('/api/daily-summary', dailyHandler);
 } else {
-  console.warn('No daily summary handler exported from ReportController; /api/daily-summary not mounted. Exported keys:', reportCtrl && Object.keys(reportCtrl));
+  console.warn('⚠️ No daily summary handler found.');
 }
 
-// Inventory routes
-app.get('/api/ingredients', invCtrl.getIngredientsHandler);
+// ===== Inventory =====
+app.get('/api/ingredients', invCtrl.getIngredientsHandler || orderCtrl.getIngredients);
 app.post('/api/ingredients', invCtrl.addIngredientHandler);
 app.delete('/api/ingredients/:id', invCtrl.deleteIngredientHandler);
 app.put('/api/ingredients/:id/quantity', invCtrl.setIngredientQuantityHandler);
 app.get('/api/ingredients/:id/quantity', invCtrl.getIngredientQuantityHandler);
 
-// Menu routes
-app.get('/api/menu', menuCtrl.getItemsHandler);
-app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler);
+// ===== Menu =====
+app.get('/api/menu', menuCtrl.getItemsHandler || orderCtrl.getMenu);
+app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler || orderCtrl.updateItemPrice);
 app.get('/api/categories', menuCtrl.getCategories);
-app.get('/api/ingredients', menuCtrl.getIngredients);
 app.post('/api/items', menuCtrl.addItem);
 
-// Orders routes
+// ===== Orders =====
 app.post('/api/orders', orderCtrl.createOrder);
 app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
 
-// Serve React build
+// ===== Sales =====
+app.get('/api/sales', orderCtrl.getSales);
+
+// Serve frontend
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
-// Use regex catch-all for React routing (fixes PathError in Express 5)
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log('Available endpoints:');
+  console.log('  GET  /api/employees');
+  console.log('  GET  /api/ingredients');
+  console.log('  GET  /api/menu');
+  console.log('  GET  /api/sales');
+  console.log('  GET  /api/reports/popular-items');
+  console.log('  GET  /api/reports/revenue');
+  console.log('  GET  /api/reports/total-orders');
+  console.log('  GET  /api/reports/avg-order-value');
+  console.log('  GET  /api/reports/peak-hours');
+  console.log('  GET  /api/reports/orders-by-hour');
+  console.log('  GET  /api/reports/order-volume');
+  console.log('  GET  /api/reports/revenue-chart');
+  console.log('  GET  /api/reports/aov-by-category');
 });
