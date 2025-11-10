@@ -1,21 +1,26 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
-import About from "./pages/manager";
-import Contact from "./pages/cashier";
+import Manager from "./pages/manager";
+import Cashier from "./pages/cashier";
+import Kiosk from "./pages/kiosk";
+import Menu from "./pages/menu";
 import './App.css'
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <div className="container mt-4">
+      <div className="container-fluid mt-4">
         <Routes>
-          <Route path="/" element={<Home />} />         {/* Home page */}
-          <Route path="/manager" element={<About />} />   {/* About page */}
-          <Route path="/cashier" element={<Contact />} />{/* Contact page */}
+          <Route path="/" element={<Home />} />
+          <Route path="/manager" element={<Manager />} />
+          <Route path="/cashier" element={<Cashier />} />
+          <Route path="/kiosk" element={<Kiosk />} />
+          <Route path="/menu" element={<Menu />} />
         </Routes>
       </div>
+
     </BrowserRouter>
   );
 }
