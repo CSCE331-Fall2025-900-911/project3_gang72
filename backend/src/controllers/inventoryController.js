@@ -55,8 +55,15 @@ async function getIngredientsHandler(req, res) {
 async function addIngredient(name, quantity, unit) {
     const client = await pool.connect();
     try {
-        const insertSql = `INSERT INTO ingredient (ingredient_name, quantity, unit) VALUES ($1, $2, $3) RETURNING ingredient_id`;
-        const res = await client.query(insertSql, [name, quantity, unit]);
+        // Generate next ingredient_id
+        const nextIdRes = await client.query(
+            `SELECT COALESCE(MAX(ingredient_id), 0) + 1 AS next_id FROM ingredient`
+        );
+        const nextId = nextIdRes.rows[0].next_id;
+
+        // Insert with generated ingredient_id
+        const insertSql = `INSERT INTO ingredient (ingredient_id, ingredient_name, quantity, unit) VALUES ($1, $2, $3, $4) RETURNING ingredient_id`;
+        const res = await client.query(insertSql, [nextId, name, quantity, unit]);
         const id = res.rows[0] && res.rows[0].ingredient_id ? Number(res.rows[0].ingredient_id) : null;
         return { id, name, quantity, unit };
     } finally {
