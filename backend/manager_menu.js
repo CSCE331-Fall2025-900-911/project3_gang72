@@ -70,7 +70,60 @@ console.log('type getIngredientsHandler:', invCtrl && typeof invCtrl.getIngredie
 // API routes
 app.get('/api/employees', empCtrl.getEmployeesHandler);
 app.post('/api/employees', empCtrl.addEmployeeHandler);
+// Add to your server.js or index.js
 
+// Update employee
+app.put('/api/employees/:id', async (req, res) => {
+  const empId = Number(req.params.id);
+  const { firstName, lastName, password } = req.body;
+  
+  try {
+    const client = await pool.connect();
+    let updateFields = [];
+    let values = [];
+    let paramCount = 1;
+    
+    if (firstName) {
+      updateFields.push(`first_name = $${paramCount++}`);
+      values.push(firstName);
+    }
+    if (lastName) {
+      updateFields.push(`last_name = $${paramCount++}`);
+      values.push(lastName);
+    }
+    if (password) {
+      updateFields.push(`password = $${paramCount++}`);
+      values.push(password);
+    }
+    
+    values.push(empId);
+    
+    const sql = `UPDATE employee SET ${updateFields.join(', ')} WHERE employee_id = $${paramCount}`;
+    await client.query(sql, values);
+    client.release();
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating employee:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete employee
+app.delete('/api/employees/:id', async (req, res) => {
+  const empId = Number(req.params.id);
+  
+  try {
+    const client = await pool.connect();
+    await client.query('DELETE FROM employee WHERE employee_id = $1', [empId]);
+    client.release();
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting employee:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 // Report routes
 app.get('/api/x-report', reportCtrl.xReportHandler);
 const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport || reportCtrl.runDailySummary;
