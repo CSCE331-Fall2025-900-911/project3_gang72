@@ -46,26 +46,29 @@ async function pickRandomEmployee(client) {
   return 1; // fallback
 }
 
-async function createReceiptWithTip(client, employeeId, customerId, tipPercent, total) {
-  // tip amount computed as percent of total
-  const tipAmount = (tipPercent / 100.0) * total;
+async function createReceiptWithTip(client, employeeId, customerId, tipPercent, subtotal) {
+  const tipAmount = Number((subtotal * (tipPercent / 100)).toFixed(2));
 
-  const nextIdSql = `SELECT COALESCE(MAX(receipt_id), 0) + 1 AS next_id FROM receipt`;
-  const nextIdRes = await client.query(nextIdSql);
+  // Generate next receipt_id
+  const nextIdRes = await client.query(
+    `SELECT COALESCE(MAX(receipt_id), 0) + 1 AS next_id FROM receipt`
+  );
   const nextReceiptId = nextIdRes.rows[0].next_id;
 
-  // order_time mimics Java: integer hour-ish — you can store CURRENT_TIME or similar if preferred
-  const orderTimeSql = `EXTRACT(HOUR FROM CURRENT_TIME) :: int`;
-  const orderTimeRes = await client.query(orderTimeSql);
-  const orderTime = orderTimeRes.rows[0].date_part || orderTimeRes.rows[0].extract || orderTimeRes.rows[0].hour || orderTimeRes.rows[0];
+  // Insert with generated receipt_id
+  const result = await client.query(
+    `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip)
+     VALUES ($1, $2, $3, CURRENT_DATE, EXTRACT(EPOCH FROM NOW()), $4)
+     RETURNING receipt_id`,
+    [nextReceiptId, employeeId, customerId, tipAmount]
+  );
 
-  const insertSql = `
-    INSERT INTO receipt (receipt_id, employee_id, customer_id, tip, order_time, order_date)
-    VALUES ($1, $2, $3, $4, $5, CURRENT_DATE)
-  `;
-  await client.query(insertSql, [nextReceiptId, employeeId, customerId, tipAmount, orderTime]);
-  return { receiptId: nextReceiptId, tipAmount };
+  return { receiptId: result.rows[0].receipt_id, tipAmount };
 }
+
+
+
+
 
 /**
  * Insert orders and topping associations, and decrement ingredient quantities.
