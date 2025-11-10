@@ -58,7 +58,7 @@ async function createReceiptWithTip(client, employeeId, customerId, tipPercent, 
   // Insert with generated receipt_id
   const result = await client.query(
     `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip)
-     VALUES ($1, $2, $3, CURRENT_DATE, EXTRACT(EPOCH FROM NOW()), $4)
+     VALUES ($1, $2, $3, CURRENT_DATE, ((EXTRACT(HOUR FROM NOW())::integer % 13) + 11), $4)
      RETURNING receipt_id`,
     [nextReceiptId, employeeId, customerId, tipAmount]
   );
