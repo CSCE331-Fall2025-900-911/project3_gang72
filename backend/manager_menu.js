@@ -2,6 +2,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -15,6 +16,7 @@ let reportCtrl;
 let invCtrl;
 let menuCtrl;
 let orderCtrl;
+
 try {
   empCtrl = require('./src/controllers/employeeController');
 } catch (e) {
@@ -50,9 +52,10 @@ try {
   process.exit(1);
 }
 
-app.get('/', (req, res) => {
-  res.send('POS Manager API running');
-});
+// Root endpoint
+// app.get('/', (req, res) => {
+//   res.send('POS Manager API running');
+// });
 
 // debug: print available exports and types before mounting routes
 console.log('employeeController exports:', empCtrl && Object.keys(empCtrl));
@@ -64,16 +67,12 @@ console.log('type dailySummaryHandler:', reportCtrl && typeof reportCtrl.dailySu
 console.log('inventoryController exports:', invCtrl && Object.keys(invCtrl));
 console.log('type getIngredientsHandler:', invCtrl && typeof invCtrl.getIngredientsHandler);
 
-app.get('/', (req, res) => {
-  res.send('POS Manager API running');
-});
-
 // API routes
 app.get('/api/employees', empCtrl.getEmployeesHandler);
 app.post('/api/employees', empCtrl.addEmployeeHandler);
 
+// Report routes
 app.get('/api/x-report', reportCtrl.xReportHandler);
-// daily summary handler - support multiple export names for compatibility
 const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport || reportCtrl.runDailySummary;
 if (typeof dailyHandler === 'function') {
   app.get('/api/daily-summary', dailyHandler);
@@ -88,20 +87,25 @@ app.delete('/api/ingredients/:id', invCtrl.deleteIngredientHandler);
 app.put('/api/ingredients/:id/quantity', invCtrl.setIngredientQuantityHandler);
 app.get('/api/ingredients/:id/quantity', invCtrl.getIngredientQuantityHandler);
 
-//Menu routes
+// Menu routes
 app.get('/api/menu', menuCtrl.getItemsHandler);
 app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler);
 app.get('/api/categories', menuCtrl.getCategories);
 app.get('/api/ingredients', menuCtrl.getIngredients);
 app.post('/api/items', menuCtrl.addItem);
 
-
-//Orders Routes
+// Orders routes
 app.post('/api/orders', orderCtrl.createOrder);
 app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
 
+// Serve React build
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+// Use regex catch-all for React routing (fixes PathError in Express 5)
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
