@@ -60,6 +60,8 @@ async function xReportHandler(req, res) {
     try {
         const rows = await runXReport();
         res.json({ success: true, rows });
+        res.json({ message: "X report generated ✅" });
+
     } catch (err) {
         console.error('Error running X report', err);
         res.status(500).json({ success: false, error: err.message });
@@ -85,6 +87,8 @@ async function zReportHandler(req, res) {
     try {
         const summary = await zReport();
         res.json({ success: true, summary });
+        res.json({ message: "Z report generated ✅" });
+
     } catch (err) {
         console.error('Error running daily summary', err);
         res.status(500).json({ success: false, error: err.message });

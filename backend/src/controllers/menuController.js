@@ -11,10 +11,43 @@ dotenv.config();
 
 const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : undefined);
 
+// Image mapping for menu items
+const ITEM_IMAGES = {
+  // Milk Tea
+  'Wintermelon Milk Tea': 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80',
+  'Strawberry Milk Tea': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80',
+  'Milk Black Tea': 'https://images.unsplash.com/photo-1578374173705-64e9ae843b2f?w=400&q=80',
+  'Oolong Tea': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80',
+  'Pearl Milk Tea': 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80',
+  'Caramel Milk Tea': 'https://images.unsplash.com/photo-1578374173705-64e9ae843b2f?w=400&q=80',
+  
+  // Coffee
+  'Milk Coffee': 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80',
+  'Coffee Milk Tea': 'https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=400&q=80',
+  'Milk Foam Black Coffee': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80',
+  
+  // Tea Latte
+  'Matcha Tea Latte': 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=400&q=80',
+  'Strawberry Matcha Latte': 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400&q=80',
+  'Thai Tea Latte': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&q=80',
+  
+  // Slush Series
+  'Lychee': 'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80',
+  'Taro Milk': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80',
+  'Mango Milk': 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80',
+  'Strawberry Milk': 'https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=400&q=80',
+  
+  // Toppings
+  'Pearl': 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80',
+  'Coconut Jelly': 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&q=80',
+  'Herbal Jelly': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80',
+  'Ai-Yu Jelly': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80',
+  'White Pearl': 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80',
+};
 
 /**
  * Fetch all items from the `item` table and return as an array of objects.
- * Each object: { id, name, category, price}
+ * Each object: { id, name, category, price, image }
  */
 async function getAllItems() {
     const client = await pool.connect();
@@ -26,6 +59,7 @@ async function getAllItems() {
             name: r.item_name || null,
             category: r.category || null,
             price: r.price == null ? null : Number(r.price),
+            image: ITEM_IMAGES[r.item_name] || 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80'
         }));
         return items;
     } catch (err) {
