@@ -1,12 +1,11 @@
 // require('dotenv').config();
 
 const express = require('express');
-const cors = require('cors');
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // middlewares
-app.use(cors());
 app.use(express.json());
 
 // controllers (require and validate handlers)
@@ -18,17 +17,8 @@ try {
   empCtrl = require('./src/controllers/employeeController');
 } catch (e) {
   console.error('Failed to require employeeController:', e && e.stack ? e.stack : e);
-
-  let authCtrl;
-  try {
-    authCtrl = require('./src/controllers/authController');
-  } catch (e) {
-    console.warn('No authController found; /api/auth/google will not be mounted.');
-  }
   process.exit(1);
 }
-console.log('authController exports:', authCtrl && Object.keys(authCtrl));
-console.log('type verifyTokenHandler:', authCtrl && typeof authCtrl.verifyTokenHandler);
 
 try {
   reportCtrl = require('./src/controllers/ReportController');
@@ -51,9 +41,22 @@ try {
   process.exit(1);
 }
 
-app.get('/', (req, res) => {
-  res.send('POS Manager API running');
-});
+// auth and oauth controllers (optional)
+let authCtrl;
+try {
+  authCtrl = require('./src/controllers/authController');
+} catch (e) {
+  console.warn('No authController found; /api/auth/google will not be mounted.');
+}
+let oauthCtrl;
+try {
+  oauthCtrl = require('./src/controllers/oauthController');
+} catch (e) {
+  console.warn('No oauthController found; /auth/google and /oauth2/callback will not be mounted.');
+}
+
+console.log('authController exports:', authCtrl && Object.keys(authCtrl));
+console.log('type verifyTokenHandler:', authCtrl && typeof authCtrl.verifyTokenHandler);
 
 // debug: print available exports and types before mounting routes
 console.log('employeeController exports:', empCtrl && Object.keys(empCtrl));
@@ -65,9 +68,17 @@ console.log('type dailySummaryHandler:', reportCtrl && typeof reportCtrl.dailySu
 console.log('inventoryController exports:', invCtrl && Object.keys(invCtrl));
 console.log('type getIngredientsHandler:', invCtrl && typeof invCtrl.getIngredientsHandler);
 
-app.get('/', (req, res) => {
-  res.send('POS Manager API running');
-});
+
+// Serve frontend static files (if built) and fallback to index.html for SPA routes
+const staticDir = path.join(__dirname, '..', 'frontend', 'dist');
+if (staticDir) {
+  app.use(express.static(staticDir));
+  // Fallback for SPA routes: serve index.html for non-API/auth requests
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/auth') || req.path.startsWith('/oauth2')) return next();
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
 
 // API routes
 app.get('/api/employees', empCtrl.getEmployeesHandler);
@@ -94,6 +105,14 @@ if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
   app.post('/api/auth/google', authCtrl.verifyTokenHandler);
 } else {
   console.warn('/api/auth/google not mounted because authController.verifyTokenHandler is not available');
+}
+
+// Authorization-code flow endpoints (popup/redirect)
+if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
+  app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
+}
+if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
+  app.get('/oauth2/callback', oauthCtrl.oauthCallbackHandler);
 }
 
 //Menu routes
