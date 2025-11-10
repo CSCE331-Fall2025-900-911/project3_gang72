@@ -55,7 +55,10 @@ export default function XReport() {
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>X-Report (Hourly Sales Today)</h2>
+                <div>
+                    <h2>X-Report (Hourly Sales)</h2>
+                    <p className="text-muted mb-0">Testing Date: August 20, 2025</p>
+                </div>
                 <button className="btn btn-primary" onClick={fetchXReport} disabled={loading}>
                     {loading ? 'Loading...' : 'Refresh'}
                 </button>
@@ -116,60 +119,87 @@ export default function XReport() {
                                 {/* Grid lines */}
                                 {[0, 1, 2, 3, 4].map(i => {
                                     const y = 350 - (i * 70);
+                                    const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
+                                    const gridValue = (maxSales / 4) * i;
                                     return (
                                         <g key={i}>
                                             <line x1="60" y1={y} x2="880" y2={y} stroke="#e0e0e0" strokeWidth="1" />
+                                            <text x="45" y={y + 4} fontSize="10" fill="#999" textAnchor="end">
+                                                ${gridValue.toFixed(0)}
+                                            </text>
                                         </g>
                                     );
                                 })}
 
-                                {/* Bars */}
+                                {/* Line path */}
+                                {(() => {
+                                    const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
+                                    const points = reportData.map((item, idx) => {
+                                        const x = idx * (800 / (reportData.length - 1 || 1)) + 80;
+                                        const y = 350 - ((item.gross_sales || 0) / maxSales) * 300;
+                                        return `${x},${y}`;
+                                    }).join(' ');
+                                    
+                                    return (
+                                        <polyline
+                                            points={points}
+                                            fill="none"
+                                            stroke="#0d6efd"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    );
+                                })()}
+
+                                {/* Data points and markers */}
                                 {reportData.map((item, idx) => {
                                     const maxSales = Math.max(...reportData.map(d => d.gross_sales || 0), 1);
-                                    const barHeight = ((item.gross_sales || 0) / maxSales) * 300;
-                                    const x = idx * (800 / reportData.length) + 80;
-                                    const barWidth = Math.max((800 / reportData.length) - 20, 20);
+                                    const x = idx * (800 / (reportData.length - 1 || 1)) + 80;
+                                    const y = 350 - ((item.gross_sales || 0) / maxSales) * 300;
 
                                     return (
                                         <g key={idx}>
-                                            {/* Bar */}
-                                            <rect
-                                                x={x}
-                                                y={350 - barHeight}
-                                                width={barWidth}
-                                                height={barHeight}
+                                            {/* Circle marker */}
+                                            <circle
+                                                cx={x}
+                                                cy={y}
+                                                r="6"
                                                 fill="#0d6efd"
-                                                opacity="0.8"
+                                                stroke="white"
+                                                strokeWidth="2"
                                             />
-                                            {/* Value on top */}
+                                            {/* Value label above marker */}
                                             <text
-                                                x={x + barWidth / 2}
-                                                y={345 - barHeight}
+                                                x={x}
+                                                y={y - 12}
                                                 fontSize="10"
                                                 textAnchor="middle"
                                                 fill="#333"
+                                                fontWeight="bold"
                                             >
                                                 ${(item.gross_sales || 0).toFixed(0)}
                                             </text>
                                             {/* Hour label */}
                                             <text
-                                                x={x + barWidth / 2}
+                                                x={x}
                                                 y={370}
                                                 fontSize="10"
                                                 textAnchor="middle"
                                                 fill="#666"
+                                                transform={`rotate(-45, ${x}, 370)`}
                                             >
                                                 {formatTime(item.hour)}
                                             </text>
                                             {/* Order count */}
                                             <text
-                                                x={x + barWidth / 2}
+                                                x={x}
                                                 y={385}
                                                 fontSize="9"
                                                 textAnchor="middle"
                                                 fill="#999"
                                             >
-                                                ({item.order_count} orders)
+                                                ({item.order_count})
                                             </text>
                                         </g>
                                     );
