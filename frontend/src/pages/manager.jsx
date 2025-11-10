@@ -1,34 +1,45 @@
 import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
+import ManagerNavbar from "../components/ManagerNavbar"; // Adjust path as needed
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function Manager() {
-  const [employees, setEmployees] = useState([]);
+    const [employees, setEmployees] = useState([]);
+    const [ingredients, setIngredients] = useState([]);
+    const [sales, setSales] = useState([]);
 
-  useEffect(() => {
-    fetch("/api/employees")
-      .then(res => res.json())
-      .then(data => {
-        // backend returns { success: true, employees: [...] }
-        if (data.success && Array.isArray(data.employees)) {
-          setEmployees(data.employees);
-        } else {
-          setEmployees([]);
-        }
-      })
-      .catch(error => console.error("Error fetching employees:", error));
-  }, []);
+    // Fetch employees
+    useEffect(() => {
+        fetch("/api/employees")
+            .then(res => res.json())
+            .then(data => setEmployees(Array.isArray(data) ? data : data.employees || []))
+            .catch(console.error);
+    }, []);
 
-  return (
-    <div className="p-4">
-      <h1>Manager Dashboard</h1>
-      {employees.length > 0 ? (
-        <ul>
-          {employees.map(emp => (
-            <li key={emp.id}>{emp.firstName} {emp.lastName}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No employees found</p>
-      )}
-    </div>
-  );
+    // Fetch ingredients
+    useEffect(() => {
+        fetch("/api/ingredients")
+            .then(res => res.json())
+            .then(data => setIngredients(Array.isArray(data) ? data : data.ingredients || []))
+            .catch(console.error);
+    }, []);
+
+    // Fetch sales
+    useEffect(() => {
+        fetch("/api/sales")
+            .then(res => res.json())
+            .then(data => setSales(Array.isArray(data) ? data : data.sales || []))
+            .catch(console.error);
+    }, []);
+
+    return (
+        <div>
+            <ManagerNavbar />
+            <div className="container mt-4">
+                <h1 className="mb-4">Manager Dashboard</h1>
+                {/* Render subpages and pass data via context */}
+                <Outlet context={{ employees, ingredients, sales }} />
+            </div>
+        </div>
+    );
 }
