@@ -188,7 +188,7 @@ async function createOrder(req, res) {
       tipAmount,
     });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => { });
     console.error('createOrder failed:', err);
     return res.status(500).json({ success: false, error: err.message });
   } finally {
@@ -222,7 +222,424 @@ async function getOrderByReceipt(req, res) {
   }
 }
 
+/**
+ * GET /api/employees
+ * Fetch all employees
+ */
+async function getEmployees(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT employee_id AS id, first_name AS "firstName", last_name AS "lastName", 
+              email, phone_number AS phone, position, hourly_wage AS wage
+       FROM employee 
+       ORDER BY employee_id`
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getEmployees failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/ingredients
+ * Fetch all ingredients
+ */
+async function getIngredients(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT ingredient_id AS id, ingredient_name AS name, quantity, unit
+       FROM ingredient 
+       ORDER BY ingredient_id`
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getIngredients failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/sales
+ * Fetch all sales/receipts with total calculation
+ */
+async function getSales(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT r.receipt_id AS id, 
+              r.employee_id AS "employeeId", 
+              r.customer_id AS "customerId", 
+              r.order_date AS date, 
+              r.order_time AS time, 
+              r.tip,
+              (SELECT SUM(i.price) 
+               FROM orders o 
+               JOIN item i ON o.item_id = i.item_id 
+               WHERE o.receipt_id = r.receipt_id) + COALESCE(r.tip, 0) AS total
+       FROM receipt r
+       ORDER BY r.receipt_id DESC`
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getSales failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/menu
+ * Get all menu items with prices
+ */
+async function getMenu(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT item_id AS id, item_name AS name, category, price
+       FROM item
+       ORDER BY item_id, item_name`
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getMenu failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * PUT /api/menu/:itemId
+ * Update item price
+ * Body: { price: number }
+ */
+async function updateItemPrice(req, res) {
+  const itemId = Number(req.params.itemId);
+  const { price } = req.body;
+
+  if (Number.isNaN(itemId) || !price) {
+    return res.status(400).json({ success: false, error: 'Invalid item ID or price' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE item SET price = $1 WHERE item_id = $2 RETURNING *`,
+      [price, itemId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Item not found' });
+    }
+
+    return res.json({ success: true, item: result.rows[0] });
+  } catch (err) {
+    console.error('updateItemPrice failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/popular-items?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get most popular items for date range
+ */
+async function getMostPopularItems(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT i.item_name AS name, COUNT(o.item_id) AS "totalSold"
+                 FROM orders o
+                 JOIN item i ON o.item_id = i.item_id
+                 JOIN receipt r ON o.receipt_id = r.receipt_id
+                 ${dateFilter}
+                 GROUP BY i.item_name
+                 ORDER BY "totalSold" DESC`;
+
+    const result = await pool.query(sql);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getMostPopularItems failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/revenue?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get total revenue for date range
+ */
+async function getTotalRevenue(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT SUM(i.price) + SUM(COALESCE(r.tip, 0)) + SUM(COALESCE(topping_item.price, 0)) AS "totalRevenue"
+                 FROM receipt r
+                 JOIN orders o ON r.receipt_id = o.receipt_id
+                 JOIN item i ON o.item_id = i.item_id
+                 LEFT JOIN toppingstodrinks td ON o.order_id = td.order_id
+                 LEFT JOIN item topping_item ON td.topping_id = topping_item.item_id
+                 ${dateFilter}`;
+
+    const result = await pool.query(sql);
+    return res.json({ totalRevenue: result.rows[0].totalRevenue || 0 });
+  } catch (err) {
+    console.error('getTotalRevenue failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/total-orders?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get total number of orders for date range
+ */
+async function getTotalOrders(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT COUNT(DISTINCT r.receipt_id) AS "totalOrders"
+                 FROM receipt r
+                 ${dateFilter}`;
+
+    const result = await pool.query(sql);
+    return res.json({ totalOrders: result.rows[0].totalOrders || 0 });
+  } catch (err) {
+    console.error('getTotalOrders failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/avg-order-value?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get average order value for date range
+ */
+async function getAvgOrderValue(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT AVG(order_total) AS "avgOrderValue"
+                 FROM (
+                   SELECT r.receipt_id, SUM(i.price) + COALESCE(r.tip, 0) AS order_total
+                   FROM receipt r
+                   JOIN orders o ON r.receipt_id = o.receipt_id
+                   JOIN item i ON o.item_id = i.item_id
+                   ${dateFilter}
+                   GROUP BY r.receipt_id, r.tip
+                 ) AS totals`;
+
+    const result = await pool.query(sql);
+    return res.json({ avgOrderValue: result.rows[0].avgOrderValue || 0 });
+  } catch (err) {
+    console.error('getAvgOrderValue failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/peak-hours?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get peak hours for date range
+ */
+async function getPeakHours(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT r.order_time AS hour, COUNT(*) AS "orderCount"
+                 FROM receipt r
+                 ${dateFilter}
+                 GROUP BY r.order_time
+                 ORDER BY "orderCount" DESC
+                 LIMIT 3`;
+
+    const result = await pool.query(sql);
+    const peakHours = result.rows.map(row => ({
+      hour: row.hour,
+      formatted: formatHour(row.hour),
+      count: row.orderCount
+    }));
+
+    return res.json(peakHours);
+  } catch (err) {
+    console.error('getPeakHours failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/orders-by-hour?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get hourly order distribution
+ */
+async function getOrdersByHour(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT r.order_time AS hour, COUNT(*) AS "orderCount"
+                 FROM receipt r
+                 ${dateFilter}
+                 GROUP BY r.order_time
+                 ORDER BY r.order_time`;
+
+    const result = await pool.query(sql);
+    const data = result.rows.map(row => ({
+      hour: row.hour,
+      formatted: formatHour(row.hour),
+      count: row.orderCount
+    }));
+
+    return res.json(data);
+  } catch (err) {
+    console.error('getOrdersByHour failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/order-volume?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get order volume grouped by day or month depending on date range
+ */
+async function getOrderVolume(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    // Calculate day difference
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.abs((end - start) / (1000 * 60 * 60 * 24));
+
+    let sql;
+    if (diffDays > 31) {
+      // Group by month
+      sql = `SELECT TO_CHAR(r.order_date, 'YYYY-MM') AS period, COUNT(*) AS "orderCount"
+             FROM receipt r
+             ${dateFilter}
+             GROUP BY TO_CHAR(r.order_date, 'YYYY-MM')
+             ORDER BY period`;
+    } else {
+      // Group by day
+      sql = `SELECT TO_CHAR(r.order_date, 'YYYY-MM-DD') AS period, COUNT(*) AS "orderCount"
+             FROM receipt r
+             ${dateFilter}
+             GROUP BY TO_CHAR(r.order_date, 'YYYY-MM-DD')
+             ORDER BY period`;
+    }
+
+    const result = await pool.query(sql);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getOrderVolume failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/revenue-chart?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get revenue grouped by day or month depending on date range
+ */
+async function getRevenueChart(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.abs((end - start) / (1000 * 60 * 60 * 24));
+
+    let sql;
+    if (diffDays > 31) {
+      sql = `SELECT TO_CHAR(r.order_date, 'YYYY-MM') AS period,
+                    SUM(i.price) + SUM(COALESCE(r.tip, 0)) AS revenue
+             FROM receipt r
+             JOIN orders o ON r.receipt_id = o.receipt_id
+             JOIN item i ON o.item_id = i.item_id
+             ${dateFilter}
+             GROUP BY TO_CHAR(r.order_date, 'YYYY-MM')
+             ORDER BY period`;
+    } else {
+      sql = `SELECT TO_CHAR(r.order_date, 'YYYY-MM-DD') AS period,
+                    SUM(i.price) + SUM(COALESCE(r.tip, 0)) AS revenue
+             FROM receipt r
+             JOIN orders o ON r.receipt_id = o.receipt_id
+             JOIN item i ON o.item_id = i.item_id
+             ${dateFilter}
+             GROUP BY TO_CHAR(r.order_date, 'YYYY-MM-DD')
+             ORDER BY period`;
+    }
+
+    const result = await pool.query(sql);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getRevenueChart failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/**
+ * GET /api/reports/aov-by-category?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Get average order value by category
+ */
+async function getAOVByCategory(req, res) {
+  const { startDate, endDate } = req.query;
+  const dateFilter = getDateFilter(startDate, endDate);
+
+  try {
+    const sql = `SELECT i.category, AVG(i.price) AS "avgPrice"
+                 FROM item i
+                 JOIN orders o ON i.item_id = o.item_id
+                 JOIN receipt r ON o.receipt_id = r.receipt_id
+                 ${dateFilter}
+                 GROUP BY i.category
+                 ORDER BY i.category`;
+
+    const result = await pool.query(sql);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('getAOVByCategory failed:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+// Helper function to build date filter for SQL queries
+function getDateFilter(startDate, endDate) {
+  const hasStart = startDate && startDate.trim();
+  const hasEnd = endDate && endDate.trim();
+
+  if (!hasStart && !hasEnd) {
+    return '';
+  } else if (hasStart && hasEnd) {
+    return `WHERE r.order_date BETWEEN '${startDate}' AND '${endDate}'`;
+  } else if (hasStart) {
+    return `WHERE r.order_date >= '${startDate}'`;
+  } else {
+    return `WHERE r.order_date <= '${endDate}'`;
+  }
+}
+
+// Helper function to format hour (0-23 to 12 AM/PM format)
+function formatHour(hour) {
+  if (hour === 0) return '12 AM';
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return '12 PM';
+  return `${hour - 12} PM`;
+}
+
 module.exports = {
   createOrder,
   getOrderByReceipt,
+  getEmployees,
+  getIngredients,
+  getSales,
+  getMenu,
+  updateItemPrice,
+  getMostPopularItems,
+  getTotalRevenue,
+  getTotalOrders,
+  getAvgOrderValue,
+  getPeakHours,
+  getOrdersByHour,
+  getOrderVolume,
+  getRevenueChart,
+  getAOVByCategory,
 };
