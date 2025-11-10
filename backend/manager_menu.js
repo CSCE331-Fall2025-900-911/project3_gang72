@@ -18,8 +18,17 @@ try {
   empCtrl = require('./src/controllers/employeeController');
 } catch (e) {
   console.error('Failed to require employeeController:', e && e.stack ? e.stack : e);
+
+  let authCtrl;
+  try {
+    authCtrl = require('./src/controllers/authController');
+  } catch (e) {
+    console.warn('No authController found; /api/auth/google will not be mounted.');
+  }
   process.exit(1);
 }
+console.log('authController exports:', authCtrl && Object.keys(authCtrl));
+console.log('type verifyTokenHandler:', authCtrl && typeof authCtrl.verifyTokenHandler);
 
 try {
   reportCtrl = require('./src/controllers/ReportController');
@@ -79,6 +88,13 @@ app.post('/api/ingredients', invCtrl.addIngredientHandler);
 app.delete('/api/ingredients/:id', invCtrl.deleteIngredientHandler);
 app.put('/api/ingredients/:id/quantity', invCtrl.setIngredientQuantityHandler);
 app.get('/api/ingredients/:id/quantity', invCtrl.getIngredientQuantityHandler);
+
+// Google auth verification endpoint (expects JSON body { id_token: string })
+if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
+  app.post('/api/auth/google', authCtrl.verifyTokenHandler);
+} else {
+  console.warn('/api/auth/google not mounted because authController.verifyTokenHandler is not available');
+}
 
 //Menu routes
 app.get('/api/menu', menuCtrl.getItemsHandler);
