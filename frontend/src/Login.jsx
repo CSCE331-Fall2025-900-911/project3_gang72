@@ -1,14 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 
-// Login component: initializes Google Identity Services if a Vite env var is present
+// Minimal Login component: only Google auth (GSI button if VITE_GOOGLE_CLIENT_ID present) and popup flow
 export default function Login({ onLogin }) {
-    const [clientIdInput, setClientIdInput] = useState('')
-    const [token, setToken] = useState(null)
     const buttonRef = useRef(null)
-    const [verifiedUser, setVerifiedUser] = useState(null)
 
-    const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
-    const clientId = envClientId || clientIdInput
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
     useEffect(() => {
         if (!clientId) return
@@ -16,11 +12,16 @@ export default function Login({ onLogin }) {
         try {
             window.google.accounts.id.initialize({
                 client_id: clientId,
-                callback: handleCredentialResponse,
+                callback: (res) => {
+                    // pass id token to backend for verification if desired
+                    // the popup flow handles server verification; for GSI token you may POST it to /api/auth/google
+                    // For now we notify parent that a login happened with the raw credential (server should verify)
+                    if (typeof onLogin === 'function') {
+                        try { onLogin({ id_token: res?.credential }) } catch (e) { console.error(e) }
+                    }
+                },
             })
             window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large' })
-            // optionally show One Tap
-            // window.google.accounts.id.prompt()
         } catch (e) {
             console.error('GSI init error', e)
         }
@@ -28,45 +29,32 @@ export default function Login({ onLogin }) {
         return () => {
             if (buttonRef.current) buttonRef.current.innerHTML = ''
         }
-    }, [clientId])
-
-    function handleCredentialResponse(res) {
-        setToken(res?.credential || null)
-    }
-
-    function initFromInput() {
-        if (!clientIdInput) return alert('Paste your Google Client ID in the box')
-        setClientIdInput(clientIdInput.trim())
-    }
+    }, [clientId, onLogin])
 
     // Popup-based OAuth code flow: open backend /auth/google and receive postMessage
     useEffect(() => {
         function handleMessage(e) {
             try {
-                const envelope = e.data;
-                if (!envelope || envelope.type !== 'GOOGLE_AUTH') return;
-                const d = envelope.data || {};
+                const envelope = e.data
+                if (!envelope || envelope.type !== 'GOOGLE_AUTH') return
+                const d = envelope.data || {}
                 // d contains: payload, role, redirect, tokens
                 if (d.payload) {
-                    setVerifiedUser(d.payload);
-                    // inform parent that a user has just logged in and pass redirect if present
                     if (typeof onLogin === 'function') {
-                        try { onLogin(d.payload, d.redirect) } catch (e) { console.error('onLogin threw', e) }
+                        try { onLogin(d.payload, d.redirect) } catch (err) { console.error('onLogin threw', err) }
                     }
                 }
-                // if server wants to redirect (e.g., manager -> /manager), follow it immediately
                 if (d.redirect) {
-                    window.location.href = d.redirect;
-                    return;
+                    window.location.href = d.redirect
                 }
             } catch (err) {
-                console.error('message handling error', err);
+                console.error('message handling error', err)
             }
         }
 
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, [])
+        window.addEventListener('message', handleMessage)
+        return () => window.removeEventListener('message', handleMessage)
+    }, [onLogin])
 
     function openPopup() {
         const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
@@ -79,37 +67,15 @@ export default function Login({ onLogin }) {
         <div className="login-page">
             <div className="card">
                 <h2>Sign in with Google</h2>
-                <p>Paste your Google Client ID below if you didn't set VITE_GOOGLE_CLIENT_ID.</p>
+                {clientId ? (
+                    <div ref={buttonRef} style={{ marginTop: 10 }} />
+                ) : (
+                    <p style={{ marginTop: 10 }}>No client ID configured for GSI. Use popup instead.</p>
+                )}
 
-                <label>Google Client ID</label>
-                <input
-                    type="text"
-                    placeholder="...apps.googleusercontent.com"
-                    value={clientIdInput}
-                    onChange={(e) => setClientIdInput(e.target.value)}
-                />
-                <div style={{ marginTop: 8 }}>
-                    <button onClick={initFromInput}>Initialize</button>
-                </div>
-
-                <div className="gsi-button" ref={buttonRef} style={{ marginTop: 20 }} />
-
-                <div className="token-area">
-                    <label>ID Token</label>
-                    <textarea readOnly value={token || ''} rows={6} />
-                </div>
-
-                <p className="note">This demo posts the ID token to your backend at <code>/api/auth/google</code> for verification.</p>
                 <div style={{ marginTop: 12 }}>
                     <button onClick={openPopup}>Sign in with Google (popup)</button>
                 </div>
-
-                {verifiedUser && (
-                    <div style={{ marginTop: 12 }}>
-                        <h4>Verified user (from server)</h4>
-                        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify(verifiedUser, null, 2)}</pre>
-                    </div>
-                )}
             </div>
         </div>
     )
