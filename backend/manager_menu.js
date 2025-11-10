@@ -97,8 +97,9 @@ app.get('/api/reports/order-volume', orderCtrl.getOrderVolume);
 app.get('/api/reports/revenue-chart', orderCtrl.getRevenueChart);
 app.get('/api/reports/aov-by-category', orderCtrl.getAOVByCategory);
 
-// Legacy report endpoints (if reportCtrl has these)
+// Report endpoints
 app.get('/api/x-report', reportCtrl.xReportHandler);
+app.get('/api/z-report', reportCtrl.zReportHandler);
 const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport;
 if (typeof dailyHandler === 'function') {
   app.get('/api/daily-summary', dailyHandler);
