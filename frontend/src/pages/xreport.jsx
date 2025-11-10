@@ -13,7 +13,7 @@ export default function XReport() {
     const fetchXReport = () => {
         setLoading(true);
         setError(null);
-        fetch('http://localhost:3000/api/x-report')
+        fetch('/api/x-report')
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch X-Report');
                 return res.json();
