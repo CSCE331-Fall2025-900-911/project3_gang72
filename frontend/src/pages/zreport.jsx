@@ -13,7 +13,7 @@ export default function ZReport() {
     const fetchZReport = () => {
         setLoading(true);
         setError(null);
-        fetch('http://localhost:3000/api/z-report')
+        fetch('/api/z-report')
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch Z-Report');
                 return res.json();

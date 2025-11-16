@@ -1,0 +1,48 @@
+ Meeting Minutes
+-----------------------------
+
+Tech Stack (Initial):
+- Flask
+- React
+- PostgreSQL
+- Bootstrap / Tailwind
+
+Summary Since Last Meeting:
+- Tech stack was decided.
+- Planned to begin deployment on the website.
+- SQL database can now be connected to all parts of the system.
+- Plan to start adding data to the database.
+
+Controller Assignments:
+- Boba Controller: Hiya
+- Manager Controller: Orlando, David, Allen, Gauri
+- Total controllers needed: 4–5
+
+-------------------------------------
+10/31 Update:
+- Switched backend from Flask → Express + Node.js.
+
+-------------------------------------
+11/5 Update:
+
+What We Have Done:
+- Gauri: Set up Git repository and file structure.
+
+What We Will Do:
+- Each member will start changing backend to their respective part from Project 2
+
+-------------------------------------
+11/7 Update:
+
+What We Have Done:
+- Same as last week’s progress.
+- Allen: Figured out SQL setup.
+
+What We Will Do:
+- Gauri: Create menu board + manager permissions.
+- David: Create the inventory page.
+- Allen: Build login/OAuth (frontend & backend), implement employee viewing.
+- Orlando: Work on frontend implementation.
+- Hiya: Work on cashier frontend & backend implementation.
+
+-----------------------------
