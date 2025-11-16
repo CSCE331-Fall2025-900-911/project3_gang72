@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, authCtrl, oauthCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -23,6 +23,21 @@ try {
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
+}
+
+// Load auth controllers (optional)
+try {
+  authCtrl = require('./src/controllers/authController');
+  console.log('✅ authController loaded');
+} catch (e) {
+  console.warn('⚠️  authController not available:', e.message);
+}
+
+try {
+  oauthCtrl = require('./src/controllers/oauthController');
+  console.log('✅ oauthController loaded');
+} catch (e) {
+  console.warn('⚠️  oauthController not available:', e.message);
 }
 
 console.log('employeeController exports:', Object.keys(empCtrl));
@@ -126,6 +141,28 @@ app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
 
 // ===== Sales =====
 app.get('/api/sales', orderCtrl.getSales);
+
+// ===== Google OAuth Authentication =====
+if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
+  app.post('/api/auth/google', authCtrl.verifyTokenHandler);
+  console.log('✅ Mounted: POST /api/auth/google');
+} else {
+  console.warn('⚠️  /api/auth/google not mounted (authController.verifyTokenHandler missing)');
+}
+
+if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
+  app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
+  console.log('✅ Mounted: GET /auth/google');
+} else {
+  console.warn('⚠️  /auth/google not mounted (oauthController.getAuthUrlHandler missing)');
+}
+
+if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
+  app.get('/oauth2/callback', oauthCtrl.oauthCallbackHandler);
+  console.log('✅ Mounted: GET /oauth2/callback');
+} else {
+  console.warn('⚠️  /oauth2/callback not mounted (oauthController.oauthCallbackHandler missing)');
+}
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
