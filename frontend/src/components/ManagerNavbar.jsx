@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ManagerNavbar() {
+    const { t } = useLanguage();
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <div className="container">
@@ -19,22 +21,22 @@ export default function ManagerNavbar() {
                 <div className="collapse navbar-collapse" id="managerNavbar">
                     <ul className="navbar-nav ms-auto">
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/employees">Employees</Link>
+                            <Link className="nav-link" to="/manager/employees">{t("Employees")}</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/ingredients">Ingredients</Link>
+                            <Link className="nav-link" to="/manager/ingredients">{t("Ingredients")}</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/sales">Sales</Link>
+                            <Link className="nav-link" to="/manager/sales">{t("Sales")}</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/items">Items</Link>
+                            <Link className="nav-link" to="/manager/items">{t("Items")}</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/xreport">X-Report</Link>
+                            <Link className="nav-link" to="/manager/xreport">{t("X-Report")}</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/manager/zreport">Z-Report</Link>
+                            <Link className="nav-link" to="/manager/zreport">{t("Z-Report")}</Link>
                         </li>
                     </ul>
                 </div>

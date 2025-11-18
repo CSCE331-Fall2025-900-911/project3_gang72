@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Items() {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -174,7 +176,7 @@ export default function Items() {
       <div className="container mt-4">
         <div className="text-center">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">{t("Loading...")}</span>
           </div>
         </div>
       </div>
@@ -184,12 +186,12 @@ export default function Items() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Menu Items Management</h2>
+        <h2>{t("Menu Items Management")}</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          {showAddForm ? "Cancel" : "+ Add Menu Item"}
+          {showAddForm ? t("Cancel") : t("+ Add Menu Item")}
         </button>
       </div>
 
@@ -203,10 +205,10 @@ export default function Items() {
       {showAddForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h5 className="card-title">Add New Menu Item</h5>
+            <h5 className="card-title">{t("Add New Menu Item")}</h5>
             <div className="row g-3 mb-3">
               <div className="col-md-4">
-                <label className="form-label">Item Name *</label>
+                <label className="form-label">{t("Item Name")} *</label>
                 <input
                   type="text"
                   className="form-control"
@@ -228,7 +230,7 @@ export default function Items() {
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Category *</label>
+                <label className="form-label">{t("Category")} *</label>
                 <input
                   type="text"
                   className="form-control"
@@ -246,10 +248,10 @@ export default function Items() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-bold">Select Ingredients *</label>
+              <label className="form-label fw-bold">{t("Select Ingredients")} *</label>
               <div className="border rounded p-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
                 {ingredients.length === 0 ? (
-                  <p className="text-muted">No ingredients available</p>
+                  <p className="text-muted">{t("No ingredients available")}</p>
                 ) : (
                   <div className="row g-2">
                     {ingredients.map((ing) => (
@@ -273,14 +275,14 @@ export default function Items() {
               </div>
               {selectedIngredients.length > 0 && (
                 <div className="mt-2 text-muted small">
-                  Selected: {selectedIngredients.length} ingredient(s)
+                  {t("Selected")}: {selectedIngredients.length} {t("ingredient(s)")}
                 </div>
               )}
             </div>
 
             <div>
               <button className="btn btn-success me-2" onClick={handleAddItem}>
-                Add Item
+                {t("Add Item")}
               </button>
               <button
                 className="btn btn-secondary"
@@ -292,7 +294,7 @@ export default function Items() {
                   setSelectedIngredients([]);
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -308,7 +310,7 @@ export default function Items() {
             }`}
             onClick={() => setSelectedCategory("All")}
           >
-            All
+            {t("All")}
           </button>
           {categories.map((cat) => (
             <button
@@ -326,7 +328,7 @@ export default function Items() {
 
       {/* Items Display */}
       {Object.keys(groupedItems).length === 0 ? (
-        <div className="alert alert-info">No items found</div>
+        <div className="alert alert-info">{t("No items found")}</div>
       ) : (
         Object.keys(groupedItems).map((category) => (
           <div key={category} className="mb-4">
@@ -335,10 +337,10 @@ export default function Items() {
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Actions</th>
+                    <th>{t("ID")}</th>
+                    <th>{t("Name")}</th>
+                    <th>{t("Price")}</th>
+                    <th>{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -370,13 +372,13 @@ export default function Items() {
                               className="btn btn-sm btn-success me-2"
                               onClick={() => handleUpdatePrice(item.id)}
                             >
-                              Save
+                              {t("Save")}
                             </button>
                             <button
                               className="btn btn-sm btn-secondary"
                               onClick={cancelEdit}
                             >
-                              Cancel
+                              {t("Cancel")}
                             </button>
                           </>
                         ) : (
@@ -384,7 +386,7 @@ export default function Items() {
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => startEditPrice(item)}
                           >
-                            Edit Price
+                            {t("Edit Price")}
                           </button>
                         )}
                       </td>
@@ -402,7 +404,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Total Items</h5>
+              <h5 className="card-title">{t("Total Items")}</h5>
               <p className="display-6">{items.length}</p>
             </div>
           </div>
@@ -410,7 +412,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Categories</h5>
+              <h5 className="card-title">{t("Categories")}</h5>
               <p className="display-6">{categories.length}</p>
             </div>
           </div>
@@ -418,7 +420,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Average Price</h5>
+              <h5 className="card-title">{t("Average Price")}</h5>
               <p className="display-6">
                 ${items.length > 0
                   ? (

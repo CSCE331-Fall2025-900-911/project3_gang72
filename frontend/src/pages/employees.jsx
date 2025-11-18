@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Employees() {
+  const { t } = useLanguage();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -159,12 +161,12 @@ export default function Employees() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Employee Management</h2>
+        <h2>{t("Employee Management")}</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          {showAddForm ? "Cancel" : "+ Add Employee"}
+          {showAddForm ? t("Cancel") : t("+ Add Employee")}
         </button>
       </div>
 
@@ -178,10 +180,10 @@ export default function Employees() {
       {showAddForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h5 className="card-title">Add New Employee</h5>
+            <h5 className="card-title">{t("Add New Employee")}</h5>
             <div className="row g-3">
               <div className="col-md-4">
-                <label className="form-label">First Name *</label>
+                <label className="form-label">{t("First Name")} *</label>
                 <input
                   type="text"
                   className="form-control"
@@ -190,7 +192,7 @@ export default function Employees() {
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Last Name *</label>
+                <label className="form-label">{t("Last Name")} *</label>
                 <input
                   type="text"
                   className="form-control"
@@ -199,7 +201,7 @@ export default function Employees() {
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Password</label>
+                <label className="form-label">{t("Password")}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -214,7 +216,7 @@ export default function Employees() {
                 className="btn btn-success me-2"
                 onClick={handleAddEmployee}
               >
-                Add Employee
+                {t("Add Employee")}
               </button>
               <button
                 className="btn btn-secondary"
@@ -225,7 +227,7 @@ export default function Employees() {
                   setNewPassword("");
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -236,17 +238,17 @@ export default function Employees() {
       <div className="card">
         <div className="card-body">
           {employees.length === 0 ? (
-            <p className="text-muted text-center">No employees found</p>
+            <p className="text-muted text-center">{t("No employees found")}</p>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Password</th>
-                    <th>Actions</th>
+                    <th>{t("ID")}</th>
+                    <th>{t("First Name")}</th>
+                    <th>{t("Last Name")}</th>
+                    <th>{t("Password")}</th>
+                    <th>{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -285,13 +287,13 @@ export default function Employees() {
                               className="btn btn-sm btn-success me-2"
                               onClick={() => handleUpdateEmployee(emp.id)}
                             >
-                              Save
+                              {t("Save")}
                             </button>
                             <button
                               className="btn btn-sm btn-secondary"
                               onClick={cancelEdit}
                             >
-                              Cancel
+                              {t("Cancel")}
                             </button>
                           </td>
                         </>
@@ -310,7 +312,7 @@ export default function Employees() {
                               className="btn btn-sm btn-outline-primary me-2"
                               onClick={() => startEdit(emp)}
                             >
-                              Edit
+                              {t("Edit")}
                             </button>
                             <button
                               className="btn btn-sm btn-outline-danger"
@@ -321,7 +323,7 @@ export default function Employees() {
                                 )
                               }
                             >
-                              Delete
+                              {t("Delete")}
                             </button>
                           </td>
                         </>

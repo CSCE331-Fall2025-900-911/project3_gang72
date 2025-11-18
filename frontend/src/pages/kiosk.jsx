@@ -1,7 +1,9 @@
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Kiosk() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
@@ -159,27 +161,27 @@ export default function Kiosk() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-center mb-4">Kiosk Page</h1>
+      <h1 className="text-center mb-4">{t("Kiosk Page")}</h1>
 
       {/* Customer info */}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="First Name"
+          placeholder={t("First Name")}
           value={customerFirst}
           onChange={(e) => setCustomerFirst(e.target.value)}
           className="form-control d-inline w-auto me-2"
         />
         <input
           type="text"
-          placeholder="Last Name"
+          placeholder={t("Last Name")}
           value={customerLast}
           onChange={(e) => setCustomerLast(e.target.value)}
           className="form-control d-inline w-auto me-2"
         />
         <input
           type="text"
-          placeholder="Phone Number"
+          placeholder={t("Phone Number")}
           value={customerPhone}
           onChange={(e) => setCustomerPhone(e.target.value)}
           className="form-control d-inline w-auto"
@@ -207,9 +209,9 @@ export default function Kiosk() {
 
       {/* Cart */}
       <div className="border-top pt-3 mt-4">
-        <h4>Cart</h4>
+        <h4>{t("Cart")}</h4>
         {cart.length === 0 ? (
-          <p>No items added yet.</p>
+          <p>{t("No items added yet.")}</p>
         ) : (
           <ul className="list-group">
             {cart.map((drink, i) => (
@@ -228,7 +230,7 @@ export default function Kiosk() {
                   className="btn btn-sm btn-outline-danger mt-2"
                   onClick={() => removeFromCart(i)}
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </li>
             ))}
@@ -236,7 +238,7 @@ export default function Kiosk() {
         )}
 
         <div className="mt-3">
-          <label className="me-2">Tip %:</label>
+          <label className="me-2">{t("Tip %")}:</label>
           <input
             type="number"
             value={tipPercent}
@@ -248,13 +250,13 @@ export default function Kiosk() {
 
         <div className="mt-3">
           <div className="fw-normal">
-            Subtotal: ${subtotal.toFixed(2)}
+            {t("Subtotal")}: ${subtotal.toFixed(2)}
           </div>
           <div className="fw-normal">
-            Tip ({tipPercent}%): ${tipAmount.toFixed(2)}
+            {t("Tip")} ({tipPercent}%): ${tipAmount.toFixed(2)}
           </div>
           <div className="fw-bold fs-5 mt-2">
-            Total: ${total.toFixed(2)}
+            {t("Total")}: ${total.toFixed(2)}
           </div>
         </div>
 
@@ -262,7 +264,7 @@ export default function Kiosk() {
           onClick={submitOrder}
           className="btn btn-primary mt-3"
         >
-          Place Order
+          {t("Place Order")}
         </button>
       </div>
 

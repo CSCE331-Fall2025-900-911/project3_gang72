@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-
+import { useLanguage } from "../context/LanguageContext";
+  
 export default function Ingredients() {
+  const { t } = useLanguage();
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -180,12 +182,12 @@ export default function Ingredients() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Inventory Management</h2>
+        <h2>{t("Inventory Management")}</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          {showAddForm ? "Cancel" : "+ Add Ingredient"}
+          {showAddForm ? t("Cancel") : t("+ Add Ingredient")}
         </button>
       </div>
 
@@ -199,10 +201,10 @@ export default function Ingredients() {
       {showAddForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h5 className="card-title">Add New Ingredient</h5>
+            <h5 className="card-title">{t("Add New Ingredient")}</h5>
             <div className="row g-3">
               <div className="col-md-4">
-                <label className="form-label">Ingredient Name *</label>
+                <label className="form-label">{t("Ingredient Name")} *</label>
                 <input
                   type="text"
                   className="form-control"
@@ -212,7 +214,7 @@ export default function Ingredients() {
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Quantity *</label>
+                <label className="form-label">{t("Quantity")} *</label>
                 <input
                   type="number"
                   className="form-control"
@@ -224,7 +226,7 @@ export default function Ingredients() {
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Unit *</label>
+                <label className="form-label">{t("Unit")} *</label>
                 <select
                   className="form-select"
                   value={newUnit}
@@ -243,7 +245,7 @@ export default function Ingredients() {
             </div>
             <div className="mt-3">
               <button className="btn btn-success me-2" onClick={handleAddIngredient}>
-                Add Ingredient
+                {t("Add Ingredient")}
               </button>
               <button
                 className="btn btn-secondary"
@@ -254,7 +256,7 @@ export default function Ingredients() {
                   setNewUnit("oz");
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -264,7 +266,7 @@ export default function Ingredients() {
       {/* Low Stock Alert */}
       {ingredients.filter((ing) => Number(ing.quantity) < 20).length > 0 && (
         <div className="alert alert-warning" role="alert">
-          <strong>⚠️ Low Stock Alert:</strong>{" "}
+          <strong>⚠️ {t("Low Stock Alert")}:</strong>{" "}
           {ingredients
             .filter((ing) => Number(ing.quantity) < 20)
             .map((ing) => ing.name)
@@ -276,18 +278,18 @@ export default function Ingredients() {
       <div className="card">
         <div className="card-body">
           {ingredients.length === 0 ? (
-            <p className="text-muted text-center">No ingredients found</p>
+            <p className="text-muted text-center">{t("No ingredients found")}</p>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Ingredient Name</th>
-                    <th>Quantity</th>
-                    <th>Unit</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>{t("ID")}</th>
+                    <th>{t("Ingredient Name")}</th>
+                    <th>{t("Quantity")}</th>
+                    <th>{t("Unit")}</th>
+                    <th>{t("Status")}</th>
+                    <th>{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -319,11 +321,11 @@ export default function Ingredients() {
                         <td>{ing.unit}</td>
                         <td>
                           {isOutOfStock ? (
-                            <span className="badge bg-danger">Out of Stock</span>
+                            <span className="badge bg-danger">{t("Out of Stock")}</span>
                           ) : isLowStock ? (
-                            <span className="badge bg-warning text-dark">Low Stock</span>
+                            <span className="badge bg-warning text-dark">{t("Low Stock")}</span>
                           ) : (
-                            <span className="badge bg-success">In Stock</span>
+                            <span className="badge bg-success">{t("In Stock")}</span>
                           )}
                         </td>
                         <td>
@@ -333,10 +335,10 @@ export default function Ingredients() {
                                 className="btn btn-sm btn-success me-2"
                                 onClick={() => handleUpdateQuantity(ing.id)}
                               >
-                                Save
+                                {t("Save")}
                               </button>
                               <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>
-                                Cancel
+                                {t("Cancel")}
                               </button>
                             </>
                           ) : (
@@ -346,7 +348,7 @@ export default function Ingredients() {
                                 onClick={() => startEditQuantity(ing)}
                                 title="Edit quantity"
                               >
-                                Edit Qty
+                                {t("Edit Qty")}
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-success me-2"
@@ -360,7 +362,7 @@ export default function Ingredients() {
                                 onClick={() => handleDeleteIngredient(ing.id, ing.name)}
                                 title="Delete ingredient"
                               >
-                                Delete
+                                {t("Delete")}
                               </button>
                             </>
                           )}

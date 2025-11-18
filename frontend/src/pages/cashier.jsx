@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Cashier() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
@@ -166,7 +168,7 @@ export default function Cashier() {
       <div className="row h-100">
         {/* Left side - Menu */}
         <div className="col-md-7 h-100 d-flex flex-column p-3 bg-light">
-          <h2 className="mb-3">POS - Cashier</h2>
+          <h2 className="mb-3">{t("POS - Cashier")}</h2>
 
           {/* Category tabs */}
           <div className="mb-3">
@@ -182,7 +184,7 @@ export default function Cashier() {
                   }`}
                   onClick={() => setSelectedCategory(cat)}
                 >
-                  {cat}
+                  {t(cat)}
                 </button>
               ))}
             </div>
@@ -218,7 +220,7 @@ export default function Cashier() {
               <h5>{currentItem.name}</h5>
               
               <div className="mb-2">
-                <label className="form-label fw-bold">Size:</label>
+                <label className="form-label fw-bold">{t("Size")}:</label>
                 <div className="btn-group ms-2" role="group">
                   <button
                     className={`btn btn-sm ${
@@ -226,7 +228,7 @@ export default function Cashier() {
                     }`}
                     onClick={() => setCurrentSize("Small")}
                   >
-                    Small
+                    {t("Small")}
                   </button>
                   <button
                     className={`btn btn-sm ${
@@ -234,13 +236,13 @@ export default function Cashier() {
                     }`}
                     onClick={() => setCurrentSize("Large")}
                   >
-                    Large (+$1.00)
+                    {t("Large")} (+$1.00)
                   </button>
                 </div>
               </div>
 
               <div className="mb-2">
-                <label className="form-label fw-bold">Toppings:</label>
+                <label className="form-label fw-bold">{t("Toppings")}:</label>
                 <div className="d-flex flex-wrap gap-1">
                   {availableToppings.map((topping) => (
                     <button
@@ -262,7 +264,7 @@ export default function Cashier() {
                 className="btn btn-primary w-100 mt-2"
                 onClick={addToCart}
               >
-                Add to Cart
+                {t("Add to Cart")}
               </button>
             </div>
           )}
@@ -270,13 +272,13 @@ export default function Cashier() {
 
         {/* Right side - Cart & Checkout */}
         <div className="col-md-5 h-100 d-flex flex-column p-3 bg-white border-start">
-          <h4 className="mb-3">Current Order</h4>
+          <h4 className="mb-3">{t("Current Order")}</h4>
 
           {/* Customer info */}
           <div className="mb-3">
             <input
               type="text"
-              placeholder="Phone Number *"
+              placeholder={t("Phone Number *")}
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
               className="form-control mb-2"
@@ -285,7 +287,7 @@ export default function Cashier() {
               <div className="col-6">
                 <input
                   type="text"
-                  placeholder="First Name"
+                  placeholder={t("First Name")}
                   value={customerFirst}
                   onChange={(e) => setCustomerFirst(e.target.value)}
                   className="form-control"
@@ -294,7 +296,7 @@ export default function Cashier() {
               <div className="col-6">
                 <input
                   type="text"
-                  placeholder="Last Name"
+                  placeholder={t("Last Name")}
                   value={customerLast}
                   onChange={(e) => setCustomerLast(e.target.value)}
                   className="form-control"
@@ -335,7 +337,7 @@ export default function Cashier() {
                             className="btn btn-sm btn-outline-danger mt-1"
                             onClick={() => removeFromCart(i)}
                           >
-                            Remove
+                            {t("Remove")}
                           </button>
                         </div>
                       </div>
@@ -348,21 +350,21 @@ export default function Cashier() {
 
           {/* Payment options */}
           <div className="mb-3">
-            <label className="form-label fw-bold">Payment Method:</label>
+            <label className="form-label fw-bold">{t("Payment Method")}:</label>
             <select
               className="form-select"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="Digital">Digital Wallet</option>
+              <option value="Cash">{t("Cash")}</option>
+              <option value="Card">{t("Card")}</option>
+              <option value="Digital">{t("Digital Wallet")}</option>
             </select>
           </div>
 
           {/* Tip */}
           <div className="mb-3">
-            <label className="form-label fw-bold">Tip %:</label>
+            <label className="form-label fw-bold">{t("Tip %")}:</label>
             <div className="input-group">
               <input
                 type="number"
@@ -397,7 +399,7 @@ export default function Cashier() {
                 className="btn btn-sm btn-outline-secondary"
                 onClick={() => setTipPercent(0)}
               >
-                No Tip
+                {t("No Tip")}
               </button>
             </div>
           </div>
@@ -405,15 +407,15 @@ export default function Cashier() {
           {/* Totals */}
           <div className="border-top pt-3 mb-3">
             <div className="d-flex justify-content-between mb-1">
-              <span>Subtotal:</span>
+              <span>{t("Subtotal")}:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
             <div className="d-flex justify-content-between mb-1">
-              <span>Tip ({tipPercent}%):</span>
+              <span>{t("Tip")} ({tipPercent}%):</span>
               <span>${tipAmount.toFixed(2)}</span>
             </div>
             <div className="d-flex justify-content-between fw-bold fs-5 border-top pt-2">
-              <span>Total:</span>
+              <span>{t("Total")}:</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
@@ -425,14 +427,14 @@ export default function Cashier() {
               onClick={submitOrder}
               disabled={cart.length === 0 || !customerPhone}
             >
-              Complete Order
+              {t("Complete Order")}
             </button>
             <button
               className="btn btn-outline-danger"
               onClick={clearCart}
               disabled={cart.length === 0}
             >
-              Clear Cart
+              {t("Clear Cart")}
             </button>
           </div>
         </div>

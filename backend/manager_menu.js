@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, translationCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -20,6 +20,7 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
   menuCtrl = require('./src/controllers/menuController');
   orderCtrl = require('./src/controllers/orderController');
+  translationCtrl = require('./src/controllers/translationController');
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
@@ -106,6 +107,10 @@ if (typeof dailyHandler === 'function') {
 } else {
   console.warn('⚠️ No daily summary handler found.');
 }
+
+// Translation endpoints
+app.post('/api/translate', translationCtrl.translateHandler);
+app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
 // ===== Inventory =====
 app.get('/api/ingredients', invCtrl.getIngredientsHandler || orderCtrl.getIngredients);

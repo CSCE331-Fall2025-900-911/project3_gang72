@@ -1,8 +1,10 @@
 // pages/sales.jsx
 import { useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Sales() {
+    const { t } = useLanguage();
     const { sales } = useOutletContext();
 
     // Report data states
