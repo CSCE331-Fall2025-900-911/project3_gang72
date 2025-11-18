@@ -22,14 +22,22 @@ async function verifyTokenHandler(req, res) {
         const { id_token, idToken, token } = req.body || {};
         const id = id_token || idToken || token;
         if (!id) return res.status(400).json({ error: 'id_token is required in JSON body' });
-
+        
         const payload = await verifyIdToken(id);
 
         // Determine role (simple: match manager email)
         const email = (payload.email || '').toLowerCase();
         const role = email === MANAGER_EMAIL ? 'manager' : 'staff';
         const redirect = role === 'manager' ? '/manager' : '/';
-
+         console.log({
+            sub: payload.sub,
+            email: payload.email,
+            name: payload.name,
+            picture: payload.picture,
+            email_verified: payload.email_verified,
+            role,
+            redirect,
+        });
         // Basic payload returned to frontend; in a real app, create/find a local user record
         return res.json({
             sub: payload.sub,
