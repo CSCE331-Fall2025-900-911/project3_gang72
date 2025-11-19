@@ -49,9 +49,10 @@ export default function Login() {
                 if (!envelope || envelope.type !== 'GOOGLE_AUTH') return
                 const d = envelope.data || {}
 
-                if (d.payload) {
-                    handleAuthSuccess(d.payload)
+                if (d.tokens?.id_token) {
+                     verifyPopupToken(d.tokens.id_token)
                 }
+
             } catch (err) {
                 console.error('message handling error', err)
                 setError('Authentication failed. Please try again.')
@@ -62,6 +63,18 @@ export default function Login() {
         window.addEventListener('message', handleMessage)
         return () => window.removeEventListener('message', handleMessage)
     }, [from])
+    async function verifyPopupToken(idToken) {
+        const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
+
+        const res = await fetch(`${apiBase}/api/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+        })
+
+        const data = await res.json()
+        handleAuthSuccess(data)
+    }
 
     function handleCredentialResponse(response) {
         if (!response.credential) return
@@ -73,7 +86,7 @@ export default function Login() {
         fetch(`${apiBase}/api/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_token: response.credential })
+            body: JSON.stringify({ idToken: response.credential })
         })
             .then(res => res.json())
             .then(data => {
