@@ -164,11 +164,36 @@ if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
   console.warn('⚠️  /oauth2/callback not mounted (oauthController.oauthCallbackHandler missing)');
 }
 
+//==========WEATHER=============
+app.get('/api/weather', async (req, res) => {
+  try {
+    // College Station example
+    const lat = 30.61;
+    const lon = -96.34;
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&temperature_unit=fahrenheit`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    res.json({
+      temperature: data.current.temperature_2m,
+      weatherCode: data.current.weathercode
+    });
+
+  } catch (err) {
+    console.error("Weather API error:", err);
+    res.status(500).json({ error: "Weather fetch failed" });
+  }
+});
+
+
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
+
 
 
 // Start server
