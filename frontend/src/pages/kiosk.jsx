@@ -9,12 +9,26 @@ export default function Kiosk() {
   const [customerFirst, setCustomerFirst] = useState("");
   const [customerLast, setCustomerLast] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [weather, setWeather] = useState(null);
 
   // Modal-related
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedSize, setSelectedSize] = useState("Small");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [selectedToppings, setSelectedToppings] = useState([]);
+
+  const weatherIcons = {
+    0: "☀️",      // Clear sky
+    1: "🌤️",      // Mostly clear
+    2: "⛅",       // Partly cloudy
+    3: "☁️",      // Cloudy
+    45: "🌫️",     // Fog
+    48: "🌫️", 
+    51: "🌦️",     // Light drizzle
+    61: "🌧️",     // Rain
+    71: "❄️",     // Snow
+    95: "⛈️",     // Thunderstorm
+  };
 
   useEffect(() => {
     fetch("/api/menu")
@@ -30,6 +44,22 @@ export default function Kiosk() {
         }
       })
       .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      try {
+        const res = await fetch("/api/weather");
+        const data = await res.json();
+        setWeather(data);
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+      }
+    };
+
+    loadWeather();
+    const interval = setInterval(loadWeather, 5 * 60 * 1000); // refresh every 5 min
+    return () => clearInterval(interval);
   }, []);
 
   // Filter out toppings from display
@@ -62,7 +92,7 @@ export default function Kiosk() {
   const addToCart = () => {
     if (!selectedItem) return;
 
-    // Large is +$1.00 instead of +50%
+    // Large is +$1.00
     const itemPrice =
       selectedSize === "Large"
         ? Number(selectedItem.price) + 1.00
@@ -159,9 +189,18 @@ export default function Kiosk() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-center mb-4">Kiosk Page</h1>
+      <div className="text-center mb-4">
+        <h1>Kiosk Page</h1>
 
-      {/* Customer info */}
+        {weather ? (
+          <div style={{ fontSize: "1.5rem", marginTop: "10px" }}>
+            {weatherIcons[weather.weatherCode] || "❓"}{" "}
+            {weather.temperature}°F
+          </div>
+        ) : (
+          <div className="text-muted small">Loading weather...</div>
+        )}
+      </div>
       <div className="mb-4">
         <input
           type="text"
