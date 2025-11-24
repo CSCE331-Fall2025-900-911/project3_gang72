@@ -12,6 +12,7 @@ import Items from "./pages/items";
 import XReport from "./pages/xreport";
 import ZReport from "./pages/zreport";
 import Login from "./Login";
+import VoiceNavigationController from "./services/voiceNavigationController";
 import './App.css'
 
 // Protected Route component - requires @tamu.edu email

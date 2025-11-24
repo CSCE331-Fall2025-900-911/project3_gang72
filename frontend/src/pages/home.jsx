@@ -1,6 +1,19 @@
 import { Link } from "react-router-dom";
+import { useEffect } from 'react';
 
 export default function Home() {
+    useEffect(() => {
+        if (window.voiceController) {
+            // Add home-specific helpful commands
+            window.voiceController.registerCommand(
+                ['show options', 'what can I do', 'help'],
+                () => {
+                    window.voiceController.speak('You can say: go to manager, go to cashier, go to kiosk, or go to menu');
+                }
+            );
+        }
+    }, []);
+
     return (
         <div className="text-center mt-5">
             <h1>Welcome Home!</h1>
