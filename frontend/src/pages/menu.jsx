@@ -59,12 +59,109 @@ export default function Menu() {
     [menuItems, active, query]
   );
 
+  // ========== VOICE COMMANDS - AFTER filtered is defined ==========
+  useEffect(() => {
+    const voiceController = window.voiceController;
+
+    if (voiceController) {
+      // Filter by category
+      voiceController.registerCommand(
+        ['show all', 'all items', 'show everything', 'view all'],
+        () => {
+          setActive(ALL);
+          voiceController.speak('Showing all items');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['show milk tea', 'milk tea', 'filter milk tea'],
+        () => {
+          setActive('Milk Tea');
+          voiceController.speak('Showing milk tea');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['show coffee', 'coffee', 'filter coffee'],
+        () => {
+          setActive('Coffee');
+          voiceController.speak('Showing coffee');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['show tea latte', 'tea latte', 'filter tea latte'],
+        () => {
+          setActive('Tea Latte');
+          voiceController.speak('Showing tea latte');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['show slush', 'slush', 'filter slush', 'slush series'],
+        () => {
+          const slushCat = categories.find(c => c.toLowerCase().includes('slush'));
+          if (slushCat) {
+            setActive(slushCat);
+            voiceController.speak('Showing slush drinks');
+          }
+        }
+      );
+
+      voiceController.registerCommand(
+        ['show toppings', 'toppings', 'filter toppings'],
+        () => {
+          setActive('Toppings');
+          voiceController.speak('Showing toppings');
+        }
+      );
+
+      // Search functionality
+      voiceController.registerCommand(
+        ['search', 'find', 'look for'],
+        () => {
+          const searchInput = document.querySelector('input[placeholder*="Search"]');
+          if (searchInput) {
+            searchInput.focus();
+            voiceController.speak('What would you like to search for?');
+          }
+        }
+      );
+
+      voiceController.registerCommand(
+        ['clear search', 'reset search'],
+        () => {
+          setQuery('');
+          setActive(ALL);
+          voiceController.speak('Search cleared');
+        }
+      );
+
+      // Navigation
+      voiceController.registerCommand(
+        ['scroll to top', 'go to top', 'top of page'],
+        () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          voiceController.speak('Scrolling to top');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['how many items', 'count items', 'total items'],
+        () => {
+          const count = filtered.length;
+          voiceController.speak(`There are ${count} items`);
+        }
+      );
+    }
+  }, [filtered, active, categories]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mb-4"></div>
-          <p className="text-amber-700 text-lg font-medium">Loading menu... </p>
+          <p className="text-amber-700 text-lg font-medium">Loading menu... 🧋</p>
         </div>
       </div>
     );
@@ -87,13 +184,20 @@ export default function Menu() {
             <div className="relative mb-4">
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
               <div className="relative bg-gradient-to-br from-amber-100 to-orange-100 p-4 rounded-full shadow-2xl border-4 border-white">
-                <span className="text-6xl"></span>
+                <span className="text-6xl">🧋</span>
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm mb-2">
               Boba Menu
             </h1>
-            <p className="text-amber-700/80 text-lg"> Sip the sunshine, taste the joy! 🧋</p>
+            <p className="text-amber-700/80 text-lg">✨ Sip the sunshine, taste the joy! 🧋</p>
+          </div>
+
+          {/* Voice Commands Helper */}
+          <div className="bg-gradient-to-r from-amber-100 to-orange-100 border-2 border-amber-300 rounded-lg p-3 mb-4 text-center max-w-2xl mx-auto">
+            <p className="text-amber-800 text-sm font-medium">
+              🎤 <strong>Voice Commands:</strong> Say "show [category]", "search", "clear search", or click any item!
+            </p>
           </div>
 
           {/* Category Pills */}
@@ -105,11 +209,11 @@ export default function Menu() {
                 <button
                   key={cat}
                   onClick={() => setActive(cat)}
+                  data-category={cat}
                   className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 transform hover:scale-105 border-2
-                    ${
-                      isActive
-                        ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-transparent scale-105`
-                        : "bg-white/90 text-amber-700 hover:bg-amber-50 border-amber-200/50 shadow-md"
+                    ${isActive
+                      ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-transparent scale-105`
+                      : "bg-white/90 text-amber-700 hover:bg-amber-50 border-amber-200/50 shadow-md"
                     }`}
                 >
                   {cat}
@@ -123,7 +227,7 @@ export default function Menu() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder=" Search your favorite drink..."
+              placeholder="🔍 Search your favorite drink..."
               className="w-full rounded-full border-2 border-amber-200/50 bg-white/90 px-6 py-3 text-base focus:outline-none focus:ring-4 focus:ring-amber-300/50 focus:border-amber-400 shadow-lg transition-all"
             />
           </div>
@@ -134,7 +238,7 @@ export default function Menu() {
       <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         {filtered.length === 0 ? (
           <div className="text-center py-20">
-            <span className="text-6xl mb-4 block"></span>
+            <span className="text-6xl mb-4 block">🔍</span>
             <p className="text-amber-700 text-xl">No items found</p>
             <p className="text-amber-600 mt-2">Try a different search or category!</p>
           </div>
@@ -145,7 +249,8 @@ export default function Menu() {
               return (
                 <div
                   key={item.id}
-                  className={`group bg-gradient-to-br ${gradient} rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-white/50 overflow-hidden backdrop-blur-sm`}
+                  data-item-name={item.name}
+                  className={`group bg-gradient-to-br ${gradient} rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-white/50 overflow-hidden backdrop-blur-sm cursor-pointer`}
                 >
                   {/* Image Container */}
                   <div className="relative h-32 bg-white/40 flex items-center justify-center overflow-hidden">
@@ -181,8 +286,8 @@ export default function Menu() {
 
       {/* Footer */}
       <footer className="py-10 text-center text-amber-700/70 text-sm relative z-10 border-t border-amber-200/30 backdrop-blur-sm bg-white/30">
-        <p className="mb-2"> Soak & sip the sweetness </p>
-        <p className="text-xs">Made with love</p>
+        <p className="mb-2">✨ Soak & sip the sweetness ✨</p>
+        <p className="text-xs">Made with love 💛</p>
       </footer>
 
       <style>{`

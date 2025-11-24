@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 export default function Kiosk() {
@@ -18,17 +17,170 @@ export default function Kiosk() {
   const [selectedToppings, setSelectedToppings] = useState([]);
 
   const weatherIcons = {
-    0: "☀️",      // Clear sky
-    1: "🌤️",      // Mostly clear
-    2: "⛅",       // Partly cloudy
-    3: "☁️",      // Cloudy
-    45: "🌫️",     // Fog
-    48: "🌫️", 
-    51: "🌦️",     // Light drizzle
-    61: "🌧️",     // Rain
-    71: "❄️",     // Snow
-    95: "⛈️",     // Thunderstorm
+    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+    45: "🌫️", 48: "🌫️", 51: "🌦️",
+    61: "🌧️", 71: "❄️", 95: "⛈️",
   };
+
+  // ========== VOICE COMMANDS ==========
+  useEffect(() => {
+    const voiceController = window.voiceController;
+
+    if (voiceController) {
+      // Order a specific item by name
+      voiceController.registerCommand(
+        ['order', 'add', 'I want'],
+        () => {
+          voiceController.speak('What would you like to order?');
+        }
+      );
+
+      // View cart
+      voiceController.registerCommand(
+        ['view cart', 'show cart', 'check cart', 'what is in my cart'],
+        () => {
+          if (cart.length === 0) {
+            voiceController.speak('Your cart is empty');
+          } else {
+            voiceController.speak(`You have ${cart.length} items in your cart`);
+            // Scroll to cart
+            document.querySelector('.border-top')?.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      );
+
+      // Clear cart
+      voiceController.registerCommand(
+        ['clear cart', 'empty cart', 'remove all'],
+        () => {
+          if (cart.length > 0) {
+            setCart([]);
+            voiceController.speak('Cart cleared');
+          } else {
+            voiceController.speak('Cart is already empty');
+          }
+        }
+      );
+
+      // Place order / Checkout
+      voiceController.registerCommand(
+        ['place order', 'checkout', 'complete order', 'finish order', 'submit order'],
+        () => {
+          const placeOrderBtn = document.querySelector('button.btn-primary');
+          if (placeOrderBtn && placeOrderBtn.textContent.includes('Place Order')) {
+            placeOrderBtn.click();
+            voiceController.speak('Placing your order');
+          }
+        }
+      );
+
+      // Add to cart (when modal is open)
+      voiceController.registerCommand(
+        ['add to cart', 'add this', 'confirm selection'],
+        () => {
+          const addBtn = document.querySelector('.modal-footer .btn-primary');
+          if (addBtn && addBtn.textContent.includes('Add to Cart')) {
+            addBtn.click();
+            voiceController.speak('Added to cart');
+          }
+        }
+      );
+
+      // Cancel / Close modal
+      voiceController.registerCommand(
+        ['cancel', 'close', 'never mind'],
+        () => {
+          const cancelBtn = document.querySelector('.modal-footer .btn-secondary');
+          if (cancelBtn) {
+            cancelBtn.click();
+            voiceController.speak('Cancelled');
+          }
+        }
+      );
+
+      // Select size
+      voiceController.registerCommand(
+        ['small size', 'small', 'select small'],
+        () => {
+          const sizeSelect = document.querySelector('select.form-select');
+          if (sizeSelect) {
+            sizeSelect.value = 'Small';
+            setSelectedSize('Small');
+            voiceController.speak('Small size selected');
+          }
+        }
+      );
+
+      voiceController.registerCommand(
+        ['large size', 'large', 'select large', 'make it large'],
+        () => {
+          const sizeSelect = document.querySelector('select.form-select');
+          if (sizeSelect) {
+            sizeSelect.value = 'Large';
+            setSelectedSize('Large');
+            voiceController.speak('Large size selected, plus one dollar');
+          }
+        }
+      );
+
+      // Set tip
+      voiceController.registerCommand(
+        ['no tip', 'zero tip', 'skip tip'],
+        () => {
+          setTipPercent(0);
+          voiceController.speak('No tip');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['ten percent tip', '10 percent tip', 'tip ten percent'],
+        () => {
+          setTipPercent(10);
+          voiceController.speak('Ten percent tip');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['fifteen percent tip', '15 percent tip', 'tip fifteen percent'],
+        () => {
+          setTipPercent(15);
+          voiceController.speak('Fifteen percent tip');
+        }
+      );
+
+      voiceController.registerCommand(
+        ['twenty percent tip', '20 percent tip', 'tip twenty percent'],
+        () => {
+          setTipPercent(20);
+          voiceController.speak('Twenty percent tip');
+        }
+      );
+
+      // Remove last item
+      voiceController.registerCommand(
+        ['remove last', 'delete last', 'remove last item'],
+        () => {
+          if (cart.length > 0) {
+            setCart(prev => prev.slice(0, -1));
+            voiceController.speak('Removed last item');
+          } else {
+            voiceController.speak('Cart is empty');
+          }
+        }
+      );
+
+      // Scroll to menu sections
+      voiceController.registerCommand(
+        ['show menu', 'see menu', 'view menu'],
+        () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          voiceController.speak('Showing menu');
+        }
+      );
+    }
+  }, [cart]);
+
+  // ========== EXISTING CODE ==========
 
   useEffect(() => {
     fetch("/api/menu")
@@ -58,11 +210,10 @@ export default function Kiosk() {
     };
 
     loadWeather();
-    const interval = setInterval(loadWeather, 5 * 60 * 1000); // refresh every 5 min
+    const interval = setInterval(loadWeather, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Filter out toppings from display
   const groupedItems = menuItems
     .filter((item) => !item.category?.toLowerCase().includes("topping"))
     .reduce((acc, item) => {
@@ -92,7 +243,6 @@ export default function Kiosk() {
   const addToCart = () => {
     if (!selectedItem) return;
 
-    // Large is +$1.00
     const itemPrice =
       selectedSize === "Large"
         ? Number(selectedItem.price) + 1.00
@@ -118,7 +268,6 @@ export default function Kiosk() {
   const removeFromCart = (index) =>
     setCart((prev) => prev.filter((_, i) => i !== index));
 
-  // Calculate subtotal
   const subtotal = cart.reduce(
     (sum, drink) =>
       sum +
@@ -127,10 +276,7 @@ export default function Kiosk() {
     0
   );
 
-  // Calculate tip amount
   const tipAmount = subtotal * (Number(tipPercent) / 100);
-
-  // Calculate total
   const total = subtotal + tipAmount;
 
   const submitOrder = async () => {
@@ -201,6 +347,12 @@ export default function Kiosk() {
           <div className="text-muted small">Loading weather...</div>
         )}
       </div>
+
+      {/* Voice Command Helper */}
+      <div className="alert alert-info text-center" role="alert">
+        🎤 Voice Commands: Say "place order", "view cart", "small size", "large size", "ten percent tip", or click any item name!
+      </div>
+
       <div className="mb-4">
         <input
           type="text"
@@ -235,6 +387,7 @@ export default function Kiosk() {
                 <button
                   className="btn btn-outline-primary w-100"
                   onClick={() => openItemModal(item)}
+                  data-item-name={item.name}
                 >
                   {item.name} (${Number(item.price).toFixed(2)})
                 </button>
@@ -348,11 +501,10 @@ export default function Kiosk() {
                           <button
                             key={t.id}
                             type="button"
-                            className={`btn btn-sm m-1 ${
-                              selectedToppings.find((s) => s.id === t.id)
+                            className={`btn btn-sm m-1 ${selectedToppings.find((s) => s.id === t.id)
                                 ? "btn-success"
                                 : "btn-outline-secondary"
-                            }`}
+                              }`}
                             onClick={() => toggleTopping(t)}
                           >
                             {t.name} (+${Number(t.price).toFixed(2)})
