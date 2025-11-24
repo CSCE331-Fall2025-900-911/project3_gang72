@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/navbar";
+import VoiceNavigationButton from "./components/voiceNavigationButton"; // ADD THIS
 import Home from "./pages/home";
 import Manager from "./pages/manager";
 import Employees from "./pages/employees";
@@ -12,7 +13,6 @@ import Items from "./pages/items";
 import XReport from "./pages/xreport";
 import ZReport from "./pages/zreport";
 import Login from "./Login";
-import VoiceNavigationController from "./services/voiceNavigationController";
 import './App.css'
 
 // Protected Route component - requires @tamu.edu email
@@ -21,16 +21,13 @@ function ProtectedRoute({ children }) {
   const userStr = sessionStorage.getItem('user');
 
   if (!userStr) {
-    // Not logged in - redirect to login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   try {
     const user = JSON.parse(userStr);
 
-    // Check if email ends with @tamu.edu
     if (!user.email || !user.email.toLowerCase().endsWith('@tamu.edu')) {
-      // Not authorized - redirect back to login
       sessionStorage.removeItem('user');
       return <Navigate to="/login" state={{ from: location.pathname, error: 'Only @tamu.edu email addresses are authorized.' }} replace />;
     }
@@ -46,13 +43,13 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <BrowserRouter>
+      <VoiceNavigationButton /> {/* ADD THIS - the button will show on all pages */}
       <Navbar />
       <div className="container-fluid mt-4">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/manager" element={<ProtectedRoute><Manager /></ProtectedRoute>}>
-            {/* Nest child routes under /manager */}
             <Route path="employees" element={<Employees />} />
             <Route path="ingredients" element={<Ingredients />} />
             <Route path="sales" element={<Sales />} />
