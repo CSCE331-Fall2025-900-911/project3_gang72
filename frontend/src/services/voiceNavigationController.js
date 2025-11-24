@@ -335,12 +335,4 @@ class VoiceNavigationController {
     }
 }
 
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = VoiceNavigationController;
-}
-
-// Auto-initialize if in browser
-if (typeof window !== 'undefined') {
-    window.VoiceNavigationController = VoiceNavigationController;
-}
+export default VoiceNavigationController;
