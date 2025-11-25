@@ -23,6 +23,7 @@ const CARD_GRADIENTS = [
 ];
 
 export default function Menu() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(ALL);
@@ -162,7 +163,7 @@ export default function Menu() {
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mb-4"></div>
-          <p className="text-amber-700 text-lg font-medium">Loading menu... 🧋</p>
+          <p className="text-amber-700 text-lg font-medium">{t("Loading menu...")} 🧋</p>
         </div>
       </div>
     );
@@ -189,15 +190,15 @@ export default function Menu() {
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm mb-2">
-              Boba Menu
+              {t("Boba Menu")}
             </h1>
-            <p className="text-amber-700/80 text-lg">✨ Sip the sunshine, taste the joy! 🧋</p>
+            <p className="text-amber-700/80 text-lg">✨ {t("Sip the sunshine, taste the joy!")} 🧋</p>
           </div>
 
           {/* Voice Commands Helper */}
           <div className="bg-gradient-to-r from-amber-100 to-orange-100 border-2 border-amber-300 rounded-lg p-3 mb-4 text-center max-w-2xl mx-auto">
             <p className="text-amber-800 text-sm font-medium">
-              🎤 <strong>Voice Commands:</strong> Say "show [category]", "search", "clear search", or click any item!
+              🎤 <strong>{t("Voice Commands")}:</strong> {t("Say 'show [category]', 'search', 'clear search', or click any item!")}
             </p>
           </div>
 
@@ -228,7 +229,7 @@ export default function Menu() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔍 Search your favorite drink..."
+              placeholder={`🔍 ${t("Search your favorite drink...")}`}
               className="w-full rounded-full border-2 border-amber-200/50 bg-white/90 px-6 py-3 text-base focus:outline-none focus:ring-4 focus:ring-amber-300/50 focus:border-amber-400 shadow-lg transition-all"
             />
           </div>
@@ -240,8 +241,8 @@ export default function Menu() {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <span className="text-6xl mb-4 block">🔍</span>
-            <p className="text-amber-700 text-xl">No items found</p>
-            <p className="text-amber-600 mt-2">Try a different search or category!</p>
+            <p className="text-amber-700 text-xl">{t("No items found")}</p>
+            <p className="text-amber-600 mt-2">{t("Try a different search or category!")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -287,8 +288,8 @@ export default function Menu() {
 
       {/* Footer */}
       <footer className="py-10 text-center text-amber-700/70 text-sm relative z-10 border-t border-amber-200/30 backdrop-blur-sm bg-white/30">
-        <p className="mb-2">✨ Soak & sip the sweetness ✨</p>
-        <p className="text-xs">Made with love 💛</p>
+        <p className="mb-2">✨ {t("Soak & sip the sweetness")} ✨</p>
+        <p className="text-xs">{t("Made with love")} 💛</p>
       </footer>
 
       <style>{`
