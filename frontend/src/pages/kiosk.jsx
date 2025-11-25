@@ -1,5 +1,6 @@
-
 import { useEffect, useState } from "react";
+import VoiceRecorder from "../components/VoiceRecorder.jsx";
+
 
 export default function Kiosk() {
   const [menuItems, setMenuItems] = useState([]);
@@ -15,6 +16,85 @@ export default function Kiosk() {
   const [selectedSize, setSelectedSize] = useState("Small");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [selectedToppings, setSelectedToppings] = useState([]);
+  const [usedSpeech, setUsedSpeech] = useState(false);
+
+
+function parseSpeech(text, menuItems, availableToppings) {
+  // Normalize text (lowercase + remove punctuation)
+  let spoken = text
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, "") // remove punctuation
+    .trim();
+
+  // Words we should ignore when matching drink names
+  const fillerWords = [
+    "i", "want", "would", "like", "to", "please", "can", "you",
+    "get", "me", "a", "the", "uh", "um", "give", "order",
+    "for", "just", "and"
+  ];
+
+  // Split words and remove fillers
+  let words = spoken
+    .split(" ")
+    .filter(w => w && !fillerWords.includes(w));
+
+  // Detect size before removing size words
+  let size = "Small";
+  if (spoken.includes("large")) size = "Large";
+
+  // Remove size words before drink matching
+  words = words.filter(w => w !== "large" && w !== "small");
+
+  // Create cleaned phrase
+  const cleanedPhrase = words.join(" ").trim();
+
+  // ------------------------------
+  // DRINK DETECTION (FUZZY MATCH)
+  // ------------------------------
+  let drink = menuItems.find(item => {
+    const nm = item.name.toLowerCase();
+    return words.every(w => nm.includes(w));
+  });
+
+  // If not found, try partial includes
+  if (!drink) {
+    drink = menuItems.find(item => {
+      const nm = item.name.toLowerCase();
+      return nm.includes(cleanedPhrase) || cleanedPhrase.includes(nm);
+    });
+  }
+
+  // ------------------------------
+  // TOPPING DETECTION
+  // ------------------------------
+  const detectedToppings = [];
+  availableToppings.forEach(t => {
+    const nm = t.name.toLowerCase();
+    if (words.some(w => nm.includes(w))) {
+      detectedToppings.push(t);
+    }
+  });
+
+ // ------------------------------
+// PHONE NUMBER DETECTION
+// ------------------------------
+
+  // Attempt to extract a phone number from speech
+  let phoneMatch = spoken.match(/\d{7,10}/);
+  let phone = null;
+
+  if (phoneMatch) {
+    // Use spoken phone number if available
+    phone = phoneMatch[0];
+  } else {
+    // Mark phone as missing (handled in VoiceRecorder block)
+    phone = null;
+  }
+
+  return { drink, size, detectedToppings, phone };
+
+}
+
 
   useEffect(() => {
     fetch("/api/menu")
@@ -104,7 +184,23 @@ export default function Kiosk() {
   const total = subtotal + tipAmount;
 
   const submitOrder = async () => {
-    if (!customerPhone) {
+      let phone = customerPhone;
+
+  // If phone missing, generate one
+  if (!phone || phone.trim() === "") {
+    if (usedSpeech) {
+      // speech was used → auto-generate a number
+      phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
+      setCustomerPhone(phone);
+      console.log("Generated phone from speech:", phone);
+    } else {
+      // speech was NOT used → require user entry
+      alert("Customer phone is required!");
+      return;
+    }
+  }
+
+    if (!phone) {
       alert("Customer phone is required!");
       return;
     }
@@ -160,6 +256,55 @@ export default function Kiosk() {
   return (
     <div className="container mt-4">
       <h1 className="text-center mb-4">Kiosk Page</h1>
+<VoiceRecorder
+  onText={(text) => {
+    setUsedSpeech(true);
+    console.log("USER SAID:", text);
+    
+
+    const { drink, size, detectedToppings, phone } =
+      parseSpeech(text, menuItems, availableToppings);
+
+    // 1️⃣ If no drink matched
+    if (!drink) {
+      alert("Sorry, I could not understand the drink. Please say it again.");
+      return;
+    }
+
+    // 2️⃣ If no phone number detected
+    if (!phone) {
+       let finalPhone = phone;
+    if (!finalPhone) {
+      finalPhone = "9" + Math.floor(100000000 + Math.random() * 900000000);
+      // alert("No phone number detected. Temporary number assigned: " + finalPhone);
+    }
+    setCustomerPhone(finalPhone);
+    // ⭐⭐ END PHONE FIX ⭐⭐
+    }
+
+    // 3️⃣ If phone is detected → use it
+    setCustomerPhone(phone);
+
+    // 4️⃣ Open item modal
+    openItemModal(drink);
+
+    // 5️⃣ Apply size
+    setSelectedSize(size);
+
+    // 6️⃣ Apply toppings
+    setSelectedToppings(detectedToppings);
+
+    // 7️⃣ Add to cart
+    setTimeout(() => {
+      addToCart();
+    }, 800);
+
+    // 8️⃣ Auto-submit order after cart add
+    setTimeout(() => {
+      submitOrder();
+    }, 200);
+  }}
+/>
 
       {/* Customer info */}
       <div className="mb-4">
@@ -338,6 +483,7 @@ export default function Kiosk() {
                     type="button"
                     className="btn btn-primary"
                     onClick={addToCart}
+
                   >
                     Add to Cart
                   </button>
