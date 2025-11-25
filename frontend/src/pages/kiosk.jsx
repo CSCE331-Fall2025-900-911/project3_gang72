@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Kiosk() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
@@ -281,11 +283,11 @@ export default function Kiosk() {
 
   const submitOrder = async () => {
     if (!customerPhone) {
-      alert("Customer phone is required!");
+      alert(t("Customer phone is required!"));
       return;
     }
     if (cart.length === 0) {
-      alert("Cart is empty!");
+      alert(t("Cart is empty!"));
       return;
     }
 
@@ -323,20 +325,20 @@ export default function Kiosk() {
         setOrderSuccess(data);
         setCart([]);
         setTipPercent(0);
-        alert(`Order placed! Receipt #${data.receiptId}`);
+        alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
       } else {
-        alert("Order failed: " + data.error);
+        alert(t("Order failed:") + " " + data.error);
       }
     } catch (err) {
       console.error(err);
-      alert("Error placing order");
+      alert(t("Error placing order"));
     }
   };
 
   return (
     <div className="container mt-4">
       <div className="text-center mb-4">
-        <h1>Kiosk Page</h1>
+        <h1>{t("Kiosk Page")}</h1>
 
         {weather ? (
           <div style={{ fontSize: "1.5rem", marginTop: "10px" }}>
@@ -344,33 +346,33 @@ export default function Kiosk() {
             {weather.temperature}°F
           </div>
         ) : (
-          <div className="text-muted small">Loading weather...</div>
+          <div className="text-muted small">{t("Loading weather...")} </div>
         )}
       </div>
 
       {/* Voice Command Helper */}
       <div className="alert alert-info text-center" role="alert">
-        🎤 Voice Commands: Say "place order", "view cart", "small size", "large size", "ten percent tip", or click any item name!
+        🎤 {t("Voice Commands: Say 'place order', 'view cart', 'small size', 'large size', 'ten percent tip', or click any item name!")}
       </div>
 
       <div className="mb-4">
         <input
           type="text"
-          placeholder="First Name"
+          placeholder={t("First Name")}
           value={customerFirst}
           onChange={(e) => setCustomerFirst(e.target.value)}
           className="form-control d-inline w-auto me-2"
         />
         <input
           type="text"
-          placeholder="Last Name"
+          placeholder={t("Last Name")}
           value={customerLast}
           onChange={(e) => setCustomerLast(e.target.value)}
           className="form-control d-inline w-auto me-2"
         />
         <input
           type="text"
-          placeholder="Phone Number"
+          placeholder={t("Phone Number")}
           value={customerPhone}
           onChange={(e) => setCustomerPhone(e.target.value)}
           className="form-control d-inline w-auto"
@@ -399,9 +401,9 @@ export default function Kiosk() {
 
       {/* Cart */}
       <div className="border-top pt-3 mt-4">
-        <h4>Cart</h4>
+        <h4>{t("Cart")}</h4>
         {cart.length === 0 ? (
-          <p>No items added yet.</p>
+          <p>{t("No items added yet.")}</p>
         ) : (
           <ul className="list-group">
             {cart.map((drink, i) => (
@@ -420,7 +422,7 @@ export default function Kiosk() {
                   className="btn btn-sm btn-outline-danger mt-2"
                   onClick={() => removeFromCart(i)}
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </li>
             ))}
@@ -428,7 +430,7 @@ export default function Kiosk() {
         )}
 
         <div className="mt-3">
-          <label className="me-2">Tip %:</label>
+          <label className="me-2">{t("Tip %")}:</label>
           <input
             type="number"
             value={tipPercent}
@@ -440,13 +442,13 @@ export default function Kiosk() {
 
         <div className="mt-3">
           <div className="fw-normal">
-            Subtotal: ${subtotal.toFixed(2)}
+            {t("Subtotal")}: ${subtotal.toFixed(2)}
           </div>
           <div className="fw-normal">
-            Tip ({tipPercent}%): ${tipAmount.toFixed(2)}
+            {t("Tip")} ({tipPercent}%): ${tipAmount.toFixed(2)}
           </div>
           <div className="fw-bold fs-5 mt-2">
-            Total: ${total.toFixed(2)}
+            {t("Total")}: ${total.toFixed(2)}
           </div>
         </div>
 
@@ -454,7 +456,7 @@ export default function Kiosk() {
           onClick={submitOrder}
           className="btn btn-primary mt-3"
         >
-          Place Order
+          {t("Place Order")}
         </button>
       </div>
 
@@ -476,25 +478,25 @@ export default function Kiosk() {
                     type="button"
                     className="btn-close"
                     data-bs-dismiss="modal"
-                    aria-label="Close"
+                    aria-label={t("Close")}
                   ></button>
                 </div>
 
                 <div className="modal-body">
                   <div className="mb-3">
-                    <label className="form-label">Size</label>
+                    <label className="form-label">{t("Size")}</label>
                     <select
                       value={selectedSize}
                       onChange={(e) => setSelectedSize(e.target.value)}
                       className="form-select"
                     >
-                      <option value="Small">Small</option>
-                      <option value="Large">Large (+$1.00)</option>
+                      <option value="Small">{t("Small")}</option>
+                      <option value="Large">{t("Large")} (+$1.00)</option>
                     </select>
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Toppings</label>
+                    <label className="form-label">{t("Toppings")}</label>
                     <div className="d-flex flex-wrap">
                       {availableToppings.length > 0 ? (
                         availableToppings.map((t) => (
@@ -511,7 +513,7 @@ export default function Kiosk() {
                           </button>
                         ))
                       ) : (
-                        <p className="text-muted small">No toppings available</p>
+                        <p className="text-muted small">{t("No toppings available")}</p>
                       )}
                     </div>
                   </div>
@@ -523,14 +525,14 @@ export default function Kiosk() {
                     className="btn btn-secondary"
                     data-bs-dismiss="modal"
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     type="button"
                     className="btn btn-primary"
                     onClick={addToCart}
                   >
-                    Add to Cart
+                    {t("Add to Cart")}
                   </button>
                 </div>
               </>
