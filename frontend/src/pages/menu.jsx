@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 const ALL = "All";
 
