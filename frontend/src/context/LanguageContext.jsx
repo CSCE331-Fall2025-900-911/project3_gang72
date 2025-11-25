@@ -1,5 +1,5 @@
 // context/LanguageContext.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const LanguageContext = createContext();
 
@@ -15,6 +15,7 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState('en'); // 'en' or 'es'
   const [translations, setTranslations] = useState({});
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translationTrigger, setTranslationTrigger] = useState(0);
 
   // Toggle between English and Spanish
   const toggleLanguage = () => {
@@ -55,6 +56,9 @@ export const LanguageProvider = ({ children }) => {
         ...prev,
         [key]: translated
       }));
+      
+      // Trigger re-render of components using translations
+      setTranslationTrigger(prev => prev + 1);
 
       return translated;
     } catch (error) {
