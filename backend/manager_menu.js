@@ -189,8 +189,8 @@ app.get('/api/weather', async (req, res) => {
 });
 
 // Translation routes
-router.post('/api/translate', translationCtrl.translateHandler);
-router.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
+app.post('/api/translate', translationCtrl.translateHandler);
+app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
@@ -217,4 +217,6 @@ app.listen(PORT, () => {
   console.log('  GET  /api/reports/order-volume');
   console.log('  GET  /api/reports/revenue-chart');
   console.log('  GET  /api/reports/aov-by-category');
+  console.log('  POST /api/translate');
+  console.log('  POST /api/translate/batch');
 });
