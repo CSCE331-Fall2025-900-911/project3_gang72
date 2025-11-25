@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, authCtrl, oauthCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, authCtrl, oauthCtrl, translationCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -20,6 +20,7 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
   menuCtrl = require('./src/controllers/menuController');
   orderCtrl = require('./src/controllers/orderController');
+  translationCtrl = require('./src/controllers/translationController');
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
@@ -187,6 +188,9 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
+// Translation routes
+router.post('/api/translate', translationCtrl.translateHandler);
+router.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
