@@ -12,7 +12,7 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('en'); // 'en' or 'es'
+  const [language, setLanguage] = useState('en'); // Any language code: 'en', 'es', 'fr', 'ja', etc.
   const [translations, setTranslations] = useState({});
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationTrigger, setTranslationTrigger] = useState(0);

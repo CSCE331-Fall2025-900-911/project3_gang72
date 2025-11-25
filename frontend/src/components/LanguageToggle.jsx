@@ -1,25 +1,42 @@
 // components/LanguageToggle.jsx
 import { useLanguage } from '../context/LanguageContext';
 
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'ko', name: '한국어', flag: '🇰🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+];
+
 export default function LanguageToggle() {
-  const { language, toggleLanguage, isTranslating } = useLanguage();
+  const { language, setLanguage, isTranslating } = useLanguage();
+  
+  const currentLang = LANGUAGES.find(lang => lang.code === language) || LANGUAGES[0];
 
   return (
-    <button
-      onClick={() => {
-        console.log('Toggle button clicked!');
-        toggleLanguage();
+    <select
+      value={language}
+      onChange={(e) => {
+        console.log('Language changed to:', e.target.value);
+        setLanguage(e.target.value);
       }}
-      className={`btn ${language === 'es' ? 'btn-warning' : 'btn-outline-primary'} btn-sm`}
-      title={language === 'en' ? 'Switch to Spanish' : 'Cambiar a Inglés'}
+      className={`form-select form-select-sm ${language === 'en' ? '' : 'bg-warning'}`}
       disabled={isTranslating}
+      style={{ width: 'auto', minWidth: '120px' }}
     >
-      {isTranslating ? (
-        <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-      ) : (
-        <i className="bi bi-translate me-1"></i>
-      )}
-      <strong>{language === 'en' ? 'ES' : 'EN'}</strong>
-    </button>
+      {LANGUAGES.map(lang => (
+        <option key={lang.code} value={lang.code}>
+          {lang.flag} {lang.name}
+        </option>
+      ))}
+    </select>
   );
 }
