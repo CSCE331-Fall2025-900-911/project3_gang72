@@ -12,18 +12,29 @@ export default function Kiosk() {
   const [customerLast, setCustomerLast] = useState("");
   const [usedSpeech, setUsedSpeech] = useState(false);
 
-  // Manual modal-only UI
+  // MANUAL UI
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [selectedSize, setSelectedSize] = useState("Small");
 
-  // -------------------------
-  // CONVERSATION STATE MACHINE
-  // -------------------------
+  // -----------------------------
+  // CONVERSATION CONTEXT
+  // -----------------------------
   const [conversation, setConversation] = useState({
     step: "idle", // idle | awaitingSize | awaitingToppings
     pendingDrink: null,
   });
+
+  // -----------------------------------
+  // FEMALE VOICE SPEAKER
+  // -----------------------------------
+  function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.voice = speechSynthesis
+      .getVoices()
+      .find((v) => v.name.toLowerCase().includes("female"));
+    speechSynthesis.speak(utter);
+  }
 
   // -------------------------
   // LOAD MENU
@@ -45,8 +56,7 @@ export default function Kiosk() {
   }, []);
 
   // -------------------------
-  // STRICT TOPPING MATCHER
-  // “pearl” ≠ “white pearl”
+  // STRICT TOPPING MATCH
   // -------------------------
   function matchExactTopping(words) {
     return availableToppings.filter((t) =>
@@ -65,30 +75,35 @@ export default function Kiosk() {
 
     const words = spoken.split(" ");
 
-    // Size
     let size = null;
     if (spoken.includes("large")) size = "Large";
     if (spoken.includes("small")) size = "Small";
 
-    // Phone
     const phoneMatch = spoken.match(/\d{7,10}/);
     let phone = phoneMatch ? phoneMatch[0] : null;
 
-    // Drink match
     let drink = null;
 
     for (let item of menuItems) {
       let nm = item.name.toLowerCase();
-      let matched = words.every((w) => nm.includes(w) || words.join(" ").includes(nm));
-      if (matched && !item.category?.toLowerCase().includes("topping")) {
+      let matched =
+        words.every((w) => nm.includes(w)) ||
+        words.join(" ").includes(nm);
+      if (
+        matched &&
+        !item.category?.toLowerCase().includes("topping")
+      ) {
         drink = item;
         break;
       }
     }
 
-    // Toppings (strict)
-    const toppingWords = availableToppings.map((t) => t.name.toLowerCase());
-    const toppingHits = words.filter((w) => toppingWords.includes(w));
+    const toppingWords = availableToppings.map((t) =>
+      t.name.toLowerCase()
+    );
+    const toppingHits = words.filter((w) =>
+      toppingWords.includes(w)
+    );
 
     const toppings = matchExactTopping(toppingHits);
 
@@ -96,7 +111,7 @@ export default function Kiosk() {
   }
 
   // -------------------------
-  // CART ADD (VOICE MODE)
+  // ADD TO CART (VOICE)
   // -------------------------
   function addDrinkToCart(drinkItem, size, toppings) {
     const price =
@@ -120,23 +135,12 @@ export default function Kiosk() {
   }
 
   // -------------------------
-  // SPEAK HELPER
-  // -------------------------
-  function speak(text) {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = speechSynthesis.getVoices().find((v) =>
-      v.name.toLowerCase().includes("female")
-    );
-    speechSynthesis.speak(utter);
-  }
-
-  // -------------------------
   // HANDLE VOICE INPUT
   // -------------------------
   function handleVoice(text) {
     setUsedSpeech(true);
+
     const spoken = text.toLowerCase();
-    console.log("USER SAID:", spoken);
 
     // REMOVE LAST
     if (spoken.includes("remove last")) {
@@ -164,7 +168,9 @@ export default function Kiosk() {
       return;
     }
 
-    // If we are WAITING on size
+    // --------------------------------
+    // WAITING FOR SIZE
+    // --------------------------------
     if (conversation.step === "awaitingSize") {
       let size = null;
       if (spoken.includes("large")) size = "Large";
@@ -176,33 +182,37 @@ export default function Kiosk() {
       }
 
       setConversation((prev) => ({
-        ...prev,
-        pendingDrink: { ...prev.pendingDrink, size },
         step: "awaitingToppings",
+        pendingDrink: { ...prev.pendingDrink, size },
       }));
 
       speak("Any toppings?");
       return;
     }
 
-    // Waiting for toppings
+    // --------------------------------
+    // WAITING FOR TOPPINGS
+    // --------------------------------
     if (conversation.step === "awaitingToppings") {
-      const toppingCandidates = parseSpeech(spoken).toppings;
-
-      const toppings = toppingCandidates || [];
+      const { toppings } = parseSpeech(spoken);
+      const finalToppings = toppings || [];
 
       const { drinkItem, size } = conversation.pendingDrink;
 
-      addDrinkToCart(drinkItem, size, toppings);
-      speak("Great, adding that drink.");
+      addDrinkToCart(drinkItem, size, finalToppings);
+
+      speak("Great, adding your drink.");
+
       setConversation({ step: "idle", pendingDrink: null });
       return;
     }
 
-    // Normal parsing
-    const { drink, size, toppings, phone } = parseSpeech(spoken);
+    // --------------------------------
+    // NORMAL INPUT
+    // --------------------------------
+    const parsed = parseSpeech(spoken);
+    const { drink, size, toppings, phone } = parsed;
 
-    // Phone auto-assign if needed
     if (phone) setCustomerPhone(phone);
     else {
       const gen = "9" + Math.floor(100000000 + Math.random() * 900000000);
@@ -210,37 +220,58 @@ export default function Kiosk() {
     }
 
     if (!drink) {
-      speak("I could not understand the drink.");
+      speak("I could not understand which drink.");
       return;
     }
 
-    // If NO size → ask for size
+    // Missing size?
     if (!size) {
+      speak(`What size would you like for ${drink.name}?`);
       setConversation({
         step: "awaitingSize",
         pendingDrink: { drinkItem: drink },
       });
-      speak(`What size would you like for ${drink.name}?`);
       return;
     }
 
-    // If size but no toppings → ask toppings
-    if (size && toppings.length === 0) {
+    // Missing toppings?
+    if (toppings.length === 0) {
+      speak("Any toppings?");
       setConversation({
         step: "awaitingToppings",
         pendingDrink: { drinkItem: drink, size },
       });
-      speak("Any toppings?");
       return;
     }
 
-    // If we have everything → add automatically
+    // FULL info → add
     addDrinkToCart(drink, size, toppings);
     speak(`Added your ${size} ${drink.name}.`);
   }
 
   // -------------------------
-  // SUBMIT ORDER
+  // 30-SECOND SILENCE HANDLER
+  // -------------------------
+  function handleSilence() {
+    if (conversation.step === "awaitingSize") {
+      speak("I'm still here. What size would you like?");
+    } else if (conversation.step === "awaitingToppings") {
+      speak("Do you want any toppings?");
+    }
+  }
+
+  // -------------------------
+  // 5-MINUTE TIMEOUT HANDLER
+  // -------------------------
+  function handleFiveMinuteTimeout() {
+    if (cart.length > 0) {
+      speak("You've been inactive. Placing your order now.");
+      submitOrder();
+    }
+  }
+
+  // -------------------------
+  // ORDER CALCULATIONS
   // -------------------------
   const subtotal = cart.reduce(
     (sum, d) => sum + d.price + d.toppings.reduce((s, t) => s + t.price, 0),
@@ -257,7 +288,7 @@ export default function Kiosk() {
         phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
         setCustomerPhone(phone);
       } else {
-        alert("Enter phone");
+        alert("Phone required");
         return;
       }
     }
@@ -267,13 +298,13 @@ export default function Kiosk() {
       return;
     }
 
-    const items = cart.flatMap((drink) => [
+    const items = cart.flatMap((d) => [
       {
-        itemId: drink.id,
-        name: `${drink.name} (${drink.size})`,
-        price: drink.price,
+        itemId: d.id,
+        name: `${d.name} (${d.size})`,
+        price: d.price,
       },
-      ...drink.toppings.map((t) => ({
+      ...d.toppings.map((t) => ({
         itemId: t.id,
         name: t.name,
         price: t.price,
@@ -294,22 +325,21 @@ export default function Kiosk() {
       });
 
       const data = await res.json();
-
       if (data.success) {
         speak("Your order has been placed.");
         alert(`Order placed. Receipt #${data.receiptId}`);
         setCart([]);
         setTipPercent(0);
-      } else {
-        alert("Order failed");
+        setConversation({ step: "idle", pendingDrink: null });
       }
     } catch (err) {
-      alert("Error");
+      console.error(err);
+      alert("Order failed");
     }
   }
 
   // -------------------------
-  // MANUAL MODAL (unchanged)
+  // MANUAL MODAL FUNCTIONS
   // -------------------------
   const groupedItems = menuItems
     .filter((i) => !i.category?.toLowerCase().includes("topping"))
@@ -364,15 +394,19 @@ export default function Kiosk() {
   }
 
   // -------------------------
-  // UI RENDER
+  // UI
   // -------------------------
   return (
     <div className="container mt-4">
       <h1 className="text-center mb-4">Kiosk Page</h1>
 
-      <VoiceRecorder onText={handleVoice} />
+      <VoiceRecorder
+        onText={handleVoice}
+        onSilenceTimeout={handleSilence}
+        onFiveMinuteTimeout={handleFiveMinuteTimeout}
+      />
 
-      {/* CUSTOMER INFO */}
+      {/* CUSTOMER INPUT */}
       <div className="mb-4">
         <input
           type="text"
@@ -397,7 +431,7 @@ export default function Kiosk() {
         />
       </div>
 
-      {/* MENU */}
+      {/* MENU (manual UI unchanged) */}
       {Object.keys(groupedItems).map((cat) => (
         <div key={cat} className="mb-4">
           <h3>{cat}</h3>
@@ -427,7 +461,8 @@ export default function Kiosk() {
             {cart.map((drink, i) => (
               <li key={i} className="list-group-item">
                 <div className="fw-bold">
-                  {drink.name} ({drink.size}) - ${drink.price.toFixed(2)}
+                  {drink.name} ({drink.size}) - $
+                  {drink.price.toFixed(2)}
                 </div>
 
                 {drink.toppings.length > 0 && (
@@ -443,7 +478,9 @@ export default function Kiosk() {
                 <button
                   className="btn btn-sm btn-outline-danger mt-2"
                   onClick={() =>
-                    setCart((prev) => prev.filter((_, idx) => idx !== i))
+                    setCart((prev) =>
+                      prev.filter((_, idx) => idx !== i)
+                    )
                   }
                 >
                   Remove
@@ -453,6 +490,7 @@ export default function Kiosk() {
           </ul>
         )}
 
+        {/* Tip */}
         <div className="mt-3">
           <label className="me-2">Tip %:</label>
           <input
@@ -464,10 +502,13 @@ export default function Kiosk() {
           />
         </div>
 
+        {/* Totals */}
         <div className="mt-3">
           <div>Subtotal: ${subtotal.toFixed(2)}</div>
           <div>Tip ({tipPercent}%): ${tipAmount.toFixed(2)}</div>
-          <div className="fw-bold fs-5 mt-2">Total: ${total.toFixed(2)}</div>
+          <div className="fw-bold fs-5 mt-2">
+            Total: ${total.toFixed(2)}
+          </div>
         </div>
 
         <button onClick={submitOrder} className="btn btn-primary mt-3">
@@ -475,7 +516,7 @@ export default function Kiosk() {
         </button>
       </div>
 
-      {/* MANUAL MODAL */}
+      {/* MANUAL MODAL (unchanged) */}
       <div
         className="modal fade"
         id="itemModal"
@@ -503,7 +544,9 @@ export default function Kiosk() {
                     className="form-select mb-3"
                   >
                     <option value="Small">Small</option>
-                    <option value="Large">Large (+$1.00)</option>
+                    <option value="Large">
+                      Large (+$1.00)
+                    </option>
                   </select>
 
                   {/* TOPPINGS */}
@@ -513,13 +556,16 @@ export default function Kiosk() {
                       <button
                         key={t.id}
                         className={`btn btn-sm m-1 ${
-                          selectedToppings.find((x) => x.id === t.id)
+                          selectedToppings.find(
+                            (x) => x.id === t.id
+                          )
                             ? "btn-success"
                             : "btn-outline-secondary"
                         }`}
                         onClick={() => toggleTopping(t)}
                       >
-                        {t.name} (+${Number(t.price).toFixed(2)})
+                        {t.name} (+$
+                        {Number(t.price).toFixed(2)})
                       </button>
                     ))}
                   </div>
@@ -532,7 +578,10 @@ export default function Kiosk() {
                   >
                     Cancel
                   </button>
-                  <button className="btn btn-primary" onClick={addToCartManual}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={addToCartManual}
+                  >
                     Add to Cart
                   </button>
                 </div>
