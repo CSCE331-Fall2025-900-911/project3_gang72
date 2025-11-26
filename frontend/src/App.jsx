@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/navbar";
 import VoiceNavigationButton from "./components/voiceNavigationButton"; // ADD THIS
+import HighContrastToggle from "./components/highContrastToggle";
 import Home from "./pages/home";
 import Manager from "./pages/manager";
 import Employees from "./pages/employees";
