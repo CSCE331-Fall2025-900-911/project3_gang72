@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, speechRoutes, translationCtrl, authCtrl, oauthCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, speechCtrl, translationCtrl, authCtrl, oauthCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -20,6 +20,8 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
   menuCtrl = require('./src/controllers/menuController');
   orderCtrl = require('./src/controllers/orderController');
+  translationCtrl = require('./src/controllers/translationController.js');
+  speechCtrl = require('./src/controllers/speechController');
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
@@ -240,8 +242,18 @@ app.get('/api/weather', async (req, res) => {
 app.post('/api/translate', translationCtrl.translateHandler);
 app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
+
 // ===== Speech-to-Text =====
-app.use("/api", speechRoutes);
+const multer = require("multer");
+const upload = multer();
+
+app.post(
+  "/api/speech-to-text",
+  upload.single("audio"),
+  speechCtrl.transcribeSpeech
+);
+
+
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use((req, res) => {

@@ -20,194 +20,207 @@ export default function Kiosk() {
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [selectedSize, setSelectedSize] = useState("Small");
 
-  // -----------------------------
   // CONVERSATION CONTEXT
-  // -----------------------------
   const [conversation, setConversation] = useState({
     step: "idle", // idle | awaitingSize | awaitingToppings
     pendingDrink: null,
   });
 
-  // -----------------------------------
-  // FEMALE VOICE SPEAKER
-  // -----------------------------------
+  // SPEECH UTTER
   function speak(text) {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = speechSynthesis
-      .getVoices()
-      .find((v) => v.name.toLowerCase().includes("female"));
-    speechSynthesis.speak(utter);
+    try {
+      const utter = new SpeechSynthesisUtterance(text);
+      const voices = speechSynthesis.getVoices();
+      utter.voice =
+        voices.find((v) => v.name.toLowerCase().includes("female")) ||
+        voices[0] ||
+        null;
+      speechSynthesis.speak(utter);
+    } catch (err) {
+      // ignore if speech isn't supported
+      console.warn("speak error:", err);
+    }
   }
 
-  // -------------------------
-  // LOAD MENU
-  // -------------------------
+  // WEATHER ICONS
   const weatherIcons = {
-    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-    45: "🌫️", 48: "🌫️", 51: "🌦️",
-    61: "🌧️", 71: "❄️", 95: "⛈️",
+    0: "☀️",
+    1: "🌤️",
+    2: "⛅",
+    3: "☁️",
+    45: "🌫️",
+    48: "🌫️",
+    51: "🌦️",
+    61: "🌧️",
+    71: "❄️",
+    95: "⛈️",
   };
 
-  // ========== VOICE COMMANDS ==========
+  // ========== VOICE COMMANDS (register) ==========
   useEffect(() => {
     const voiceController = window.voiceController;
+    if (!voiceController) return;
 
-    if (voiceController) {
-      // Order a specific item by name
+    // helper that reads current cart length
+    const getCartLength = () => document.querySelectorAll(".list-group-item")?.length || cart.length;
+
+    // Register commands (these refer to DOM/actions where appropriate)
+    try {
       voiceController.registerCommand(
-        ['order', 'add', 'I want'],
+        ["order", "add", "I want"],
         () => {
-          voiceController.speak('What would you like to order?');
+          voiceController.speak("What would you like to order?");
         }
       );
 
-      // View cart
       voiceController.registerCommand(
-        ['view cart', 'show cart', 'check cart', 'what is in my cart'],
+        ["view cart", "show cart", "check cart", "what is in my cart"],
         () => {
-          if (cart.length === 0) {
-            voiceController.speak('Your cart is empty');
+          if (getCartLength() === 0) {
+            voiceController.speak("Your cart is empty");
           } else {
-            voiceController.speak(`You have ${cart.length} items in your cart`);
-            // Scroll to cart
-            document.querySelector('.border-top')?.scrollIntoView({ behavior: 'smooth' });
+            voiceController.speak(`You have ${getCartLength()} items in your cart`);
+            document.querySelector(".border-top")?.scrollIntoView({ behavior: "smooth" });
           }
         }
       );
 
-      // Clear cart
       voiceController.registerCommand(
-        ['clear cart', 'empty cart', 'remove all'],
+        ["clear cart", "empty cart", "remove all"],
         () => {
           if (cart.length > 0) {
             setCart([]);
-            voiceController.speak('Cart cleared');
+            voiceController.speak("Cart cleared");
           } else {
-            voiceController.speak('Cart is already empty');
+            voiceController.speak("Cart is already empty");
           }
         }
       );
 
-      // Place order / Checkout
       voiceController.registerCommand(
-        ['place order', 'checkout', 'complete order', 'finish order', 'submit order'],
+        ["place order", "checkout", "complete order", "finish order", "submit order"],
         () => {
           const placeOrderBtn = document.querySelector('button.btn-primary');
-          if (placeOrderBtn && placeOrderBtn.textContent.includes('Place Order')) {
+          if (placeOrderBtn && placeOrderBtn.textContent.includes("Place Order")) {
             placeOrderBtn.click();
-            voiceController.speak('Placing your order');
+            voiceController.speak("Placing your order");
+          } else {
+            // fallback: call submitOrder directly
+            voiceController.speak("Placing your order");
+            submitOrder();
           }
         }
       );
 
-      // Add to cart (when modal is open)
       voiceController.registerCommand(
-        ['add to cart', 'add this', 'confirm selection'],
+        ["add to cart", "add this", "confirm selection"],
         () => {
-          const addBtn = document.querySelector('.modal-footer .btn-primary');
-          if (addBtn && addBtn.textContent.includes('Add to Cart')) {
+          const addBtn = document.querySelector(".modal-footer .btn-primary");
+          if (addBtn && addBtn.textContent.includes("Add to Cart")) {
             addBtn.click();
-            voiceController.speak('Added to cart');
+            voiceController.speak("Added to cart");
           }
         }
       );
 
-      // Cancel / Close modal
       voiceController.registerCommand(
-        ['cancel', 'close', 'never mind'],
+        ["cancel", "close", "never mind"],
         () => {
-          const cancelBtn = document.querySelector('.modal-footer .btn-secondary');
+          const cancelBtn = document.querySelector(".modal-footer .btn-secondary");
           if (cancelBtn) {
             cancelBtn.click();
-            voiceController.speak('Cancelled');
+            voiceController.speak("Cancelled");
           }
         }
       );
 
-      // Select size
       voiceController.registerCommand(
-        ['small size', 'small', 'select small'],
+        ["small size", "small", "select small"],
         () => {
-          const sizeSelect = document.querySelector('select.form-select');
+          const sizeSelect = document.querySelector("select.form-select");
           if (sizeSelect) {
-            sizeSelect.value = 'Small';
-            setSelectedSize('Small');
-            voiceController.speak('Small size selected');
+            sizeSelect.value = "Small";
+            setSelectedSize("Small");
+            voiceController.speak("Small size selected");
           }
         }
       );
 
       voiceController.registerCommand(
-        ['large size', 'large', 'select large', 'make it large'],
+        ["large size", "large", "select large", "make it large"],
         () => {
-          const sizeSelect = document.querySelector('select.form-select');
+          const sizeSelect = document.querySelector("select.form-select");
           if (sizeSelect) {
-            sizeSelect.value = 'Large';
-            setSelectedSize('Large');
-            voiceController.speak('Large size selected, plus one dollar');
+            sizeSelect.value = "Large";
+            setSelectedSize("Large");
+            voiceController.speak("Large size selected, plus one dollar");
           }
         }
       );
 
-      // Set tip
       voiceController.registerCommand(
-        ['no tip', 'zero tip', 'skip tip'],
+        ["no tip", "zero tip", "skip tip"],
         () => {
           setTipPercent(0);
-          voiceController.speak('No tip');
+          voiceController.speak("No tip");
         }
       );
 
       voiceController.registerCommand(
-        ['ten percent tip', '10 percent tip', 'tip ten percent'],
+        ["ten percent tip", "10 percent tip", "tip ten percent"],
         () => {
           setTipPercent(10);
-          voiceController.speak('Ten percent tip');
+          voiceController.speak("Ten percent tip");
         }
       );
 
       voiceController.registerCommand(
-        ['fifteen percent tip', '15 percent tip', 'tip fifteen percent'],
+        ["fifteen percent tip", "15 percent tip", "tip fifteen percent"],
         () => {
           setTipPercent(15);
-          voiceController.speak('Fifteen percent tip');
+          voiceController.speak("Fifteen percent tip");
         }
       );
 
       voiceController.registerCommand(
-        ['twenty percent tip', '20 percent tip', 'tip twenty percent'],
+        ["twenty percent tip", "20 percent tip", "tip twenty percent"],
         () => {
           setTipPercent(20);
-          voiceController.speak('Twenty percent tip');
+          voiceController.speak("Twenty percent tip");
         }
       );
 
-      // Remove last item
       voiceController.registerCommand(
-        ['remove last', 'delete last', 'remove last item'],
+        ["remove last", "delete last", "remove last item"],
         () => {
           if (cart.length > 0) {
-            setCart(prev => prev.slice(0, -1));
-            voiceController.speak('Removed last item');
+            setCart((prev) => prev.slice(0, -1));
+            voiceController.speak("Removed last item");
           } else {
-            voiceController.speak('Cart is empty');
+            voiceController.speak("Cart is empty");
           }
         }
       );
 
-      // Scroll to menu sections
       voiceController.registerCommand(
-        ['show menu', 'see menu', 'view menu'],
+        ["show menu", "see menu", "view menu"],
         () => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          voiceController.speak('Showing menu');
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          voiceController.speak("Showing menu");
         }
       );
+    } catch (err) {
+      console.warn("voiceController registration error:", err);
     }
-  }, [cart]);
 
-  // ========== EXISTING CODE ==========
+    // cleanup (if voiceController supports unregister / nothing otherwise)
+    return () => {
+      // no-op: assume voiceController handles session lifetime
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, selectedSize, selectedToppings, menuItems, tipPercent, usedSpeech]);
 
+  // ========== LOAD MENU ==========
   useEffect(() => {
     fetch("/api/menu")
       .then((res) => res.json())
@@ -215,78 +228,14 @@ export default function Kiosk() {
         if (data.success && Array.isArray(data.items)) {
           setMenuItems(data.items);
           setAvailableToppings(
-            data.items.filter((i) =>
-              i.category?.toLowerCase().includes("topping")
-            )
+            data.items.filter((i) => i.category?.toLowerCase().includes("topping"))
           );
         }
       })
       .catch(console.error);
   }, []);
 
-  // -------------------------
-  // STRICT TOPPING MATCH
-  // -------------------------
-  function matchExactTopping(words) {
-    return availableToppings.filter((t) =>
-      words.includes(t.name.toLowerCase())
-    );
-  }
-
-  // -------------------------
-  // PARSE SPEECH
-  // -------------------------
-  function parseSpeech(text) {
-    const spoken = text
-      .toLowerCase()
-      .replace(/[^\w\s]/gi, "")
-      .trim();
-
-    const words = spoken.split(" ");
-
-    let size = null;
-    if (spoken.includes("large")) size = "Large";
-    if (spoken.includes("small")) size = "Small";
-
-    const phoneMatch = spoken.match(/\d{7,10}/);
-    let phone = phoneMatch ? phoneMatch[0] : null;
-
-    let drink = null;
-
-    for (let item of menuItems) {
-      let nm = item.name.toLowerCase();
-      let matched =
-        words.every((w) => nm.includes(w)) ||
-        words.join(" ").includes(nm);
-      if (
-        matched &&
-        !item.category?.toLowerCase().includes("topping")
-      ) {
-        drink = item;
-        break;
-      }
-    }
-
-    const toppingWords = availableToppings.map((t) =>
-      t.name.toLowerCase()
-    );
-    const toppingHits = words.filter((w) =>
-      toppingWords.includes(w)
-    );
-
-    const toppings = matchExactTopping(toppingHits);
-
-    return { drink, size, toppings, phone };
-  }
-
-  // -------------------------
-  // ADD TO CART (VOICE)
-  // -------------------------
-  function addDrinkToCart(drinkItem, size, toppings) {
-    const price =
-      size === "Large"
-        ? Number(drinkItem.price) + 1
-        : Number(drinkItem.price);
+  // ========== WEATHER ==========
   useEffect(() => {
     const loadWeather = async () => {
       try {
@@ -303,46 +252,55 @@ export default function Kiosk() {
     return () => clearInterval(interval);
   }, []);
 
-  const groupedItems = menuItems
-    .filter((item) => !item.category?.toLowerCase().includes("topping"))
-    .reduce((acc, item) => {
-      const cat = item.category || "Other";
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(item);
-      return acc;
-    }, {});
+  // -------------------------
+  // HELPERS: toppings / parsing
+  // -------------------------
+  function matchExactTopping(words) {
+    return availableToppings.filter((t) => words.includes(t.name.toLowerCase()));
+  }
 
-  const openItemModal = (item) => {
-    if (item.category?.toLowerCase().includes("topping")) return;
-    setSelectedItem(item);
-    setSelectedSize("Small");
-    setSelectedToppings([]);
-    const modal = new bootstrap.Modal(document.getElementById("itemModal"));
-    modal.show();
-  };
+  function parseSpeech(text) {
+    const spoken = text.toLowerCase().replace(/[^\w\s]/gi, "").trim();
+    const words = spoken.split(/\s+/).filter(Boolean);
 
-  const toggleTopping = (t) => {
-    setSelectedToppings((prev) =>
-      prev.find((s) => s.id === t.id)
-        ? prev.filter((s) => s.id !== t.id)
-        : [...prev, t]
-    );
-  };
+    let size = null;
+    if (spoken.includes("large")) size = "Large";
+    if (spoken.includes("small")) size = "Small";
 
-  const addToCart = () => {
-    if (!selectedItem) return;
+    const phoneMatch = spoken.match(/\d{7,10}/);
+    let phone = phoneMatch ? phoneMatch[0] : null;
 
-    const itemPrice =
-      selectedSize === "Large"
-        ? Number(selectedItem.price) + 1.00
-        : Number(selectedItem.price);
+    let drink = null;
+    for (let item of menuItems) {
+      const nm = item.name.toLowerCase();
+      const matched = words.every((w) => nm.includes(w)) || words.join(" ").includes(nm);
+      if (matched && !item.category?.toLowerCase().includes("topping")) {
+        drink = item;
+        break;
+      }
+    }
+
+    const toppingWords = availableToppings.map((t) => t.name.toLowerCase());
+    const toppingHits = words.filter((w) => toppingWords.includes(w));
+    const toppings = matchExactTopping(toppingHits);
+
+    return { drink, size, toppings, phone };
+  }
+
+  // -------------------------
+  // ADD TO CART (VOICE)
+  // -------------------------
+  function addDrinkToCart(drinkItem, size, toppings = []) {
+    if (!drinkItem) return;
+
+    const price = size === "Large" ? Number(drinkItem.price) + 1 : Number(drinkItem.price);
 
     const drink = {
       id: drinkItem.id,
       name: drinkItem.name,
       size,
       price,
-      toppings: toppings.map((t) => ({
+      toppings: (toppings || []).map((t) => ({
         id: t.id,
         name: t.name,
         price: Number(t.price),
@@ -350,175 +308,64 @@ export default function Kiosk() {
     };
 
     setCart((prev) => [...prev, drink]);
-  }
-
-  // -------------------------
-  // HANDLE VOICE INPUT
-  // -------------------------
-  function handleVoice(text) {
-    setUsedSpeech(true);
-
-    const spoken = text.toLowerCase();
-
-    // REMOVE LAST
-    if (spoken.includes("remove last")) {
-      setCart((prev) => prev.slice(0, -1));
-      speak("Removed the last drink.");
-      return;
-    }
-
-    // TIP
-    const tipMatch = spoken.match(/tip (\d{1,2})/);
-    if (tipMatch) {
-      setTipPercent(Number(tipMatch[1]));
-      speak(`Tip set to ${tipMatch[1]} percent.`);
-      return;
-    }
-
-    // FINISH ORDER
-    if (
-      spoken.includes("done") ||
-      spoken.includes("finish") ||
-      spoken.includes("place order")
-    ) {
-      speak("Placing your order.");
-      submitOrder();
-      return;
-    }
-
-    // --------------------------------
-    // WAITING FOR SIZE
-    // --------------------------------
-    if (conversation.step === "awaitingSize") {
-      let size = null;
-      if (spoken.includes("large")) size = "Large";
-      if (spoken.includes("small")) size = "Small";
-
-      if (!size) {
-        speak("I didn't catch the size. Say large or small.");
-        return;
-      }
-
-      setConversation((prev) => ({
-        step: "awaitingToppings",
-        pendingDrink: { ...prev.pendingDrink, size },
-      }));
-
-      speak("Any toppings?");
-      return;
-    }
-
-    // --------------------------------
-    // WAITING FOR TOPPINGS
-    // --------------------------------
-    if (conversation.step === "awaitingToppings") {
-      const { toppings } = parseSpeech(spoken);
-      const finalToppings = toppings || [];
-
-      const { drinkItem, size } = conversation.pendingDrink;
-
-      addDrinkToCart(drinkItem, size, finalToppings);
-
-      speak("Great, adding your drink.");
-
-      setConversation({ step: "idle", pendingDrink: null });
-      return;
-    }
-
-    // --------------------------------
-    // NORMAL INPUT
-    // --------------------------------
-    const parsed = parseSpeech(spoken);
-    const { drink, size, toppings, phone } = parsed;
-
-    if (phone) setCustomerPhone(phone);
-    else {
-      const gen = "9" + Math.floor(100000000 + Math.random() * 900000000);
-      setCustomerPhone(gen);
-    }
-
-    if (!drink) {
-      speak("I could not understand which drink.");
-      return;
-    }
-
-    // Missing size?
-    if (!size) {
-      speak(`What size would you like for ${drink.name}?`);
-      setConversation({
-        step: "awaitingSize",
-        pendingDrink: { drinkItem: drink },
-      });
-      return;
-    }
-
-    // Missing toppings?
-    if (toppings.length === 0) {
-      speak("Any toppings?");
-      setConversation({
-        step: "awaitingToppings",
-        pendingDrink: { drinkItem: drink, size },
-      });
-      return;
-    }
-
-    // FULL info → add
-    addDrinkToCart(drink, size, toppings);
-    speak(`Added your ${size} ${drink.name}.`);
-  }
-
-  // -------------------------
-  // 30-SECOND SILENCE HANDLER
-  // -------------------------
-  function handleSilence() {
-    if (conversation.step === "awaitingSize") {
-      speak("I'm still here. What size would you like?");
-    } else if (conversation.step === "awaitingToppings") {
-      speak("Do you want any toppings?");
+    // close any modal if open (safety)
+    try {
+      const modal = bootstrap.Modal.getInstance(document.getElementById("itemModal"));
+      modal?.hide();
+    } catch (e) {
+      // ignore if bootstrap isn't present
     }
   }
 
   // -------------------------
-  // 5-MINUTE TIMEOUT HANDLER
+  // MANUAL ADD TO CART
   // -------------------------
-  function handleFiveMinuteTimeout() {
-    if (cart.length > 0) {
-      speak("You've been inactive. Placing your order now.");
-      submitOrder();
+  function addToCartManual() {
+    if (!selectedItem) return;
+
+    const price = selectedSize === "Large" ? Number(selectedItem.price) + 1 : Number(selectedItem.price);
+
+    const drink = {
+      id: selectedItem.id,
+      name: selectedItem.name,
+      size: selectedSize,
+      price,
+      toppings: selectedToppings.map((t) => ({
+        id: t.id,
+        name: t.name,
+        price: Number(t.price),
+      })),
+    };
+
+    setCart((prev) => [...prev, drink]);
+
+    try {
+      const modal = bootstrap.Modal.getInstance(document.getElementById("itemModal"));
+      modal?.hide();
+    } catch (e) {
+      // ignore
     }
   }
 
   // -------------------------
-  // ORDER CALCULATIONS
+  // SUBMIT ORDER (merged voice + manual)
   // -------------------------
-  const subtotal = cart.reduce(
-    (sum, d) => sum + d.price + d.toppings.reduce((s, t) => s + t.price, 0),
-    0
-  );
-
-  // Calculate tip amount
-  const tipAmount = subtotal * (Number(tipPercent) / 100);
-  const total = subtotal + tipAmount;
-
-  async function submitOrder() {
+  const submitOrder = async () => {
     let phone = customerPhone;
 
+    // If no phone, allow voice mode to auto-generate
     if (!phone || phone.trim() === "") {
       if (usedSpeech) {
         phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
         setCustomerPhone(phone);
       } else {
-        alert("Phone required");
+        alert(t("Customer phone is required!"));
         return;
       }
-  const submitOrder = async () => {
-    if (!customerPhone) {
-      alert(t("Customer phone is required!"));
-      return;
     }
 
     if (cart.length === 0) {
-      alert("Cart is empty!");
+      alert(t("Cart is empty!"));
       return;
     }
 
@@ -549,24 +396,147 @@ export default function Kiosk() {
       });
 
       const data = await res.json();
+
       if (data.success) {
-        speak("Your order has been placed.");
-        alert(`Order placed. Receipt #${data.receiptId}`);
+        speak(t("Your order has been placed."));
+        alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
         setCart([]);
         setTipPercent(0);
-        alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
+        setConversation({ step: "idle", pendingDrink: null });
       } else {
-        alert(t("Order failed:") + " " + data.error);
+        alert(t("Order failed:") + " " + (data.error || ""));
         setConversation({ step: "idle", pendingDrink: null });
       }
     } catch (err) {
       console.error(err);
-      alert("Order failed");
+      alert(t("Order failed"));
+    }
+  };
+
+  // -------------------------
+  // HANDLERS FOR VOICE
+  // -------------------------
+  function handleVoice(text) {
+    setUsedSpeech(true);
+    const spoken = text.toLowerCase();
+
+    // REMOVE LAST
+    if (spoken.includes("remove last")) {
+      setCart((prev) => prev.slice(0, -1));
+      speak("Removed the last drink.");
+      return;
+    }
+
+    // TIP
+    const tipMatch = spoken.match(/tip (\d{1,2})/);
+    if (tipMatch) {
+      setTipPercent(Number(tipMatch[1]));
+      speak(`Tip set to ${tipMatch[1]} percent.`);
+      return;
+    }
+
+    // FINISH ORDER
+    if (spoken.includes("done") || spoken.includes("finish") || spoken.includes("place order")) {
+      speak("Placing your order.");
+      submitOrder();
+      return;
+    }
+
+    // WAITING FOR SIZE
+    if (conversation.step === "awaitingSize") {
+      let size = null;
+      if (spoken.includes("large")) size = "Large";
+      if (spoken.includes("small")) size = "Small";
+
+      if (!size) {
+        speak("I didn't catch the size. Say large or small.");
+        return;
+      }
+
+      setConversation((prev) => ({
+        step: "awaitingToppings",
+        pendingDrink: { ...prev.pendingDrink, size },
+      }));
+
+      speak("Any toppings?");
+      return;
+    }
+
+    // WAITING FOR TOPPINGS
+    if (conversation.step === "awaitingToppings") {
+      const { toppings } = parseSpeech(spoken);
+      const finalToppings = toppings || [];
+
+      const { drinkItem, size } = conversation.pendingDrink || {};
+      if (!drinkItem) {
+        speak("Something went wrong. Please try again.");
+        setConversation({ step: "idle", pendingDrink: null });
+        return;
+      }
+
+      addDrinkToCart(drinkItem, size, finalToppings);
+      speak("Great, adding your drink.");
+      setConversation({ step: "idle", pendingDrink: null });
+      return;
+    }
+
+    // NORMAL INPUT
+    const parsed = parseSpeech(spoken);
+    const { drink, size, toppings, phone } = parsed;
+
+    if (phone) setCustomerPhone(phone);
+    else if (!customerPhone) {
+      const gen = "9" + Math.floor(100000000 + Math.random() * 900000000);
+      setCustomerPhone(gen);
+    }
+
+    if (!drink) {
+      speak("I could not understand which drink.");
+      return;
+    }
+
+    // Missing size?
+    if (!size) {
+      speak(`What size would you like for ${drink.name}?`);
+      setConversation({
+        step: "awaitingSize",
+        pendingDrink: { drinkItem: drink },
+      });
+      return;
+    }
+
+    // Missing toppings?
+    if (!toppings || toppings.length === 0) {
+      speak("Any toppings?");
+      setConversation({
+        step: "awaitingToppings",
+        pendingDrink: { drinkItem: drink, size },
+      });
+      return;
+    }
+
+    // FULL info → add
+    addDrinkToCart(drink, size, toppings);
+    speak(`Added your ${size} ${drink.name}.`);
+  }
+
+  function handleSilence() {
+    if (conversation.step === "awaitingSize") {
+      speak("I'm still here. What size would you like?");
+    } else if (conversation.step === "awaitingToppings") {
+      speak("Do you want any toppings?");
+    }
+  }
+
+  function handleFiveMinuteTimeout() {
+    if (cart.length > 0) {
+      speak("You've been inactive. Placing your order now.");
+      submitOrder();
     }
   }
 
   // -------------------------
-  // MANUAL MODAL FUNCTIONS
+  // GROUP & UI DATA
   // -------------------------
   const groupedItems = menuItems
     .filter((i) => !i.category?.toLowerCase().includes("topping"))
@@ -577,51 +547,40 @@ export default function Kiosk() {
       return acc;
     }, {});
 
-  function openItemModal(item) {
+  // -------------------------
+  // CALCULATIONS
+  // -------------------------
+  const subtotal = cart.reduce(
+    (sum, d) => sum + Number(d.price || 0) + (d.toppings?.reduce((s, t) => s + Number(t.price || 0), 0) || 0),
+    0
+  );
+  const tipAmount = subtotal * (Number(tipPercent || 0) / 100);
+  const total = subtotal + tipAmount;
+
+  // -------------------------
+  // OPEN ITEM MODAL
+  // -------------------------
+  const openItemModal = (item) => {
+    if (item.category?.toLowerCase().includes("topping")) return;
     setSelectedItem(item);
     setSelectedSize("Small");
     setSelectedToppings([]);
+    try {
+      const modal = new bootstrap.Modal(document.getElementById("itemModal"));
+      modal.show();
+    } catch (e) {
+      // ignore if bootstrap not present
+    }
+  };
 
-    const modal = new bootstrap.Modal(document.getElementById("itemModal"));
-    modal.show();
-  }
-
-  function toggleTopping(t) {
+  const toggleTopping = (t) => {
     setSelectedToppings((prev) =>
-      prev.find((x) => x.id === t.id)
-        ? prev.filter((x) => x.id !== t.id)
-        : [...prev, t]
+      prev.find((x) => x.id === t.id) ? prev.filter((x) => x.id !== t.id) : [...prev, t]
     );
-  }
-
-  function addToCartManual() {
-    const price =
-      selectedSize === "Large"
-        ? Number(selectedItem.price) + 1
-        : Number(selectedItem.price);
-
-    const drink = {
-      id: selectedItem.id,
-      name: selectedItem.name,
-      size: selectedSize,
-      price,
-      toppings: selectedToppings.map((t) => ({
-        id: t.id,
-        name: t.name,
-        price: Number(t.price),
-      })),
-    };
-
-    setCart((prev) => [...prev, drink]);
-
-    const modal = bootstrap.Modal.getInstance(
-      document.getElementById("itemModal")
-    );
-    modal.hide();
-  }
+  };
 
   // -------------------------
-  // UI
+  // RENDER
   // -------------------------
   return (
     <div className="container mt-4">
@@ -639,15 +598,13 @@ export default function Kiosk() {
 
         {weather ? (
           <div style={{ fontSize: "1.5rem", marginTop: "10px" }}>
-            {weatherIcons[weather.weatherCode] || "❓"}{" "}
-            {weather.temperature}°F
+            {weatherIcons[weather.weatherCode] || "❓"} {weather.temperature}°F
           </div>
         ) : (
-          <div className="text-muted small">{t("Loading weather...")} </div>
+          <div className="text-muted small">{t("Loading weather...")}</div>
         )}
       </div>
 
-      {/* Voice Command Helper */}
       <div className="alert alert-info text-center" role="alert">
         🎤 {t("Voice Commands: Say 'place order', 'view cart', 'small size', 'large size', 'ten percent tip', or click any item name!")}
       </div>
@@ -676,7 +633,7 @@ export default function Kiosk() {
         />
       </div>
 
-      {/* MENU (manual UI unchanged) */}
+      {/* MENU */}
       {Object.keys(groupedItems).map((cat) => (
         <div key={cat} className="mb-4">
           <h3>{cat}</h3>
@@ -706,15 +663,14 @@ export default function Kiosk() {
             {cart.map((drink, i) => (
               <li key={i} className="list-group-item">
                 <div className="fw-bold">
-                  {drink.name} ({drink.size}) - $
-                  {drink.price.toFixed(2)}
+                  {drink.name} ({drink.size}) - ${Number(drink.price).toFixed(2)}
                 </div>
 
-                {drink.toppings.length > 0 && (
+                {drink.toppings?.length > 0 && (
                   <ul className="ms-3 mt-1 text-muted small">
                     {drink.toppings.map((t) => (
                       <li key={t.id}>
-                        + {t.name} (${t.price.toFixed(2)})
+                        + {t.name} (${Number(t.price).toFixed(2)})
                       </li>
                     ))}
                   </ul>
@@ -722,11 +678,7 @@ export default function Kiosk() {
 
                 <button
                   className="btn btn-sm btn-outline-danger mt-2"
-                  onClick={() =>
-                    setCart((prev) =>
-                      prev.filter((_, idx) => idx !== i)
-                    )
-                  }
+                  onClick={() => setCart((prev) => prev.filter((_, idx) => idx !== i))}
                 >
                   {t("Remove")}
                 </button>
@@ -749,47 +701,28 @@ export default function Kiosk() {
 
         {/* Totals */}
         <div className="mt-3">
-          <div className="fw-normal">
-            {t("Subtotal")}: ${subtotal.toFixed(2)}
-          </div>
-          <div className="fw-normal">
-            {t("Tip")} ({tipPercent}%): ${tipAmount.toFixed(2)}
-          </div>
-          <div className="fw-bold fs-5 mt-2">
-            {t("Total")}: ${total.toFixed(2)}
-          </div>
+          <div className="fw-normal">{t("Subtotal")}: ${subtotal.toFixed(2)}</div>
+          <div className="fw-normal">{t("Tip")} ({tipPercent}%): ${tipAmount.toFixed(2)}</div>
+          <div className="fw-bold fs-5 mt-2">{t("Total")}: ${total.toFixed(2)}</div>
         </div>
 
-        <button
-          onClick={submitOrder}
-          className="btn btn-primary mt-3"
-        >
+        <button onClick={submitOrder} className="btn btn-primary mt-3">
           {t("Place Order")}
         </button>
       </div>
 
-      {/* MANUAL MODAL (unchanged) */}
-      <div
-        className="modal fade"
-        id="itemModal"
-        tabIndex="-1"
-        aria-hidden="true"
-      >
+      {/* MANUAL MODAL */}
+      <div className="modal fade" id="itemModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
             {selectedItem && (
               <>
                 <div className="modal-header">
                   <h5 className="modal-title">{selectedItem.name}</h5>
-                  <button
-                    className="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
+                  <button className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div className="modal-body">
-                  {/* SIZE */}
                   <label className="form-label">{t("Size")}</label>
                   <select
                     value={selectedSize}
@@ -797,44 +730,29 @@ export default function Kiosk() {
                     className="form-select mb-3"
                   >
                     <option value="Small">{t("Small")}</option>
-                    <option value="Large">
-                      {t("Large")} (+$1.00)
-                    </option>
+                    <option value="Large">{t("Large")} (+$1.00)</option>
                   </select>
 
-                  {/* TOPPINGS */}
                   <label className="form-label">Toppings</label>
                   <div className="d-flex flex-wrap">
                     {availableToppings.map((t) => (
                       <button
                         key={t.id}
-                        className={`btn btn-sm m-1 ${
-                          selectedToppings.find(
-                            (x) => x.id === t.id
-                          )
-                            ? "btn-success"
-                            : "btn-outline-secondary"
-                        }`}
+                        className={`btn btn-sm m-1 ${selectedToppings.find((x) => x.id === t.id) ? "btn-success" : "btn-outline-secondary"}`}
                         onClick={() => toggleTopping(t)}
+                        type="button"
                       >
-                        {t.name} (+$
-                        {Number(t.price).toFixed(2)})
+                        {t.name} (+${Number(t.price).toFixed(2)})
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="modal-footer">
-                  <button
-                    className="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                  >
+                  <button className="btn btn-secondary" data-bs-dismiss="modal">
                     {t("Cancel")}
                   </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={addToCartManual}
-                  >
+                  <button className="btn btn-primary" onClick={addToCartManual}>
                     {t("Add to Cart")}
                   </button>
                 </div>

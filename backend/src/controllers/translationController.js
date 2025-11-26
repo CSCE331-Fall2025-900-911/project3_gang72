@@ -1,10 +1,16 @@
 /**
  * translationController.js
- * 
- * Handles translation requests using Google Translate API
+ *
+ * Handles translation requests using Google Cloud Translate API
  */
 
+require('dotenv').config();
 const { Translate } = require('@google-cloud/translate').v2;
+
+// Ensure API key exists
+if (!process.env.GOOGLE_TRANSLATE_API_KEY) {
+  console.error("❌ Missing GOOGLE_TRANSLATE_API_KEY in environment variables.");
+}
 
 // Initialize Google Translate client
 const translate = new Translate({
@@ -12,7 +18,7 @@ const translate = new Translate({
 });
 
 /**
- * Translate text to target language
+ * Translate a single text string
  */
 async function translateText(text, targetLang = 'es') {
   try {
@@ -20,45 +26,46 @@ async function translateText(text, targetLang = 'es') {
     return translation;
   } catch (error) {
     console.error('Translation error:', error);
-    throw error;
+    throw new Error('Failed to translate text.');
   }
 }
 
 /**
- * Express handler for translation requests
  * POST /api/translate
- * Body: { text: string, targetLang: string }
+ * Body: { text: string, targetLang?: string }
  */
 async function translateHandler(req, res) {
   try {
     const { text, targetLang = 'es' } = req.body;
 
-    if (!text) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Text is required' 
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'A valid text string is required.'
       });
     }
 
     const translatedText = await translateText(text, targetLang);
 
-    res.json({
+    return res.json({
       success: true,
       originalText: text,
       translatedText,
       targetLang
     });
+
   } catch (error) {
     console.error('Translation handler error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Internal server error during translation.'
     });
   }
 }
 
 /**
- * Batch translate multiple texts
+ * POST /api/translate/batch
+ * Body: { texts: string[], targetLang?: string }
  */
 async function batchTranslateHandler(req, res) {
   try {
@@ -67,7 +74,7 @@ async function batchTranslateHandler(req, res) {
     if (!Array.isArray(texts) || texts.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Texts array is required'
+        error: 'A non-empty array of texts is required.'
       });
     }
 
@@ -78,16 +85,17 @@ async function batchTranslateHandler(req, res) {
       translated: Array.isArray(translations) ? translations[index] : translations
     }));
 
-    res.json({
+    return res.json({
       success: true,
-      translations: results,
-      targetLang
+      targetLang,
+      translations: results
     });
+
   } catch (error) {
     console.error('Batch translation error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Internal server error during batch translation.'
     });
   }
 }
