@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, authCtrl, oauthCtrl, translationCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, speechRoutes, translationCtrl, authCtrl, oauthCtrl;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -20,7 +20,6 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
   menuCtrl = require('./src/controllers/menuController');
   orderCtrl = require('./src/controllers/orderController');
-  translationCtrl = require('./src/controllers/translationController');
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
@@ -192,6 +191,57 @@ app.get('/api/weather', async (req, res) => {
 app.post('/api/translate', translationCtrl.translateHandler);
 app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
+// ===== Google OAuth Authentication =====
+if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
+  app.post('/api/auth/google', authCtrl.verifyTokenHandler);
+  console.log('✅ Mounted: POST /api/auth/google');
+} else {
+  console.warn('⚠️  /api/auth/google not mounted (authController.verifyTokenHandler missing)');
+}
+
+if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
+  app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
+  console.log('✅ Mounted: GET /auth/google');
+} else {
+  console.warn('⚠️  /auth/google not mounted (oauthController.getAuthUrlHandler missing)');
+}
+
+if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
+  app.get('/oauth2/callback', oauthCtrl.oauthCallbackHandler);
+  console.log('✅ Mounted: GET /oauth2/callback');
+} else {
+  console.warn('⚠️  /oauth2/callback not mounted (oauthController.oauthCallbackHandler missing)');
+}
+
+//==========WEATHER=============
+app.get('/api/weather', async (req, res) => {
+  try {
+    // College Station example
+    const lat = 30.61;
+    const lon = -96.34;
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&temperature_unit=fahrenheit`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    res.json({
+      temperature: data.current.temperature_2m,
+      weatherCode: data.current.weathercode
+    });
+
+  } catch (err) {
+    console.error("Weather API error:", err);
+    res.status(500).json({ error: "Weather fetch failed" });
+  }
+});
+
+// Translation routes
+app.post('/api/translate', translationCtrl.translateHandler);
+app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
+
+// ===== Speech-to-Text =====
+app.use("/api", speechRoutes);
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use((req, res) => {

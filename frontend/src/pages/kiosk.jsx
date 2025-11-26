@@ -1,23 +1,47 @@
 import { useEffect, useState } from "react";
+import VoiceRecorder from "../components/VoiceRecorder.jsx";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function Kiosk() {
   const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
+  const [availableToppings, setAvailableToppings] = useState([]);
+
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerFirst, setCustomerFirst] = useState("");
   const [customerLast, setCustomerLast] = useState("");
-  const [orderSuccess, setOrderSuccess] = useState(null);
+  const [usedSpeech, setUsedSpeech] = useState(false);
   const [weather, setWeather] = useState(null);
 
-  // Modal-related
+  // MANUAL UI
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedSize, setSelectedSize] = useState("Small");
-  const [availableToppings, setAvailableToppings] = useState([]);
   const [selectedToppings, setSelectedToppings] = useState([]);
+  const [selectedSize, setSelectedSize] = useState("Small");
 
+  // -----------------------------
+  // CONVERSATION CONTEXT
+  // -----------------------------
+  const [conversation, setConversation] = useState({
+    step: "idle", // idle | awaitingSize | awaitingToppings
+    pendingDrink: null,
+  });
+
+  // -----------------------------------
+  // FEMALE VOICE SPEAKER
+  // -----------------------------------
+  function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.voice = speechSynthesis
+      .getVoices()
+      .find((v) => v.name.toLowerCase().includes("female"));
+    speechSynthesis.speak(utter);
+  }
+
+  // -------------------------
+  // LOAD MENU
+  // -------------------------
   const weatherIcons = {
     0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
     45: "🌫️", 48: "🌫️", 51: "🌦️",
@@ -200,6 +224,69 @@ export default function Kiosk() {
       .catch(console.error);
   }, []);
 
+  // -------------------------
+  // STRICT TOPPING MATCH
+  // -------------------------
+  function matchExactTopping(words) {
+    return availableToppings.filter((t) =>
+      words.includes(t.name.toLowerCase())
+    );
+  }
+
+  // -------------------------
+  // PARSE SPEECH
+  // -------------------------
+  function parseSpeech(text) {
+    const spoken = text
+      .toLowerCase()
+      .replace(/[^\w\s]/gi, "")
+      .trim();
+
+    const words = spoken.split(" ");
+
+    let size = null;
+    if (spoken.includes("large")) size = "Large";
+    if (spoken.includes("small")) size = "Small";
+
+    const phoneMatch = spoken.match(/\d{7,10}/);
+    let phone = phoneMatch ? phoneMatch[0] : null;
+
+    let drink = null;
+
+    for (let item of menuItems) {
+      let nm = item.name.toLowerCase();
+      let matched =
+        words.every((w) => nm.includes(w)) ||
+        words.join(" ").includes(nm);
+      if (
+        matched &&
+        !item.category?.toLowerCase().includes("topping")
+      ) {
+        drink = item;
+        break;
+      }
+    }
+
+    const toppingWords = availableToppings.map((t) =>
+      t.name.toLowerCase()
+    );
+    const toppingHits = words.filter((w) =>
+      toppingWords.includes(w)
+    );
+
+    const toppings = matchExactTopping(toppingHits);
+
+    return { drink, size, toppings, phone };
+  }
+
+  // -------------------------
+  // ADD TO CART (VOICE)
+  // -------------------------
+  function addDrinkToCart(drinkItem, size, toppings) {
+    const price =
+      size === "Large"
+        ? Number(drinkItem.price) + 1
+        : Number(drinkItem.price);
   useEffect(() => {
     const loadWeather = async () => {
       try {
@@ -251,11 +338,11 @@ export default function Kiosk() {
         : Number(selectedItem.price);
 
     const drink = {
-      id: selectedItem.id,
-      name: selectedItem.name,
-      size: selectedSize,
-      price: itemPrice,
-      toppings: selectedToppings.map((t) => ({
+      id: drinkItem.id,
+      name: drinkItem.name,
+      size,
+      price,
+      toppings: toppings.map((t) => ({
         id: t.id,
         name: t.name,
         price: Number(t.price),
@@ -263,41 +350,185 @@ export default function Kiosk() {
     };
 
     setCart((prev) => [...prev, drink]);
-    const modal = bootstrap.Modal.getInstance(document.getElementById("itemModal"));
-    modal.hide();
-  };
+  }
 
-  const removeFromCart = (index) =>
-    setCart((prev) => prev.filter((_, i) => i !== index));
+  // -------------------------
+  // HANDLE VOICE INPUT
+  // -------------------------
+  function handleVoice(text) {
+    setUsedSpeech(true);
 
+    const spoken = text.toLowerCase();
+
+    // REMOVE LAST
+    if (spoken.includes("remove last")) {
+      setCart((prev) => prev.slice(0, -1));
+      speak("Removed the last drink.");
+      return;
+    }
+
+    // TIP
+    const tipMatch = spoken.match(/tip (\d{1,2})/);
+    if (tipMatch) {
+      setTipPercent(Number(tipMatch[1]));
+      speak(`Tip set to ${tipMatch[1]} percent.`);
+      return;
+    }
+
+    // FINISH ORDER
+    if (
+      spoken.includes("done") ||
+      spoken.includes("finish") ||
+      spoken.includes("place order")
+    ) {
+      speak("Placing your order.");
+      submitOrder();
+      return;
+    }
+
+    // --------------------------------
+    // WAITING FOR SIZE
+    // --------------------------------
+    if (conversation.step === "awaitingSize") {
+      let size = null;
+      if (spoken.includes("large")) size = "Large";
+      if (spoken.includes("small")) size = "Small";
+
+      if (!size) {
+        speak("I didn't catch the size. Say large or small.");
+        return;
+      }
+
+      setConversation((prev) => ({
+        step: "awaitingToppings",
+        pendingDrink: { ...prev.pendingDrink, size },
+      }));
+
+      speak("Any toppings?");
+      return;
+    }
+
+    // --------------------------------
+    // WAITING FOR TOPPINGS
+    // --------------------------------
+    if (conversation.step === "awaitingToppings") {
+      const { toppings } = parseSpeech(spoken);
+      const finalToppings = toppings || [];
+
+      const { drinkItem, size } = conversation.pendingDrink;
+
+      addDrinkToCart(drinkItem, size, finalToppings);
+
+      speak("Great, adding your drink.");
+
+      setConversation({ step: "idle", pendingDrink: null });
+      return;
+    }
+
+    // --------------------------------
+    // NORMAL INPUT
+    // --------------------------------
+    const parsed = parseSpeech(spoken);
+    const { drink, size, toppings, phone } = parsed;
+
+    if (phone) setCustomerPhone(phone);
+    else {
+      const gen = "9" + Math.floor(100000000 + Math.random() * 900000000);
+      setCustomerPhone(gen);
+    }
+
+    if (!drink) {
+      speak("I could not understand which drink.");
+      return;
+    }
+
+    // Missing size?
+    if (!size) {
+      speak(`What size would you like for ${drink.name}?`);
+      setConversation({
+        step: "awaitingSize",
+        pendingDrink: { drinkItem: drink },
+      });
+      return;
+    }
+
+    // Missing toppings?
+    if (toppings.length === 0) {
+      speak("Any toppings?");
+      setConversation({
+        step: "awaitingToppings",
+        pendingDrink: { drinkItem: drink, size },
+      });
+      return;
+    }
+
+    // FULL info → add
+    addDrinkToCart(drink, size, toppings);
+    speak(`Added your ${size} ${drink.name}.`);
+  }
+
+  // -------------------------
+  // 30-SECOND SILENCE HANDLER
+  // -------------------------
+  function handleSilence() {
+    if (conversation.step === "awaitingSize") {
+      speak("I'm still here. What size would you like?");
+    } else if (conversation.step === "awaitingToppings") {
+      speak("Do you want any toppings?");
+    }
+  }
+
+  // -------------------------
+  // 5-MINUTE TIMEOUT HANDLER
+  // -------------------------
+  function handleFiveMinuteTimeout() {
+    if (cart.length > 0) {
+      speak("You've been inactive. Placing your order now.");
+      submitOrder();
+    }
+  }
+
+  // -------------------------
+  // ORDER CALCULATIONS
+  // -------------------------
   const subtotal = cart.reduce(
-    (sum, drink) =>
-      sum +
-      drink.price +
-      drink.toppings.reduce((s, t) => s + t.price, 0),
+    (sum, d) => sum + d.price + d.toppings.reduce((s, t) => s + t.price, 0),
     0
   );
 
+  // Calculate tip amount
   const tipAmount = subtotal * (Number(tipPercent) / 100);
   const total = subtotal + tipAmount;
 
+  async function submitOrder() {
+    let phone = customerPhone;
+
+    if (!phone || phone.trim() === "") {
+      if (usedSpeech) {
+        phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
+        setCustomerPhone(phone);
+      } else {
+        alert("Phone required");
+        return;
+      }
   const submitOrder = async () => {
     if (!customerPhone) {
       alert(t("Customer phone is required!"));
       return;
     }
+
     if (cart.length === 0) {
-      alert(t("Cart is empty!"));
+      alert("Cart is empty!");
       return;
     }
 
-    const items = cart.flatMap((drink) => [
+    const items = cart.flatMap((d) => [
       {
-        itemId: drink.id,
-        name: `${drink.name} (${drink.size})`,
-        price: drink.price,
+        itemId: d.id,
+        name: `${d.name} (${d.size})`,
+        price: d.price,
       },
-      ...drink.toppings.map((t) => ({
+      ...d.toppings.map((t) => ({
         itemId: t.id,
         name: t.name,
         price: t.price,
@@ -305,11 +536,7 @@ export default function Kiosk() {
     ]);
 
     const payload = {
-      customer: {
-        firstName: customerFirst,
-        lastName: customerLast,
-        phone: customerPhone,
-      },
+      customer: { firstName: customerFirst, lastName: customerLast, phone },
       tipPercent: Number(tipPercent) || 0,
       items,
     };
@@ -320,23 +547,93 @@ export default function Kiosk() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
       if (data.success) {
-        setOrderSuccess(data);
+        speak("Your order has been placed.");
+        alert(`Order placed. Receipt #${data.receiptId}`);
         setCart([]);
         setTipPercent(0);
         alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
       } else {
         alert(t("Order failed:") + " " + data.error);
+        setConversation({ step: "idle", pendingDrink: null });
       }
     } catch (err) {
       console.error(err);
-      alert(t("Error placing order"));
+      alert("Order failed");
     }
-  };
+  }
 
+  // -------------------------
+  // MANUAL MODAL FUNCTIONS
+  // -------------------------
+  const groupedItems = menuItems
+    .filter((i) => !i.category?.toLowerCase().includes("topping"))
+    .reduce((acc, item) => {
+      const cat = item.category || "Other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+
+  function openItemModal(item) {
+    setSelectedItem(item);
+    setSelectedSize("Small");
+    setSelectedToppings([]);
+
+    const modal = new bootstrap.Modal(document.getElementById("itemModal"));
+    modal.show();
+  }
+
+  function toggleTopping(t) {
+    setSelectedToppings((prev) =>
+      prev.find((x) => x.id === t.id)
+        ? prev.filter((x) => x.id !== t.id)
+        : [...prev, t]
+    );
+  }
+
+  function addToCartManual() {
+    const price =
+      selectedSize === "Large"
+        ? Number(selectedItem.price) + 1
+        : Number(selectedItem.price);
+
+    const drink = {
+      id: selectedItem.id,
+      name: selectedItem.name,
+      size: selectedSize,
+      price,
+      toppings: selectedToppings.map((t) => ({
+        id: t.id,
+        name: t.name,
+        price: Number(t.price),
+      })),
+    };
+
+    setCart((prev) => [...prev, drink]);
+
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("itemModal")
+    );
+    modal.hide();
+  }
+
+  // -------------------------
+  // UI
+  // -------------------------
   return (
     <div className="container mt-4">
+      <h1 className="text-center mb-4">Kiosk Page</h1>
+
+      <VoiceRecorder
+        onText={handleVoice}
+        onSilenceTimeout={handleSilence}
+        onFiveMinuteTimeout={handleFiveMinuteTimeout}
+      />
+
+      {/* CUSTOMER INPUT */}
       <div className="text-center mb-4">
         <h1>{t("Kiosk Page")}</h1>
 
@@ -379,7 +676,7 @@ export default function Kiosk() {
         />
       </div>
 
-      {/* Menu */}
+      {/* MENU (manual UI unchanged) */}
       {Object.keys(groupedItems).map((cat) => (
         <div key={cat} className="mb-4">
           <h3>{cat}</h3>
@@ -399,7 +696,7 @@ export default function Kiosk() {
         </div>
       ))}
 
-      {/* Cart */}
+      {/* CART */}
       <div className="border-top pt-3 mt-4">
         <h4>{t("Cart")}</h4>
         {cart.length === 0 ? (
@@ -409,18 +706,27 @@ export default function Kiosk() {
             {cart.map((drink, i) => (
               <li key={i} className="list-group-item">
                 <div className="fw-bold">
-                  {drink.name} ({drink.size}) - ${drink.price.toFixed(2)}
+                  {drink.name} ({drink.size}) - $
+                  {drink.price.toFixed(2)}
                 </div>
+
                 {drink.toppings.length > 0 && (
                   <ul className="ms-3 mt-1 text-muted small">
                     {drink.toppings.map((t) => (
-                      <li key={t.id}>+ {t.name} (${t.price.toFixed(2)})</li>
+                      <li key={t.id}>
+                        + {t.name} (${t.price.toFixed(2)})
+                      </li>
                     ))}
                   </ul>
                 )}
+
                 <button
                   className="btn btn-sm btn-outline-danger mt-2"
-                  onClick={() => removeFromCart(i)}
+                  onClick={() =>
+                    setCart((prev) =>
+                      prev.filter((_, idx) => idx !== i)
+                    )
+                  }
                 >
                   {t("Remove")}
                 </button>
@@ -429,6 +735,7 @@ export default function Kiosk() {
           </ul>
         )}
 
+        {/* Tip */}
         <div className="mt-3">
           <label className="me-2">{t("Tip %")}:</label>
           <input
@@ -436,10 +743,11 @@ export default function Kiosk() {
             value={tipPercent}
             onChange={(e) => setTipPercent(e.target.value)}
             className="form-control d-inline w-auto"
-            style={{ width: '80px' }}
+            style={{ width: "80px" }}
           />
         </div>
 
+        {/* Totals */}
         <div className="mt-3">
           <div className="fw-normal">
             {t("Subtotal")}: ${subtotal.toFixed(2)}
@@ -460,12 +768,11 @@ export default function Kiosk() {
         </button>
       </div>
 
-      {/* Bootstrap Modal */}
+      {/* MANUAL MODAL (unchanged) */}
       <div
         className="modal fade"
         id="itemModal"
         tabIndex="-1"
-        aria-labelledby="itemModalLabel"
         aria-hidden="true"
       >
         <div className="modal-dialog modal-dialog-centered">
@@ -475,62 +782,58 @@ export default function Kiosk() {
                 <div className="modal-header">
                   <h5 className="modal-title">{selectedItem.name}</h5>
                   <button
-                    type="button"
                     className="btn-close"
                     data-bs-dismiss="modal"
-                    aria-label={t("Close")}
+                    aria-label="Close"
                   ></button>
                 </div>
 
                 <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label">{t("Size")}</label>
-                    <select
-                      value={selectedSize}
-                      onChange={(e) => setSelectedSize(e.target.value)}
-                      className="form-select"
-                    >
-                      <option value="Small">{t("Small")}</option>
-                      <option value="Large">{t("Large")} (+$1.00)</option>
-                    </select>
-                  </div>
+                  {/* SIZE */}
+                  <label className="form-label">{t("Size")}</label>
+                  <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="form-select mb-3"
+                  >
+                    <option value="Small">{t("Small")}</option>
+                    <option value="Large">
+                      {t("Large")} (+$1.00)
+                    </option>
+                  </select>
 
-                  <div className="mb-3">
-                    <label className="form-label">{t("Toppings")}</label>
-                    <div className="d-flex flex-wrap">
-                      {availableToppings.length > 0 ? (
-                        availableToppings.map((t) => (
-                          <button
-                            key={t.id}
-                            type="button"
-                            className={`btn btn-sm m-1 ${selectedToppings.find((s) => s.id === t.id)
-                                ? "btn-success"
-                                : "btn-outline-secondary"
-                              }`}
-                            onClick={() => toggleTopping(t)}
-                          >
-                            {t.name} (+${Number(t.price).toFixed(2)})
-                          </button>
-                        ))
-                      ) : (
-                        <p className="text-muted small">{t("No toppings available")}</p>
-                      )}
-                    </div>
+                  {/* TOPPINGS */}
+                  <label className="form-label">Toppings</label>
+                  <div className="d-flex flex-wrap">
+                    {availableToppings.map((t) => (
+                      <button
+                        key={t.id}
+                        className={`btn btn-sm m-1 ${
+                          selectedToppings.find(
+                            (x) => x.id === t.id
+                          )
+                            ? "btn-success"
+                            : "btn-outline-secondary"
+                        }`}
+                        onClick={() => toggleTopping(t)}
+                      >
+                        {t.name} (+$
+                        {Number(t.price).toFixed(2)})
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 <div className="modal-footer">
                   <button
-                    type="button"
                     className="btn btn-secondary"
                     data-bs-dismiss="modal"
                   >
                     {t("Cancel")}
                   </button>
                   <button
-                    type="button"
                     className="btn btn-primary"
-                    onClick={addToCart}
+                    onClick={addToCartManual}
                   >
                     {t("Add to Cart")}
                   </button>

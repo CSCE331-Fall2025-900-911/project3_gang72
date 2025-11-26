@@ -1,5 +1,10 @@
 {
   "dependencies": {
+    "google-auth-library": "^10.5.0"
+  }
+}
+{
+  "dependencies": {
     "openmeteo": "^1.2.2"
   }
 }
