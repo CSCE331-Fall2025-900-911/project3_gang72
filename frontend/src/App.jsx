@@ -13,6 +13,7 @@ import Items from "./pages/items";
 import XReport from "./pages/xreport";
 import ZReport from "./pages/zreport";
 import Login from "./Login";
+import './highContrast.css'
 import './App.css'
 
 // Protected Route component - requires @tamu.edu email
@@ -44,6 +45,7 @@ function App() {
   return (
     <BrowserRouter>
       <VoiceNavigationButton /> {/* ADD THIS - the button will show on all pages */}
+      <HighContrastToggle />
       <Navbar />
       <div className="container-fluid mt-4">
         <Routes>
