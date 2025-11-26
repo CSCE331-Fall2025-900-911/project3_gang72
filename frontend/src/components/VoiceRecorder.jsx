@@ -82,7 +82,7 @@ export default function VoiceRecorder({ onText, onSilenceTimeout, onFiveMinuteTi
         formData.append("audio", blob);
 
         try {
-          const res = await fetch("/api/speech", {
+          const res = await fetch("/api/speech-to-text", {
             method: "POST",
             body: formData,
           });

@@ -7,7 +7,7 @@ const path = require("path");
 const app = express();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
-
+process.env.GOOGLE_APPLICATION_CREDENTIALS = './google-key.json'
 app.use(cors());
 app.use(express.json());
 

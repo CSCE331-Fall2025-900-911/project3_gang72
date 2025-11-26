@@ -1,4 +1,8 @@
  Meeting Minutes
+**************************
+-------SPRINT 1-----------
+**************************
+ 
 -----------------------------
 
 Tech Stack (Initial):
@@ -46,3 +50,26 @@ What We Will Do:
 - Hiya: Work on cashier frontend & backend implementation.
 
 -----------------------------
+
+
+
+**************************
+----SPRINT 2--------------
+**************************
+
+
+11/12 Update:
+
+Accessability Features/API's To Be Implemented(Initial):
+- OAuth
+- Weather
+- Language (Spanish/English)
+- Vocal/Text Control 
+- High Contrast Mode
+
+Summary of Meeting:
+We took note of feedback and decided what we would eventually change in what was accomplished in sprint 1 and
+decided that we would get back to it in the third and final sprint, since it mainly involved smaller details
+that aren't at the top of the work.
+We also figured out assigned different implementation responsibilities to the members of the team so that we can
+know who was going to be able to
