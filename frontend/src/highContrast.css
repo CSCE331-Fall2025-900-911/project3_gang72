@@ -1,0 +1,217 @@
+/* High Contrast Mode - Optimized for low vision users */
+body.high-contrast-mode {
+    /* Force high contrast colors */
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+/* Text and content */
+body.high-contrast-mode * {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+
+    /* Remove shadows and gradients for clarity */
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-image: none !important;
+}
+
+/* Links - bright yellow for maximum visibility */
+body.high-contrast-mode a,
+body.high-contrast-mode .btn-link {
+    color: #ffff00 !important;
+    text-decoration: underline !important;
+    font-weight: bold !important;
+}
+
+body.high-contrast-mode a:hover,
+body.high-contrast-mode a:focus {
+    color: #ffff00 !important;
+    background-color: #333 !important;
+    outline: 3px solid #ffff00 !important;
+}
+
+/* Buttons - distinct colors for different types */
+body.high-contrast-mode button,
+body.high-contrast-mode .btn {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 3px solid #fff !important;
+    font-weight: bold !important;
+    padding: 10px 20px !important;
+}
+
+body.high-contrast-mode button:hover,
+body.high-contrast-mode .btn:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 3px solid #fff !important;
+}
+
+/* Primary buttons - bright cyan */
+body.high-contrast-mode .btn-primary,
+body.high-contrast-mode button.btn-primary {
+    background-color: #00ffff !important;
+    color: #000 !important;
+    border: 3px solid #00ffff !important;
+}
+
+body.high-contrast-mode .btn-primary:hover {
+    background-color: #000 !important;
+    color: #00ffff !important;
+    border: 3px solid #00ffff !important;
+}
+
+/* Success buttons - bright green */
+body.high-contrast-mode .btn-success {
+    background-color: #00ff00 !important;
+    color: #000 !important;
+    border: 3px solid #00ff00 !important;
+}
+
+/* Danger buttons - bright red */
+body.high-contrast-mode .btn-danger,
+body.high-contrast-mode .btn-outline-danger {
+    background-color: #ff0000 !important;
+    color: #fff !important;
+    border: 3px solid #ff0000 !important;
+}
+
+/* Input fields */
+body.high-contrast-mode input,
+body.high-contrast-mode select,
+body.high-contrast-mode textarea {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 3px solid #fff !important;
+    font-size: 18px !important;
+    padding: 10px !important;
+}
+
+body.high-contrast-mode input:focus,
+body.high-contrast-mode select:focus,
+body.high-contrast-mode textarea:focus {
+    outline: 3px solid #ffff00 !important;
+    border-color: #ffff00 !important;
+}
+
+/* Cards and containers */
+body.high-contrast-mode .card,
+body.high-contrast-mode .modal-content,
+body.high-contrast-mode .list-group-item {
+    background-color: #000 !important;
+    border: 3px solid #fff !important;
+}
+
+/* Headers */
+body.high-contrast-mode h1,
+body.high-contrast-mode h2,
+body.high-contrast-mode h3,
+body.high-contrast-mode h4,
+body.high-contrast-mode h5,
+body.high-contrast-mode h6 {
+    color: #fff !important;
+    font-weight: bold !important;
+    border-bottom: 3px solid #fff !important;
+    padding-bottom: 5px !important;
+}
+
+/* Tables */
+body.high-contrast-mode table {
+    border: 3px solid #fff !important;
+}
+
+body.high-contrast-mode th,
+body.high-contrast-mode td {
+    border: 2px solid #fff !important;
+    padding: 10px !important;
+}
+
+body.high-contrast-mode th {
+    background-color: #333 !important;
+    font-weight: bold !important;
+}
+
+/* Focus indicators - critical for keyboard navigation */
+body.high-contrast-mode *:focus {
+    outline: 4px solid #ffff00 !important;
+    outline-offset: 2px !important;
+}
+
+/* Alerts */
+body.high-contrast-mode .alert {
+    border: 3px solid #fff !important;
+    font-weight: bold !important;
+}
+
+body.high-contrast-mode .alert-info {
+    background-color: #0066cc !important;
+    color: #fff !important;
+}
+
+body.high-contrast-mode .alert-warning {
+    background-color: #ff8800 !important;
+    color: #000 !important;
+}
+
+body.high-contrast-mode .alert-danger {
+    background-color: #ff0000 !important;
+    color: #fff !important;
+}
+
+body.high-contrast-mode .alert-success {
+    background-color: #00ff00 !important;
+    color: #000 !important;
+}
+
+/* Modals */
+body.high-contrast-mode .modal-header,
+body.high-contrast-mode .modal-footer {
+    border-color: #fff !important;
+    border-width: 3px !important;
+}
+
+/* Disabled elements */
+body.high-contrast-mode button:disabled,
+body.high-contrast-mode .btn:disabled {
+    background-color: #333 !important;
+    color: #666 !important;
+    border-color: #666 !important;
+    cursor: not-allowed !important;
+}
+
+/* Images - add border for visibility */
+body.high-contrast-mode img {
+    border: 2px solid #fff !important;
+    filter: contrast(2) brightness(1.2) !important;
+}
+
+/* Navigation */
+body.high-contrast-mode .navbar,
+body.high-contrast-mode nav {
+    background-color: #000 !important;
+    border-bottom: 3px solid #fff !important;
+}
+
+/* Selected/Active states */
+body.high-contrast-mode .active,
+body.high-contrast-mode .selected {
+    background-color: #ffff00 !important;
+    color: #000 !important;
+    border: 3px solid #ffff00 !important;
+}
+
+/* Screen reader text - keep visible in high contrast */
+body.high-contrast-mode .sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Text sizing - minimum 16px for readability */
+body.high-contrast-mode {
+    font-size: 18px !important;
+    line-height: 1.6 !important;
+    letter-spacing: 0.5px !important;
+}
