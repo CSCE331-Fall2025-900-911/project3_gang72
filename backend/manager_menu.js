@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load controllers safely
-let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl;
+let empCtrl, reportCtrl, invCtrl, menuCtrl, orderCtrl, speechRoutes;
 
 try {
   empCtrl = require('./src/controllers/employeeController');
@@ -20,6 +20,7 @@ try {
   invCtrl = require('./src/controllers/inventoryController');
   menuCtrl = require('./src/controllers/menuController');
   orderCtrl = require('./src/controllers/orderController');
+  speechRoutes = require("./src/routes/speechRoutes");
 } catch (e) {
   console.error('Controller load error:', e);
   process.exit(1);
@@ -126,6 +127,8 @@ app.get('/api/orders/receipt/:receiptId', orderCtrl.getOrderByReceipt);
 // ===== Sales =====
 app.get('/api/sales', orderCtrl.getSales);
 
+// ===== Speech-to-Text =====
+app.use("/api", speechRoutes);
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.get(/.*/, (req, res) => {
@@ -149,4 +152,5 @@ app.listen(PORT, () => {
   console.log('  GET  /api/reports/order-volume');
   console.log('  GET  /api/reports/revenue-chart');
   console.log('  GET  /api/reports/aov-by-category');
+
 });
