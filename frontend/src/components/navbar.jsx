@@ -4,11 +4,11 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function Navbar() {
   const { t, language } = useLanguage();
-  
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 w-100">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">{t("My App")}</Link>
+        <Link className="navbar-brand" to="/">{t("Boba Bliss")}</Link>
 
         {/* Toggle button for small screens */}
         <button
