@@ -8,7 +8,7 @@
  */
 
 const { Pool } = require('pg');
-const dotenv = require('dotenv'); 
+const dotenv = require('dotenv');
 dotenv.config();
 
 const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : undefined);
@@ -128,8 +128,8 @@ async function zReportHandler(req, res) {
         // Check if Z-report has already been run today
         const alreadyRun = await hasZReportBeenRunToday();
         if (alreadyRun) {
-            return res.status(403).json({ 
-                success: false, 
+            return res.status(403).json({
+                success: false,
                 error: 'Z-Report has already been run today. It can only be executed once per day.',
                 alreadyRun: true
             });
@@ -137,10 +137,10 @@ async function zReportHandler(req, res) {
 
         // Generate the Z-report
         const summary = await zReport();
-        
+
         // Mark Z-report as run
         await markZReportAsRun();
-        
+
         res.json({ success: true, summary, alreadyRun: false });
     } catch (err) {
         console.error('Error running daily summary', err);
