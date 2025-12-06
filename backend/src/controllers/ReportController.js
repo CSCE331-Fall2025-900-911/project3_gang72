@@ -81,15 +81,72 @@ async function zReport() {
     }
 }
 
+/**
+ * Check if Z-report has already been run today
+ */
+async function hasZReportBeenRunToday() {
+    const client = await pool.connect();
+    try {
+        // Create table if it doesn't exist
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS z_report_status (
+                id SERIAL PRIMARY KEY,
+                report_date DATE NOT NULL UNIQUE,
+                run_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Check if Z-report was already run today
+        const result = await client.query(
+            'SELECT * FROM z_report_status WHERE report_date = CURRENT_DATE'
+        );
+        return result.rows.length > 0;
+    } finally {
+        client.release();
+    }
+}
+
+/**
+ * Mark Z-report as run for today
+ */
+async function markZReportAsRun() {
+    const client = await pool.connect();
+    try {
+        await client.query(`
+            INSERT INTO z_report_status (report_date, run_timestamp)
+            VALUES (CURRENT_DATE, CURRENT_TIMESTAMP)
+            ON CONFLICT (report_date) DO NOTHING
+        `);
+    } finally {
+        client.release();
+    }
+}
+
 async function zReportHandler(req, res) {
     try {
+        // Check if Z-report has already been run today
+        const alreadyRun = await hasZReportBeenRunToday();
+        if (alreadyRun) {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Z-Report has already been run today. It can only be executed once per day.',
+                alreadyRun: true
+            });
+        }
+
+        // Generate the Z-report
         const summary = await zReport();
-        res.json({ success: true, summary });
+        
+        // Mark Z-report as run
+        await markZReportAsRun();
+        
+        res.json({ success: true, summary, alreadyRun: false });
     } catch (err) {
         console.error('Error running daily summary', err);
         res.status(500).json({ success: false, error: err.message });
     }
 }
 
-module.exports = { runXReport, xReportHandler, X_REPORT_SQL, zReport, zReportHandler, zReportSQL };
+module.exports = { runXReport, xReportHandler, X_REPORT_SQL, zReport, zReportHandler, zReportSQL, hasZReportBeenRunToday, markZReportAsRun };
 
