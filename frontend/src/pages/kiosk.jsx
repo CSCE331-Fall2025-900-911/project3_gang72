@@ -14,6 +14,9 @@ export default function Kiosk() {
   const [customerLast, setCustomerLast] = useState("");
   const [usedSpeech, setUsedSpeech] = useState(false);
   const [weather, setWeather] = useState(null);
+  const [sugarLevel, setSugarLevel] = useState("100%");
+  const [iceLevel, setIceLevel] = useState("100%");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // MANUAL UI
   const [selectedItem, setSelectedItem] = useState(null);
@@ -298,9 +301,11 @@ export default function Kiosk() {
     const drink = {
       id: drinkItem.id,
       name: drinkItem.name,
-      size,
+      size: size,
       price,
-      toppings: (toppings || []).map((t) => ({
+      sugarLevel: sugarLevel,
+      iceLevel: iceLevel,
+      toppings: toppings.map((t) => ({
         id: t.id,
         name: t.name,
         price: Number(t.price),
@@ -330,6 +335,8 @@ export default function Kiosk() {
       name: selectedItem.name,
       size: selectedSize,
       price,
+      sugarLevel: sugarLevel,
+      iceLevel: iceLevel,
       toppings: selectedToppings.map((t) => ({
         id: t.id,
         name: t.name,
@@ -368,6 +375,8 @@ export default function Kiosk() {
       alert(t("Cart is empty!"));
       return;
     }
+
+    setIsSubmitting(true);
 
     const items = cart.flatMap((d) => [
       {
@@ -410,6 +419,8 @@ export default function Kiosk() {
     } catch (err) {
       console.error(err);
       alert(t("Order failed"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -565,6 +576,8 @@ export default function Kiosk() {
     setSelectedItem(item);
     setSelectedSize("Small");
     setSelectedToppings([]);
+    setSugarLevel("100%");
+    setIceLevel("100%");
     try {
       const modal = new bootstrap.Modal(document.getElementById("itemModal"));
       modal.show();
@@ -665,7 +678,9 @@ export default function Kiosk() {
                 <div className="fw-bold">
                   {drink.name} ({drink.size}) - ${Number(drink.price).toFixed(2)}
                 </div>
-
+                <div className="small text-muted">
+                  Sugar: {drink.sugarLevel} | Ice: {drink.iceLevel}
+                </div>
                 {drink.toppings?.length > 0 && (
                   <ul className="ms-3 mt-1 text-muted small">
                     {drink.toppings.map((t) => (
@@ -706,8 +721,19 @@ export default function Kiosk() {
           <div className="fw-bold fs-5 mt-2">{t("Total")}: ${total.toFixed(2)}</div>
         </div>
 
-        <button onClick={submitOrder} className="btn btn-primary mt-3">
-          {t("Place Order")}
+        <button 
+          onClick={submitOrder} 
+          className="btn btn-primary mt-3"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {t("Processing...")}
+            </>
+          ) : (
+            t("Place Order")
+          )}
         </button>
       </div>
 
@@ -746,6 +772,39 @@ export default function Kiosk() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Sugar Level */}
+                  <div className="mt-3">
+                    <label className="form-label">Sugar Level</label>
+                    <select
+                      className="form-select"
+                      value={sugarLevel}
+                      onChange={(e) => setSugarLevel(e.target.value)}
+                    >
+                      <option>0%</option>
+                      <option>25%</option>
+                      <option>50%</option>
+                      <option>75%</option>
+                      <option>100%</option>
+                    </select>
+                  </div>
+
+                  {/* Ice Level */}
+                  <div className="mt-3">
+                  <label className="form-label">Ice Level</label>
+                  <select
+                    className="form-select"
+                    value={iceLevel}
+                    onChange={(e) => setIceLevel(e.target.value)}
+                  >
+                    <option>0%</option>
+                    <option>25%</option>
+                    <option>50%</option>
+                    <option>75%</option>
+                    <option>100%</option>
+                  </select>
+                </div>
+
                 </div>
 
                 <div className="modal-footer">
@@ -761,6 +820,31 @@ export default function Kiosk() {
           </div>
         </div>
       </div>
+
+      {/* LOADING OVERLAY */}
+      {isSubmitting && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div className="spinner-border text-light" style={{ width: '4rem', height: '4rem' }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h3 className="text-light mt-4">Processing Your Order...</h3>
+          <p className="text-light">Please wait</p>
+        </div>
+      )}
     </div>
   );
 }

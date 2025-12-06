@@ -9,6 +9,8 @@ export default function Cashier() {
   const [customerLast, setCustomerLast] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableToppings, setAvailableToppings] = useState([]);
+  const [currentSugar, setCurrentSugar] = useState("100%");
+const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   // Current item being customized
@@ -76,12 +78,16 @@ export default function Cashier() {
         name: t.name,
         price: Number(t.price),
       })),
+      sugar: currentSugar,
+      ice: currentIce,
     };
 
     setCart((prev) => [...prev, cartItem]);
     setCurrentItem(null);
     setCurrentSize("Small");
     setCurrentToppings([]);
+    setCurrentSugar("100%");
+    setCurrentIce("100%");
   };
 
   const removeFromCart = (index) => {
@@ -257,6 +263,40 @@ export default function Cashier() {
                   ))}
                 </div>
               </div>
+              {/*Add Sugar Level*/}
+              <div className="mb-2">
+                <label className="form-label fw-bold">Sugar Level:</label>
+                <div className="btn-group w-100" role="group">
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      className={`btn btn-sm ${
+                        currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
+                      }`}
+                      onClick={() => setCurrentSugar(lvl)}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/*Add Ice Level*/}
+              <div className="mb-2">
+                <label className="form-label fw-bold">Ice Level:</label>
+                <div className="btn-group w-100" role="group">
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      className={`btn btn-sm ${
+                        currentIce === lvl ? "btn-primary" : "btn-outline-primary"
+                      }`}
+                      onClick={() => setCurrentIce(lvl)}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <button
                 className="btn btn-primary w-100 mt-2"
@@ -322,6 +362,9 @@ export default function Cashier() {
                               {item.toppings.map((t) => t.name).join(", ")}
                             </div>
                           )}
+                          <div className="text-muted small">
+                            Sugar: {item.sugar} | Ice: {item.ice}
+                          </div>
                         </div>
                         <div className="text-end">
                           <div className="fw-bold">
