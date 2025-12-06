@@ -71,9 +71,9 @@ export default function ZReport() {
                     <h2>Z-Report (Daily Summary)</h2>
                     <p className="text-muted mb-0">{getCurrentDate()}</p>
                 </div>
-                <button 
-                    className="btn btn-primary" 
-                    onClick={fetchZReport} 
+                <button
+                    className="btn btn-primary"
+                    onClick={fetchZReport}
                     disabled={loading || alreadyRun}
                     title={alreadyRun ? "Z-Report has already been run today" : ""}
                 >
@@ -83,7 +83,7 @@ export default function ZReport() {
 
             {alreadyRun && (
                 <div className="alert alert-warning" role="alert">
-                    <strong>Z-Report Already Executed!</strong> The Z-Report can only be run once per day. 
+                    <strong>Z-Report Already Executed!</strong> The Z-Report can only be run once per day.
                     It has already been executed today. If you need to run a new Z-Report, please wait until tomorrow.
                 </div>
             )}
@@ -184,7 +184,7 @@ export default function ZReport() {
                                         <tr>
                                             <td className="fw-bold">Average Tip per Order</td>
                                             <td>
-                                                {reportData.total_orders > 0 
+                                                {reportData.total_orders > 0
                                                     ? formatCurrency(reportData.total_tips / reportData.total_orders)
                                                     : formatCurrency(0)
                                                 }
@@ -202,7 +202,7 @@ export default function ZReport() {
                             <i className="bi bi-info-circle"></i> Z-Report Information
                         </h5>
                         <p className="mb-0">
-                            This Z-Report shows the daily summary for <strong>{getCurrentDate()}</strong>. 
+                            This Z-Report shows the daily summary for <strong>{getCurrentDate()}</strong>.
                             It includes all transactions from today and is typically run at the end of business day.
                         </p>
                     </div>
