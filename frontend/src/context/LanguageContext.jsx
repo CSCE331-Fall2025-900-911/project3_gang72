@@ -38,7 +38,7 @@ export const LanguageProvider = ({ children }) => {
 
     try {
       setIsTranslating(true);
-      const response = await fetch('http://localhost:3000/api/translate', {
+      const response = await fetch('http://https://bobastore-gang72.onrender.com/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, targetLang }),
