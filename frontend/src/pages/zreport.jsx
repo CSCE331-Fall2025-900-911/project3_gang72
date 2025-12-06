@@ -8,19 +8,21 @@ export default function ZReport() {
     const [alreadyRun, setAlreadyRun] = useState(false);
 
     useEffect(() => {
-        fetchZReport();
+        checkZReportStatus();
     }, []);
 
-    const fetchZReport = () => {
+    const checkZReportStatus = () => {
         setLoading(true);
         setError(null);
         fetch('/api/z-report')
             .then(res => {
+                // Check if it's a 403 (already run)
+                if (res.status === 403) {
+                    setAlreadyRun(true);
+                    setLoading(false);
+                    return res.json();
+                }
                 if (!res.ok) {
-                    // Check if it's a 403 (already run)
-                    if (res.status === 403) {
-                        setAlreadyRun(true);
-                    }
                     throw new Error('Failed to fetch Z-Report');
                 }
                 setAlreadyRun(false);
@@ -72,23 +74,28 @@ export default function ZReport() {
                     <p className="text-muted mb-0">{getCurrentDate()}</p>
                 </div>
                 <button
-                    className="btn btn-primary"
-                    onClick={fetchZReport}
+                    className={`btn ${alreadyRun ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={checkZReportStatus}
                     disabled={loading || alreadyRun}
-                    title={alreadyRun ? "Z-Report has already been run today" : ""}
+                    style={alreadyRun ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    title={alreadyRun ? "Z-Report has already been run today - it can only be executed once per day" : ""}
                 >
-                    {loading ? 'Loading...' : alreadyRun ? 'Already Run' : 'Run Z-Report'}
+                    {loading ? 'Loading...' : alreadyRun ? 'Already Run Today' : 'Run Z-Report'}
                 </button>
             </div>
 
             {alreadyRun && (
-                <div className="alert alert-warning" role="alert">
-                    <strong>Z-Report Already Executed!</strong> The Z-Report can only be run once per day.
-                    It has already been executed today. If you need to run a new Z-Report, please wait until tomorrow.
+                <div className="alert alert-warning alert-dismissible fade show" role="alert">
+                    <div className="d-flex align-items-center">
+                        <strong className="me-2">⚠️ Z-Report Already Executed Today</strong>
+                    </div>
+                    <hr />
+                    <p className="mb-2">The Z-Report can only be run <strong>once per day</strong>.</p>
+                    <p className="mb-0">It has already been executed today. If you need to run a new Z-Report, please return <strong>tomorrow</strong>.</p>
                 </div>
             )}
 
-            {error && (
+            {error && !alreadyRun && (
                 <div className="alert alert-danger" role="alert">
                     Error: {error}
                 </div>
