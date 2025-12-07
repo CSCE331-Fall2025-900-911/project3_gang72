@@ -10,7 +10,7 @@ export default function Cashier() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [currentSugar, setCurrentSugar] = useState("100%");
-const [currentIce, setCurrentIce] = useState("100%");
+  const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   // Current item being customized
@@ -186,11 +186,10 @@ const [currentIce, setCurrentIce] = useState("100%");
                 <button
                   key={cat}
                   type="button"
-                  className={`btn ${
-                    selectedCategory === cat
+                  className={`btn ${selectedCategory === cat
                       ? "btn-primary"
                       : "btn-outline-primary"
-                  }`}
+                    }`}
                   onClick={() => setSelectedCategory(cat)}
                 >
                   {cat}
@@ -205,11 +204,10 @@ const [currentIce, setCurrentIce] = useState("100%");
               {filteredItems.map((item) => (
                 <div key={item.id} className="col-6 col-lg-4">
                   <button
-                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${
-                      currentItem?.id === item.id
+                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${currentItem?.id === item.id
                         ? "btn-success"
                         : "btn-outline-secondary"
-                    }`}
+                      }`}
                     onClick={() => selectItem(item)}
                     style={{ minHeight: "80px" }}
                   >
@@ -227,22 +225,20 @@ const [currentIce, setCurrentIce] = useState("100%");
           {currentItem && (
             <div className="mt-3 p-3 border rounded bg-white">
               <h5>{currentItem.name}</h5>
-              
+
               <div className="mb-2">
                 <label className="form-label fw-bold">Size:</label>
                 <div className="btn-group ms-2" role="group">
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
-                    }`}
+                    className={`btn btn-sm ${currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
+                      }`}
                     onClick={() => setCurrentSize("Small")}
                   >
                     Small
                   </button>
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
-                    }`}
+                    className={`btn btn-sm ${currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
+                      }`}
                     onClick={() => setCurrentSize("Large")}
                   >
                     Large (+$1.00)
@@ -256,11 +252,10 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {availableToppings.map((topping) => (
                     <button
                       key={topping.id}
-                      className={`btn btn-sm ${
-                        currentToppings.find((t) => t.id === topping.id)
+                      className={`btn btn-sm ${currentToppings.find((t) => t.id === topping.id)
                           ? "btn-success"
                           : "btn-outline-secondary"
-                      }`}
+                        }`}
                       onClick={() => toggleTopping(topping)}
                     >
                       {topping.name} (+${Number(topping.price).toFixed(2)})
@@ -275,9 +270,8 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
+                      className={`btn btn-sm ${currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
+                        }`}
                       onClick={() => setCurrentSugar(lvl)}
                     >
                       {lvl}
@@ -292,9 +286,8 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentIce === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
+                      className={`btn btn-sm ${currentIce === lvl ? "btn-primary" : "btn-outline-primary"
+                        }`}
                       onClick={() => setCurrentIce(lvl)}
                     >
                       {lvl}
