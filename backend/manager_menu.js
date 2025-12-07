@@ -152,6 +152,13 @@ if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
   console.warn('⚠️  /api/auth/google not mounted (authController.verifyTokenHandler missing)');
 }
 
+if (authCtrl && typeof authCtrl.logoutHandler === 'function') {
+  app.post('/api/auth/logout', authCtrl.logoutHandler);
+  console.log('✅ Mounted: POST /api/auth/logout');
+} else {
+  console.warn('⚠️  /api/auth/logout not mounted (authController.logoutHandler missing)');
+}
+
 if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
   app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
   console.log('✅ Mounted: GET /auth/google');
@@ -192,28 +199,6 @@ app.get('/api/weather', async (req, res) => {
 // Translation routes
 app.post('/api/translate', translationCtrl.translateHandler);
 app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
-
-// ===== Google OAuth Authentication =====
-if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
-  app.post('/api/auth/google', authCtrl.verifyTokenHandler);
-  console.log('✅ Mounted: POST /api/auth/google');
-} else {
-  console.warn('⚠️  /api/auth/google not mounted (authController.verifyTokenHandler missing)');
-}
-
-if (oauthCtrl && typeof oauthCtrl.getAuthUrlHandler === 'function') {
-  app.get('/auth/google', oauthCtrl.getAuthUrlHandler);
-  console.log('✅ Mounted: GET /auth/google');
-} else {
-  console.warn('⚠️  /auth/google not mounted (oauthController.getAuthUrlHandler missing)');
-}
-
-if (oauthCtrl && typeof oauthCtrl.oauthCallbackHandler === 'function') {
-  app.get('/oauth2/callback', oauthCtrl.oauthCallbackHandler);
-  console.log('✅ Mounted: GET /oauth2/callback');
-} else {
-  console.warn('⚠️  /oauth2/callback not mounted (oauthController.oauthCallbackHandler missing)');
-}
 
 //==========WEATHER=============
 app.get('/api/weather', async (req, res) => {

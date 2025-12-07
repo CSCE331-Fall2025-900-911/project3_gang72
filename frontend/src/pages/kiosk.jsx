@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import VoiceRecorder from "../components/VoiceRecorder.jsx";
-import { useLanguage } from "../context/LanguageContext";
+
+// Mock VoiceRecorder component
+const VoiceRecorder = ({ onText, onSilenceTimeout, onFiveMinuteTimeout }) => {
+  return <div style={{ display: 'none' }} />;
+};
+
+// Mock translation function
+const t = (key) => key;
 
 export default function Kiosk() {
-  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [availableToppings, setAvailableToppings] = useState([]);
 
@@ -14,6 +19,10 @@ export default function Kiosk() {
   const [customerLast, setCustomerLast] = useState("");
   const [usedSpeech, setUsedSpeech] = useState(false);
   const [weather, setWeather] = useState(null);
+  const [sugarLevel, setSugarLevel] = useState("100%");
+  const [iceLevel, setIceLevel] = useState("100%");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   // MANUAL UI
   const [selectedItem, setSelectedItem] = useState(null);
@@ -22,7 +31,7 @@ export default function Kiosk() {
 
   // CONVERSATION CONTEXT
   const [conversation, setConversation] = useState({
-    step: "idle", // idle | awaitingSize | awaitingToppings
+    step: "idle",
     pendingDrink: null,
   });
 
@@ -37,7 +46,6 @@ export default function Kiosk() {
         null;
       speechSynthesis.speak(utter);
     } catch (err) {
-      // ignore if speech isn't supported
       console.warn("speak error:", err);
     }
   }
@@ -61,10 +69,8 @@ export default function Kiosk() {
     const voiceController = window.voiceController;
     if (!voiceController) return;
 
-    // helper that reads current cart length
-    const getCartLength = () => document.querySelectorAll(".list-group-item")?.length || cart.length;
+    const getCartLength = () => document.querySelectorAll(".cart-item")?.length || cart.length;
 
-    // Register commands (these refer to DOM/actions where appropriate)
     try {
       voiceController.registerCommand(
         ["order", "add", "I want"],
@@ -80,7 +86,6 @@ export default function Kiosk() {
             voiceController.speak("Your cart is empty");
           } else {
             voiceController.speak(`You have ${getCartLength()} items in your cart`);
-            document.querySelector(".border-top")?.scrollIntoView({ behavior: "smooth" });
           }
         }
       );
@@ -100,61 +105,40 @@ export default function Kiosk() {
       voiceController.registerCommand(
         ["place order", "checkout", "complete order", "finish order", "submit order"],
         () => {
-          const placeOrderBtn = document.querySelector('button.btn-primary');
-          if (placeOrderBtn && placeOrderBtn.textContent.includes("Place Order")) {
-            placeOrderBtn.click();
-            voiceController.speak("Placing your order");
-          } else {
-            // fallback: call submitOrder directly
-            voiceController.speak("Placing your order");
-            submitOrder();
-          }
+          voiceController.speak("Placing your order");
+          submitOrder();
         }
       );
 
       voiceController.registerCommand(
         ["add to cart", "add this", "confirm selection"],
         () => {
-          const addBtn = document.querySelector(".modal-footer .btn-primary");
-          if (addBtn && addBtn.textContent.includes("Add to Cart")) {
-            addBtn.click();
-            voiceController.speak("Added to cart");
-          }
+          addToCartManual();
+          voiceController.speak("Added to cart");
         }
       );
 
       voiceController.registerCommand(
         ["cancel", "close", "never mind"],
         () => {
-          const cancelBtn = document.querySelector(".modal-footer .btn-secondary");
-          if (cancelBtn) {
-            cancelBtn.click();
-            voiceController.speak("Cancelled");
-          }
+          setSelectedItem(null);
+          voiceController.speak("Cancelled");
         }
       );
 
       voiceController.registerCommand(
         ["small size", "small", "select small"],
         () => {
-          const sizeSelect = document.querySelector("select.form-select");
-          if (sizeSelect) {
-            sizeSelect.value = "Small";
-            setSelectedSize("Small");
-            voiceController.speak("Small size selected");
-          }
+          setSelectedSize("Small");
+          voiceController.speak("Small size selected");
         }
       );
 
       voiceController.registerCommand(
         ["large size", "large", "select large", "make it large"],
         () => {
-          const sizeSelect = document.querySelector("select.form-select");
-          if (sizeSelect) {
-            sizeSelect.value = "Large";
-            setSelectedSize("Large");
-            voiceController.speak("Large size selected, plus one dollar");
-          }
+          setSelectedSize("Large");
+          voiceController.speak("Large size selected, plus one dollar");
         }
       );
 
@@ -205,7 +189,6 @@ export default function Kiosk() {
       voiceController.registerCommand(
         ["show menu", "see menu", "view menu"],
         () => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
           voiceController.speak("Showing menu");
         }
       );
@@ -213,11 +196,7 @@ export default function Kiosk() {
       console.warn("voiceController registration error:", err);
     }
 
-    // cleanup (if voiceController supports unregister / nothing otherwise)
-    return () => {
-      // no-op: assume voiceController handles session lifetime
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {};
   }, [cart, selectedSize, selectedToppings, menuItems, tipPercent, usedSpeech]);
 
   // ========== LOAD MENU ==========
@@ -230,6 +209,11 @@ export default function Kiosk() {
           setAvailableToppings(
             data.items.filter((i) => i.category?.toLowerCase().includes("topping"))
           );
+          
+          const firstCategory = data.items.find(i => !i.category?.toLowerCase().includes("topping"))?.category;
+          if (firstCategory) {
+            setSelectedCategory(firstCategory);
+          }
         }
       })
       .catch(console.error);
@@ -252,9 +236,7 @@ export default function Kiosk() {
     return () => clearInterval(interval);
   }, []);
 
-  // -------------------------
-  // HELPERS: toppings / parsing
-  // -------------------------
+  // HELPERS
   function matchExactTopping(words) {
     return availableToppings.filter((t) => words.includes(t.name.toLowerCase()));
   }
@@ -287,9 +269,6 @@ export default function Kiosk() {
     return { drink, size, toppings, phone };
   }
 
-  // -------------------------
-  // ADD TO CART (VOICE)
-  // -------------------------
   function addDrinkToCart(drinkItem, size, toppings = []) {
     if (!drinkItem) return;
 
@@ -298,9 +277,11 @@ export default function Kiosk() {
     const drink = {
       id: drinkItem.id,
       name: drinkItem.name,
-      size,
+      size: size,
       price,
-      toppings: (toppings || []).map((t) => ({
+      sugarLevel: sugarLevel,
+      iceLevel: iceLevel,
+      toppings: toppings.map((t) => ({
         id: t.id,
         name: t.name,
         price: Number(t.price),
@@ -308,18 +289,9 @@ export default function Kiosk() {
     };
 
     setCart((prev) => [...prev, drink]);
-    // close any modal if open (safety)
-    try {
-      const modal = bootstrap.Modal.getInstance(document.getElementById("itemModal"));
-      modal?.hide();
-    } catch (e) {
-      // ignore if bootstrap isn't present
-    }
+    setSelectedItem(null);
   }
 
-  // -------------------------
-  // MANUAL ADD TO CART
-  // -------------------------
   function addToCartManual() {
     if (!selectedItem) return;
 
@@ -330,6 +302,8 @@ export default function Kiosk() {
       name: selectedItem.name,
       size: selectedSize,
       price,
+      sugarLevel: sugarLevel,
+      iceLevel: iceLevel,
       toppings: selectedToppings.map((t) => ({
         id: t.id,
         name: t.name,
@@ -338,22 +312,12 @@ export default function Kiosk() {
     };
 
     setCart((prev) => [...prev, drink]);
-
-    try {
-      const modal = bootstrap.Modal.getInstance(document.getElementById("itemModal"));
-      modal?.hide();
-    } catch (e) {
-      // ignore
-    }
+    setSelectedItem(null);
   }
 
-  // -------------------------
-  // SUBMIT ORDER (merged voice + manual)
-  // -------------------------
   const submitOrder = async () => {
     let phone = customerPhone;
 
-    // If no phone, allow voice mode to auto-generate
     if (!phone || phone.trim() === "") {
       if (usedSpeech) {
         phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
@@ -368,6 +332,8 @@ export default function Kiosk() {
       alert(t("Cart is empty!"));
       return;
     }
+
+    setIsSubmitting(true);
 
     const items = cart.flatMap((d) => [
       {
@@ -410,24 +376,21 @@ export default function Kiosk() {
     } catch (err) {
       console.error(err);
       alert(t("Order failed"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // -------------------------
-  // HANDLERS FOR VOICE
-  // -------------------------
   function handleVoice(text) {
     setUsedSpeech(true);
     const spoken = text.toLowerCase();
 
-    // REMOVE LAST
     if (spoken.includes("remove last")) {
       setCart((prev) => prev.slice(0, -1));
       speak("Removed the last drink.");
       return;
     }
 
-    // TIP
     const tipMatch = spoken.match(/tip (\d{1,2})/);
     if (tipMatch) {
       setTipPercent(Number(tipMatch[1]));
@@ -435,14 +398,12 @@ export default function Kiosk() {
       return;
     }
 
-    // FINISH ORDER
     if (spoken.includes("done") || spoken.includes("finish") || spoken.includes("place order")) {
       speak("Placing your order.");
       submitOrder();
       return;
     }
 
-    // WAITING FOR SIZE
     if (conversation.step === "awaitingSize") {
       let size = null;
       if (spoken.includes("large")) size = "Large";
@@ -462,7 +423,6 @@ export default function Kiosk() {
       return;
     }
 
-    // WAITING FOR TOPPINGS
     if (conversation.step === "awaitingToppings") {
       const { toppings } = parseSpeech(spoken);
       const finalToppings = toppings || [];
@@ -480,7 +440,6 @@ export default function Kiosk() {
       return;
     }
 
-    // NORMAL INPUT
     const parsed = parseSpeech(spoken);
     const { drink, size, toppings, phone } = parsed;
 
@@ -495,7 +454,6 @@ export default function Kiosk() {
       return;
     }
 
-    // Missing size?
     if (!size) {
       speak(`What size would you like for ${drink.name}?`);
       setConversation({
@@ -505,7 +463,6 @@ export default function Kiosk() {
       return;
     }
 
-    // Missing toppings?
     if (!toppings || toppings.length === 0) {
       speak("Any toppings?");
       setConversation({
@@ -515,7 +472,6 @@ export default function Kiosk() {
       return;
     }
 
-    // FULL info → add
     addDrinkToCart(drink, size, toppings);
     speak(`Added your ${size} ${drink.name}.`);
   }
@@ -535,9 +491,6 @@ export default function Kiosk() {
     }
   }
 
-  // -------------------------
-  // GROUP & UI DATA
-  // -------------------------
   const groupedItems = menuItems
     .filter((i) => !i.category?.toLowerCase().includes("topping"))
     .reduce((acc, item) => {
@@ -547,9 +500,6 @@ export default function Kiosk() {
       return acc;
     }, {});
 
-  // -------------------------
-  // CALCULATIONS
-  // -------------------------
   const subtotal = cart.reduce(
     (sum, d) => sum + Number(d.price || 0) + (d.toppings?.reduce((s, t) => s + Number(t.price || 0), 0) || 0),
     0
@@ -557,20 +507,13 @@ export default function Kiosk() {
   const tipAmount = subtotal * (Number(tipPercent || 0) / 100);
   const total = subtotal + tipAmount;
 
-  // -------------------------
-  // OPEN ITEM MODAL
-  // -------------------------
   const openItemModal = (item) => {
     if (item.category?.toLowerCase().includes("topping")) return;
     setSelectedItem(item);
     setSelectedSize("Small");
     setSelectedToppings([]);
-    try {
-      const modal = new bootstrap.Modal(document.getElementById("itemModal"));
-      modal.show();
-    } catch (e) {
-      // ignore if bootstrap not present
-    }
+    setSugarLevel("100%");
+    setIceLevel("100%");
   };
 
   const toggleTopping = (t) => {
@@ -579,188 +522,678 @@ export default function Kiosk() {
     );
   };
 
-  // -------------------------
-  // RENDER
-  // -------------------------
-  return (
-    <div className="container mt-4">
-      <h1 className="text-center mb-4">Kiosk Page</h1>
+  const categories = Object.keys(groupedItems);
 
+  return (
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <VoiceRecorder
         onText={handleVoice}
         onSilenceTimeout={handleSilence}
         onFiveMinuteTimeout={handleFiveMinuteTimeout}
       />
 
-      {/* CUSTOMER INPUT */}
-      <div className="text-center mb-4">
-        <h1>{t("Kiosk Page")}</h1>
-
-        {weather ? (
-          <div style={{ fontSize: "1.5rem", marginTop: "10px" }}>
+      {/* LEFT SIDEBAR */}
+      <div style={{ 
+        width: '220px', 
+        backgroundColor: '#fafafa', 
+        borderRight: '1px solid #e0e0e0',
+        padding: '20px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        overflowY: 'auto'
+      }}>
+        <div style={{ 
+          color: '#333', 
+          fontSize: '20px', 
+          fontWeight: '600', 
+          marginBottom: '16px', 
+          paddingLeft: '8px'
+        }}>
+          Categories
+        </div>
+        
+        {weather && (
+          <div style={{ 
+            color: '#666', 
+            textAlign: 'center', 
+            padding: '12px',
+            backgroundColor: '#fff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            fontSize: '16px',
+            marginBottom: '12px'
+          }}>
             {weatherIcons[weather.weatherCode] || "❓"} {weather.temperature}°F
           </div>
-        ) : (
-          <div className="text-muted small">{t("Loading weather...")}</div>
         )}
+
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            style={{
+              padding: '16px 12px',
+              backgroundColor: selectedCategory === cat ? '#333' : '#fff',
+              color: selectedCategory === cat ? '#fff' : '#333',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              textAlign: 'left'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
-      <div className="alert alert-info text-center" role="alert">
-        🎤 {t("Voice Commands: Say 'place order', 'view cart', 'small size', 'large size', 'ten percent tip', or click any item name!")}
-      </div>
+      {/* MAIN CONTENT */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        
+        <div style={{ 
+          backgroundColor: '#fff', 
+          padding: '20px 30px',
+          borderBottom: '1px solid #e0e0e0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '600', color: '#333' }}>
+            {t("Kiosk Page")}
+          </h1>
+          
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder={t("First Name")}
+              value={customerFirst}
+              onChange={(e) => setCustomerFirst(e.target.value)}
+              style={{
+                padding: '10px 14px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                width: '130px'
+              }}
+            />
+            <input
+              type="text"
+              placeholder={t("Last Name")}
+              value={customerLast}
+              onChange={(e) => setCustomerLast(e.target.value)}
+              style={{
+                padding: '10px 14px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                width: '130px'
+              }}
+            />
+            <input
+              type="text"
+              placeholder={t("Phone Number")}
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              style={{
+                padding: '10px 14px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                width: '150px'
+              }}
+            />
+          </div>
+        </div>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder={t("First Name")}
-          value={customerFirst}
-          onChange={(e) => setCustomerFirst(e.target.value)}
-          className="form-control d-inline w-auto me-2"
-        />
-        <input
-          type="text"
-          placeholder={t("Last Name")}
-          value={customerLast}
-          onChange={(e) => setCustomerLast(e.target.value)}
-          className="form-control d-inline w-auto me-2"
-        />
-        <input
-          type="text"
-          placeholder={t("Phone Number")}
-          value={customerPhone}
-          onChange={(e) => setCustomerPhone(e.target.value)}
-          className="form-control d-inline w-auto"
-        />
-      </div>
-
-      {/* MENU */}
-      {Object.keys(groupedItems).map((cat) => (
-        <div key={cat} className="mb-4">
-          <h3>{cat}</h3>
-          <div className="row g-2">
-            {groupedItems[cat].map((item) => (
-              <div key={item.id} className="col-6 col-md-3">
-                <button
-                  className="btn btn-outline-primary w-100"
-                  onClick={() => openItemModal(item)}
-                  data-item-name={item.name}
-                >
-                  {item.name} (${Number(item.price).toFixed(2)})
-                </button>
+        <div style={{ 
+          flex: 1, 
+          padding: '24px',
+          overflowY: 'auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+          gap: '16px',
+          alignContent: 'start',
+          backgroundColor: '#fafafa'
+        }}>
+          {selectedCategory && groupedItems[selectedCategory]?.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => openItemModal(item)}
+              style={{
+                backgroundColor: '#fff',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                padding: '0',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '240px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                e.currentTarget.style.borderColor = '#333';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+            >
+              <div style={{
+                width: '100%',
+                height: '150px',
+                backgroundColor: '#f5f5f5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '56px'
+              }}>
+                🧋
               </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* CART */}
-      <div className="border-top pt-3 mt-4">
-        <h4>{t("Cart")}</h4>
-        {cart.length === 0 ? (
-          <p>{t("No items added yet.")}</p>
-        ) : (
-          <ul className="list-group">
-            {cart.map((drink, i) => (
-              <li key={i} className="list-group-item">
-                <div className="fw-bold">
-                  {drink.name} ({drink.size}) - ${Number(drink.price).toFixed(2)}
+              
+              <div style={{ padding: '14px', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '500', 
+                  color: '#333',
+                  marginBottom: '6px'
+                }}>
+                  {item.name}
                 </div>
-
-                {drink.toppings?.length > 0 && (
-                  <ul className="ms-3 mt-1 text-muted small">
-                    {drink.toppings.map((t) => (
-                      <li key={t.id}>
-                        + {t.name} (${Number(t.price).toFixed(2)})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <button
-                  className="btn btn-sm btn-outline-danger mt-2"
-                  onClick={() => setCart((prev) => prev.filter((_, idx) => idx !== i))}
-                >
-                  {t("Remove")}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {/* Tip */}
-        <div className="mt-3">
-          <label className="me-2">{t("Tip %")}:</label>
-          <input
-            type="number"
-            value={tipPercent}
-            onChange={(e) => setTipPercent(e.target.value)}
-            className="form-control d-inline w-auto"
-            style={{ width: "80px" }}
-          />
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '600', 
+                  color: '#666'
+                }}>
+                  ${Number(item.price).toFixed(2)}
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
-
-        {/* Totals */}
-        <div className="mt-3">
-          <div className="fw-normal">{t("Subtotal")}: ${subtotal.toFixed(2)}</div>
-          <div className="fw-normal">{t("Tip")} ({tipPercent}%): ${tipAmount.toFixed(2)}</div>
-          <div className="fw-bold fs-5 mt-2">{t("Total")}: ${total.toFixed(2)}</div>
-        </div>
-
-        <button onClick={submitOrder} className="btn btn-primary mt-3">
-          {t("Place Order")}
-        </button>
       </div>
 
-      {/* MANUAL MODAL */}
-      <div className="modal fade" id="itemModal" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            {selectedItem && (
-              <>
-                <div className="modal-header">
-                  <h5 className="modal-title">{selectedItem.name}</h5>
-                  <button className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+      {/* RIGHT SIDEBAR */}
+      <div style={{ 
+        width: '360px', 
+        backgroundColor: '#fff',
+        borderLeft: '1px solid #e0e0e0',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
+        <div style={{ 
+          padding: '20px 24px',
+          borderBottom: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600', color: '#333' }}>
+            {t("Cart")}
+          </h2>
+        </div>
 
-                <div className="modal-body">
-                  <label className="form-label">{t("Size")}</label>
-                  <select
-                    value={selectedSize}
-                    onChange={(e) => setSelectedSize(e.target.value)}
-                    className="form-select mb-3"
-                  >
-                    <option value="Small">{t("Small")}</option>
-                    <option value="Large">{t("Large")} (+$1.00)</option>
-                  </select>
-
-                  <label className="form-label">Toppings</label>
-                  <div className="d-flex flex-wrap">
-                    {availableToppings.map((t) => (
-                      <button
-                        key={t.id}
-                        className={`btn btn-sm m-1 ${selectedToppings.find((x) => x.id === t.id) ? "btn-success" : "btn-outline-secondary"}`}
-                        onClick={() => toggleTopping(t)}
-                        type="button"
-                      >
-                        {t.name} (+${Number(t.price).toFixed(2)})
-                      </button>
-                    ))}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+          {cart.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              color: '#999', 
+              padding: '40px 20px',
+              fontSize: '15px'
+            }}>
+              {t("No items added yet.")}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {cart.map((drink, i) => (
+                <div key={i} className="cart-item" style={{
+                  backgroundColor: '#fafafa',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e0e0e0'
+                }}>
+                  <div style={{ 
+                    fontWeight: '500', 
+                    fontSize: '14px',
+                    marginBottom: '6px',
+                    color: '#333'
+                  }}>
+                    {drink.name} ({drink.size})
                   </div>
-                </div>
+                  <div style={{ 
+                    fontSize: '13px', 
+                    color: '#666',
+                    marginBottom: '6px'
+                  }}>
+                    Sugar: {drink.sugarLevel} | Ice: {drink.iceLevel}
+                  </div>
+                  <div style={{ 
+                    fontWeight: '600', 
+                    color: '#333',
+                    fontSize: '14px',
+                    marginBottom: '8px'
+                  }}>
+                    ${Number(drink.price).toFixed(2)}
+                  </div>
+                  
+                  {drink.toppings?.length > 0 && (
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: '#666',
+                      marginBottom: '10px',
+                      paddingLeft: '8px'
+                    }}>
+                      {drink.toppings.map((t) => (
+                        <div key={t.id}>
+                          + {t.name} (${Number(t.price).toFixed(2)})
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                <div className="modal-footer">
-                  <button className="btn btn-secondary" data-bs-dismiss="modal">
-                    {t("Cancel")}
-                  </button>
-                  <button className="btn btn-primary" onClick={addToCartManual}>
-                    {t("Add to Cart")}
+                  <button
+                    onClick={() => setCart((prev) => prev.filter((_, idx) => idx !== i))}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#dc3545',
+                      border: '1px solid #dc3545',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {t("Remove")}
                   </button>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ 
+          padding: '20px 24px',
+          borderTop: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa'
+        }}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', display: 'block', color: '#333' }}>
+              {t("Tip %")}
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[0, 10, 15, 20].map((tip) => (
+                <button
+                  key={tip}
+                  onClick={() => setTipPercent(tip)}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    backgroundColor: tipPercent === tip ? '#333' : '#fff',
+                    color: tipPercent === tip ? '#fff' : '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  {tip}%
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div style={{ marginBottom: '16px', fontSize: '15px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              marginBottom: '6px',
+              color: '#666'
+            }}>
+              <span>{t("Subtotal")}:</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              color: '#666'
+            }}>
+              <span>{t("Tip")} ({tipPercent}%):</span>
+              <span>${tipAmount.toFixed(2)}</span>
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              fontSize: '18px',
+              fontWeight: '600',
+              paddingTop: '10px',
+              borderTop: '1px solid #ddd',
+              color: '#333'
+            }}>
+              <span>{t("Total")}:</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={submitOrder}
+            disabled={isSubmitting}
+            style={{
+              width: '100%',
+              padding: '14px',
+              backgroundColor: isSubmitting ? '#ccc' : '#333',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isSubmitting ? t("Processing...") : t("Place Order")}
+          </button>
         </div>
       </div>
+
+      {/* MODAL */}
+      {selectedItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '85vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+          }}>
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e0e0e0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600', color: '#333' }}>
+                {selectedItem.name}
+              </h2>
+              <button
+                onClick={() => setSelectedItem(null)}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '28px',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: '0',
+                  width: '32px',
+                  height: '32px',
+                  lineHeight: '28px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{
+              padding: '24px',
+              overflowY: 'auto',
+              flex: 1
+            }}>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '12px',
+                  color: '#333'
+                }}>
+                  {t("Size")}
+                </label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setSelectedSize('Small')}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      backgroundColor: selectedSize === 'Small' ? '#333' : '#fff',
+                      color: selectedSize === 'Small' ? '#fff' : '#666',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t("Small")}
+                  </button>
+                  <button
+                    onClick={() => setSelectedSize('Large')}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      backgroundColor: selectedSize === 'Large' ? '#333' : '#fff',
+                      color: selectedSize === 'Large' ? '#fff' : '#666',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t("Large")} (+$1.00)
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '12px',
+                  color: '#333'
+                }}>
+                  Sugar Level
+                </label>
+                <select
+                  value={sugarLevel}
+                  onChange={(e) => setSugarLevel(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '14px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    color: '#333'
+                  }}
+                >
+                  <option>0%</option>
+                  <option>25%</option>
+                  <option>50%</option>
+                  <option>75%</option>
+                  <option>100%</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '12px',
+                  color: '#333'
+                }}>
+                  Ice Level
+                </label>
+                <select
+                  value={iceLevel}
+                  onChange={(e) => setIceLevel(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '14px',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    color: '#333'
+                  }}
+                >
+                  <option>0%</option>
+                  <option>25%</option>
+                  <option>50%</option>
+                  <option>75%</option>
+                  <option>100%</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '12px',
+                  color: '#333'
+                }}>
+                  Toppings
+                </label>
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: '10px'
+                }}>
+                  {availableToppings.map((topping) => (
+                    <button
+                      key={topping.id}
+                      onClick={() => toggleTopping(topping)}
+                      style={{
+                        padding: '12px',
+                        backgroundColor: selectedToppings.find((x) => x.id === topping.id) ? '#333' : '#fff',
+                        color: selectedToppings.find((x) => x.id === topping.id) ? '#fff' : '#666',
+                        border: '1px solid #ddd',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {topping.name}
+                      <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
+                        +${Number(topping.price).toFixed(2)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              padding: '20px 24px',
+              borderTop: '1px solid #e0e0e0',
+              display: 'flex',
+              gap: '12px',
+              backgroundColor: '#fafafa'
+            }}>
+              <button
+                onClick={() => setSelectedItem(null)}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: '#fff',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                {t("Cancel")}
+              </button>
+              <button
+                onClick={addToCartManual}
+                style={{
+                  flex: 2,
+                  padding: '14px',
+                  backgroundColor: '#333',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {t("Add to Cart")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LOADING */}
+      {isSubmitting && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '4px solid rgba(255,255,255,0.3)',
+            borderTop: '4px solid white',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }} />
+          <h3 style={{ color: 'white', marginTop: '24px', fontSize: '20px', fontWeight: '500' }}>
+            {t("Processing Your Order...")}
+          </h3>
+          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '15px', marginTop: '8px' }}>
+            {t("Please wait")}
+          </p>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

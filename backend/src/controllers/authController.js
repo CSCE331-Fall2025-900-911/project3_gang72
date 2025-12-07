@@ -54,7 +54,29 @@ async function verifyTokenHandler(req, res) {
     }
 }
 
+/**
+ * logoutHandler: handles logout by clearing user session
+ * @param {object} req
+ * @param {object} res
+ */
+function logoutHandler(req, res) {
+    try {
+        // Log the logout event
+        console.log('User logout request processed');
+        
+        // Return success response - frontend will handle clearing sessionStorage
+        return res.json({ 
+            success: true,
+            message: 'Logout successful' 
+        });
+    } catch (err) {
+        console.error('Error during logout:', err);
+        return res.status(500).json({ error: 'Logout failed' });
+    }
+}
+
 module.exports = {
     verifyIdToken,
     verifyTokenHandler,
+    logoutHandler,
 };
