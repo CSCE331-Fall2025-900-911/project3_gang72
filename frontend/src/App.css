@@ -11,17 +11,24 @@
   --soft-beige: #C4B5A0;
   --peach: #FFB88C;
   --white: #ffffff;
+  --light-bg: #f8f9fa;
+  --border-color: #e5e5e5;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: #f5f5f5;
+  background: var(--light-bg);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Sidebar Navbar Styles - Stronger selectors to override Bootstrap */
@@ -37,6 +44,7 @@ body {
   padding: 0 !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
+  flex-shrink: 0 !important;
 }
 
 .navbar .container-fluid {
@@ -113,18 +121,18 @@ body {
 .main-content {
   flex: 1;
   margin-left: 240px;
-  background: #f5f5f5;
-  padding: 3rem 2.5rem;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  padding: 2rem;
 }
 
-.main-content>* {
-  width: 100%;
-  max-width: 1400px;
+/* Override Tailwind max-width constraints - HORIZONTAL WIDTH FIX */
+.main-content .max-w-7xl,
+.main-content .max-w-6xl,
+.main-content .max-w-5xl,
+.main-content .max-w-4xl,
+.main-content .max-w-3xl,
+.main-content .max-w-2xl {
+  max-width: 100% !important;
 }
 
 /* Home Page Styles */
@@ -177,11 +185,12 @@ body {
   gap: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .module-card {
   background: white;
-  border: 2px solid #e5e5e5;
+  border: 2px solid var(--border-color);
   border-radius: 20px;
   padding: 2.5rem;
   cursor: pointer;
@@ -191,6 +200,7 @@ body {
   overflow: hidden;
   text-decoration: none;
   display: block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .module-card::before {
@@ -212,8 +222,8 @@ body {
 
 .module-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-  border-color: var(--module-color);
+  box-shadow: 0 15px 40px rgba(88, 62, 35, 0.2);
+  border-color: var(--olive-bark);
   text-decoration: none;
 }
 
@@ -357,6 +367,7 @@ body {
 
   .main-content {
     margin-left: 0;
+    width: 100%;
     padding: 2rem 1.5rem;
   }
 

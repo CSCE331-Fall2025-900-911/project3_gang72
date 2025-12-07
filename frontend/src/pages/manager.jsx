@@ -33,7 +33,7 @@ export default function Manager() {
     }, []);
 
     return (
-        <div>
+        <div className="main-content">
             <ManagerNavbar />
             <div className="container mt-4">
                 <h1 className="mb-4">Manager Dashboard</h1>
