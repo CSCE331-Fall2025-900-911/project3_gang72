@@ -16,16 +16,9 @@ export default function ZReport() {
         setError(null);
         fetch('/api/z-report')
             .then(res => {
-                // Check if it's a 403 (already run)
-                if (res.status === 403) {
-                    setAlreadyRun(true);
-                    setLoading(false);
-                    return res.json();
-                }
                 if (!res.ok) {
                     throw new Error('Failed to fetch Z-Report');
                 }
-                setAlreadyRun(false);
                 return res.json();
             })
             .then(data => {
