@@ -22,6 +22,13 @@ export default function Items() {
   const [editPrice, setEditPrice] = useState("");
 
   // Fetch all data
+  useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+  
   const fetchData = async () => {
     try {
       setLoading(true);

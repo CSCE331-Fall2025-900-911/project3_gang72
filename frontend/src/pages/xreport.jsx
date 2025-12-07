@@ -7,6 +7,13 @@ export default function XReport() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+  
+    useEffect(() => {
         fetchXReport();
     }, []);
 
