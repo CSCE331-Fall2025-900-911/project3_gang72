@@ -159,7 +159,7 @@ async function createOrder(req, res) {
     // 1) find or create customer
     let customerId = await findCustomerIdByPhone(client, customer.phone);
     let hasFreedrink = false;
-    
+
     if (!customerId) {
       customerId = await createCustomer(client, customer.firstName || null, customer.lastName || null, customer.phone);
     } else {
@@ -169,14 +169,14 @@ async function createOrder(req, res) {
         [customerId]
       );
       const currentCount = countRes.rows[0].drink_count;
-      
+
       // Count number of drinks (non-topping items) in this order
       const drinkItems = items.filter(it => {
         // Exclude toppings - you may need to adjust this logic based on your item structure
         return !it.name || !it.name.toLowerCase().includes('topping');
       });
       const drinksInOrder = drinkItems.length;
-      
+
       // Check if customer gets a free drink (every 10th drink)
       if (currentCount >= 9) {
         hasFreedrink = true;
