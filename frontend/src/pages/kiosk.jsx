@@ -364,8 +364,14 @@ export default function Kiosk() {
       const data = await res.json();
 
       if (data.success) {
-        speak(t("Your order has been placed."));
-        alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
+        // Check if customer earned a free drink
+        if (data.freeDrink) {
+          speak(t("Congratulations! You have earned a free drink!"));
+          alert(t("🎉 FREE DRINK REWARD! 🎉\n\nCongratulations! You have earned a FREE DRINK!\n\nReceipt") + ` #${data.receiptId}`);
+        } else {
+          speak(t("Your order has been placed."));
+          alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
+        }
         setCart([]);
         setTipPercent(0);
         setConversation({ step: "idle", pendingDrink: null });
