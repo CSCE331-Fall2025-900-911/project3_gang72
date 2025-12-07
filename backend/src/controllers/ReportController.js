@@ -92,6 +92,7 @@ async function hasZReportBeenRunToday() {
             CREATE TABLE IF NOT EXISTS z_report_status (
                 id SERIAL PRIMARY KEY,
                 report_date DATE NOT NULL UNIQUE,
+                summary JSONB NOT NULL,
                 run_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
@@ -101,23 +102,23 @@ async function hasZReportBeenRunToday() {
         const result = await client.query(
             'SELECT * FROM z_report_status WHERE report_date = CURRENT_DATE'
         );
-        return result.rows.length > 0;
+        return result.rows.length > 0 ? result.rows[0] : null;
     } finally {
         client.release();
     }
 }
 
 /**
- * Mark Z-report as run for today
+ * Mark Z-report as run for today with the summary data
  */
-async function markZReportAsRun() {
+async function markZReportAsRun(summary) {
     const client = await pool.connect();
     try {
         await client.query(`
-            INSERT INTO z_report_status (report_date, run_timestamp)
-            VALUES (CURRENT_DATE, CURRENT_TIMESTAMP)
+            INSERT INTO z_report_status (report_date, summary, run_timestamp)
+            VALUES (CURRENT_DATE, $1::jsonb, CURRENT_TIMESTAMP)
             ON CONFLICT (report_date) DO NOTHING
-        `);
+        `, [JSON.stringify(summary)]);
     } finally {
         client.release();
     }
@@ -126,20 +127,22 @@ async function markZReportAsRun() {
 async function zReportHandler(req, res) {
     try {
         // Check if Z-report has already been run today
-        const alreadyRun = await hasZReportBeenRunToday();
-        if (alreadyRun) {
-            return res.status(403).json({
-                success: false,
-                error: 'Z-Report has already been run today. It can only be executed once per day.',
-                alreadyRun: true
+        const existingReport = await hasZReportBeenRunToday();
+        if (existingReport) {
+            // Return the existing report data
+            return res.status(200).json({
+                success: true,
+                summary: existingReport.summary,
+                alreadyRun: true,
+                runTimestamp: existingReport.run_timestamp
             });
         }
 
         // Generate the Z-report
         const summary = await zReport();
 
-        // Mark Z-report as run
-        await markZReportAsRun();
+        // Mark Z-report as run with the summary
+        await markZReportAsRun(summary);
 
         res.json({ success: true, summary, alreadyRun: false });
     } catch (err) {
