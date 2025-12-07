@@ -81,47 +81,32 @@ async function zReport() {
     }
 }
 
+// In-memory cache for Z-report (per day)
+let zReportCache = {
+    date: null,
+    summary: null
+};
+
 /**
  * Check if Z-report has already been run today
  */
 async function hasZReportBeenRunToday() {
-    const client = await pool.connect();
-    try {
-        // Create table if it doesn't exist
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS z_report_status (
-                id SERIAL PRIMARY KEY,
-                report_date DATE NOT NULL UNIQUE,
-                summary JSONB NOT NULL,
-                run_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Check if Z-report was already run today
-        const result = await client.query(
-            'SELECT * FROM z_report_status WHERE report_date = CURRENT_DATE'
-        );
-        return result.rows.length > 0 ? result.rows[0] : null;
-    } finally {
-        client.release();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    if (zReportCache.date === today && zReportCache.summary) {
+        return zReportCache.summary;
     }
+    
+    return null;
 }
 
 /**
  * Mark Z-report as run for today with the summary data
  */
 async function markZReportAsRun(summary) {
-    const client = await pool.connect();
-    try {
-        await client.query(`
-            INSERT INTO z_report_status (report_date, summary, run_timestamp)
-            VALUES (CURRENT_DATE, $1::jsonb, CURRENT_TIMESTAMP)
-            ON CONFLICT (report_date) DO NOTHING
-        `, [JSON.stringify(summary)]);
-    } finally {
-        client.release();
-    }
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    zReportCache.date = today;
+    zReportCache.summary = summary;
 }
 
 async function zReportHandler(req, res) {
@@ -132,9 +117,8 @@ async function zReportHandler(req, res) {
             // Return the existing report data
             return res.status(200).json({
                 success: true,
-                summary: existingReport.summary,
-                alreadyRun: true,
-                runTimestamp: existingReport.run_timestamp
+                summary: existingReport,
+                alreadyRun: true
             });
         }
 
