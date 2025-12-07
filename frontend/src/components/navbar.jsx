@@ -21,7 +21,7 @@ export default function Navbar() {
     } finally {
       // Clear user from sessionStorage regardless of backend response
       sessionStorage.removeItem('user');
-      
+
       // Sign out from Google if available
       if (window.google && window.google.accounts && window.google.accounts.id) {
         try {
@@ -30,16 +30,16 @@ export default function Navbar() {
           console.error('Error disabling Google auto-select:', e);
         }
       }
-      
+
       // Redirect to login
       navigate('/login', { replace: true });
     }
   };
-  
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 w-100">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">{t("My App")}</Link>
+        <Link className="navbar-brand" to="/">{t("Boba Bliss")}</Link>
 
         {/* Toggle button for small screens */}
         <button
@@ -67,7 +67,7 @@ export default function Navbar() {
             </li>
             {user && (
               <li className="nav-item ms-3">
-                <button 
+                <button
                   className="btn btn-outline-light btn-sm"
                   onClick={handleLogout}
                   title={user.email}
