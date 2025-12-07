@@ -32,7 +32,7 @@ async function createCustomer(client, first, last, phone) {
   const nextId = nextIdRes.rows[0].next_id;
 
   const insertSql = `
-    INSERT INTO customer (customer_id, first_name, last_name, phone_number, rewards_points)
+    INSERT INTO customer (customer_id, first_name, last_name, phone_number, drink_count)
     VALUES ($1, $2, $3, $4, $5)
   `;
   await client.query(insertSql, [nextId, first || null, last || null, phone, 0]);
@@ -158,15 +158,40 @@ async function createOrder(req, res) {
 
     // 1) find or create customer
     let customerId = await findCustomerIdByPhone(client, customer.phone);
+    let hasFreedrink = false;
+    
     if (!customerId) {
       customerId = await createCustomer(client, customer.firstName || null, customer.lastName || null, customer.phone);
     } else {
-      // update rewards points: add floor(total)
-      const rewardToAdd = Math.floor(total);
-      await client.query(
-        `UPDATE customer SET rewards_points = COALESCE(rewards_points,0) + $1 WHERE customer_id = $2`,
-        [rewardToAdd, customerId]
+      // Get current drink count
+      const countRes = await client.query(
+        `SELECT COALESCE(drink_count, 0) AS drink_count FROM customer WHERE customer_id = $1`,
+        [customerId]
       );
+      const currentCount = countRes.rows[0].drink_count;
+      
+      // Count number of drinks (non-topping items) in this order
+      const drinkItems = items.filter(it => {
+        // Exclude toppings - you may need to adjust this logic based on your item structure
+        return !it.name || !it.name.toLowerCase().includes('topping');
+      });
+      const drinksInOrder = drinkItems.length;
+      
+      // Check if customer gets a free drink (every 10th drink)
+      if (currentCount >= 9) {
+        hasFreedrink = true;
+        // Reset count after free drink
+        await client.query(
+          `UPDATE customer SET drink_count = $1 WHERE customer_id = $2`,
+          [drinksInOrder - 1, customerId]
+        );
+      } else {
+        // Increment drink count
+        await client.query(
+          `UPDATE customer SET drink_count = COALESCE(drink_count, 0) + $1 WHERE customer_id = $2`,
+          [drinksInOrder, customerId]
+        );
+      }
     }
 
     // 2) pick random employee
@@ -186,6 +211,7 @@ async function createOrder(req, res) {
       orderIds: insertedOrderIds,
       total,
       tipAmount,
+      freeDrink: hasFreedrink,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => { });

@@ -149,7 +149,12 @@ const [currentIce, setCurrentIce] = useState("100%");
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        // Check if customer earned a free drink
+        if (data.freeDrink) {
+          alert(`🎉 FREE DRINK REWARD! 🎉\n\nCongratulations! Customer has earned a FREE DRINK!\n\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        } else {
+          alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        }
         // Clear form
         setCart([]);
         setTipPercent(0);
