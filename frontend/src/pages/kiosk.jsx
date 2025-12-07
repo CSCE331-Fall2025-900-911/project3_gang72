@@ -196,7 +196,7 @@ export default function Kiosk() {
       console.warn("voiceController registration error:", err);
     }
 
-    return () => {};
+    return () => { };
   }, [cart, selectedSize, selectedToppings, menuItems, tipPercent, usedSpeech]);
 
   // ========== LOAD MENU ==========
@@ -209,7 +209,7 @@ export default function Kiosk() {
           setAvailableToppings(
             data.items.filter((i) => i.category?.toLowerCase().includes("topping"))
           );
-          
+
           const firstCategory = data.items.find(i => !i.category?.toLowerCase().includes("topping"))?.category;
           if (firstCategory) {
             setSelectedCategory(firstCategory);
@@ -533,9 +533,9 @@ export default function Kiosk() {
       />
 
       {/* LEFT SIDEBAR */}
-      <div style={{ 
-        width: '220px', 
-        backgroundColor: '#fafafa', 
+      <div style={{
+        width: '220px',
+        backgroundColor: '#fafafa',
         borderRight: '1px solid #e0e0e0',
         padding: '20px 12px',
         display: 'flex',
@@ -543,20 +543,20 @@ export default function Kiosk() {
         gap: '8px',
         overflowY: 'auto'
       }}>
-        <div style={{ 
-          color: '#333', 
-          fontSize: '20px', 
-          fontWeight: '600', 
-          marginBottom: '16px', 
+        <div style={{
+          color: '#333',
+          fontSize: '20px',
+          fontWeight: '600',
+          marginBottom: '16px',
           paddingLeft: '8px'
         }}>
           Categories
         </div>
-        
+
         {weather && (
-          <div style={{ 
-            color: '#666', 
-            textAlign: 'center', 
+          <div style={{
+            color: '#666',
+            textAlign: 'center',
             padding: '12px',
             backgroundColor: '#fff',
             border: '1px solid #e0e0e0',
@@ -592,9 +592,9 @@ export default function Kiosk() {
 
       {/* MAIN CONTENT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        
-        <div style={{ 
-          backgroundColor: '#fff', 
+
+        <div style={{
+          backgroundColor: '#fff',
           padding: '20px 30px',
           borderBottom: '1px solid #e0e0e0',
           display: 'flex',
@@ -604,7 +604,7 @@ export default function Kiosk() {
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '600', color: '#333' }}>
             {t("Kiosk Page")}
           </h1>
-          
+
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <input
               type="text"
@@ -648,8 +648,8 @@ export default function Kiosk() {
           </div>
         </div>
 
-        <div style={{ 
-          flex: 1, 
+        <div style={{
+          flex: 1,
           padding: '24px',
           overflowY: 'auto',
           display: 'grid',
@@ -696,19 +696,19 @@ export default function Kiosk() {
               }}>
                 🧋
               </div>
-              
+
               <div style={{ padding: '14px', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{ 
-                  fontSize: '15px', 
-                  fontWeight: '500', 
+                <div style={{
+                  fontSize: '15px',
+                  fontWeight: '500',
                   color: '#333',
                   marginBottom: '6px'
                 }}>
                   {item.name}
                 </div>
-                <div style={{ 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
                   color: '#666'
                 }}>
                   ${Number(item.price).toFixed(2)}
@@ -720,15 +720,15 @@ export default function Kiosk() {
       </div>
 
       {/* RIGHT SIDEBAR */}
-      <div style={{ 
-        width: '360px', 
+      <div style={{
+        width: '360px',
         backgroundColor: '#fff',
         borderLeft: '1px solid #e0e0e0',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden'
       }}>
-        <div style={{ 
+        <div style={{
           padding: '20px 24px',
           borderBottom: '1px solid #e0e0e0',
           backgroundColor: '#fafafa'
@@ -740,9 +740,9 @@ export default function Kiosk() {
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
           {cart.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              color: '#999', 
+            <div style={{
+              textAlign: 'center',
+              color: '#999',
               padding: '40px 20px',
               fontSize: '15px'
             }}>
@@ -757,33 +757,33 @@ export default function Kiosk() {
                   borderRadius: '8px',
                   border: '1px solid #e0e0e0'
                 }}>
-                  <div style={{ 
-                    fontWeight: '500', 
+                  <div style={{
+                    fontWeight: '500',
                     fontSize: '14px',
                     marginBottom: '6px',
                     color: '#333'
                   }}>
                     {drink.name} ({drink.size})
                   </div>
-                  <div style={{ 
-                    fontSize: '13px', 
+                  <div style={{
+                    fontSize: '13px',
                     color: '#666',
                     marginBottom: '6px'
                   }}>
                     Sugar: {drink.sugarLevel} | Ice: {drink.iceLevel}
                   </div>
-                  <div style={{ 
-                    fontWeight: '600', 
+                  <div style={{
+                    fontWeight: '600',
                     color: '#333',
                     fontSize: '14px',
                     marginBottom: '8px'
                   }}>
                     ${Number(drink.price).toFixed(2)}
                   </div>
-                  
+
                   {drink.toppings?.length > 0 && (
-                    <div style={{ 
-                      fontSize: '12px', 
+                    <div style={{
+                      fontSize: '12px',
                       color: '#666',
                       marginBottom: '10px',
                       paddingLeft: '8px'
@@ -817,7 +817,7 @@ export default function Kiosk() {
           )}
         </div>
 
-        <div style={{ 
+        <div style={{
           padding: '20px 24px',
           borderTop: '1px solid #e0e0e0',
           backgroundColor: '#fafafa'
@@ -850,8 +850,8 @@ export default function Kiosk() {
           </div>
 
           <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               justifyContent: 'space-between',
               marginBottom: '6px',
               color: '#666'
@@ -859,8 +859,8 @@ export default function Kiosk() {
               <span>{t("Subtotal")}:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               justifyContent: 'space-between',
               marginBottom: '10px',
               color: '#666'
@@ -868,8 +868,8 @@ export default function Kiosk() {
               <span>{t("Tip")} ({tipPercent}%):</span>
               <span>${tipAmount.toFixed(2)}</span>
             </div>
-            <div style={{ 
-              display: 'flex', 
+            <div style={{
+              display: 'flex',
               justifyContent: 'space-between',
               fontSize: '18px',
               fontWeight: '600',
@@ -962,8 +962,8 @@ export default function Kiosk() {
               flex: 1
             }}>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ 
-                  fontSize: '15px', 
+                <label style={{
+                  fontSize: '15px',
                   fontWeight: '500',
                   display: 'block',
                   marginBottom: '12px',
@@ -1008,8 +1008,8 @@ export default function Kiosk() {
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ 
-                  fontSize: '15px', 
+                <label style={{
+                  fontSize: '15px',
                   fontWeight: '500',
                   display: 'block',
                   marginBottom: '12px',
@@ -1040,8 +1040,8 @@ export default function Kiosk() {
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ 
-                  fontSize: '15px', 
+                <label style={{
+                  fontSize: '15px',
                   fontWeight: '500',
                   display: 'block',
                   marginBottom: '12px',
@@ -1072,8 +1072,8 @@ export default function Kiosk() {
               </div>
 
               <div>
-                <label style={{ 
-                  fontSize: '15px', 
+                <label style={{
+                  fontSize: '15px',
                   fontWeight: '500',
                   display: 'block',
                   marginBottom: '12px',
@@ -1081,7 +1081,7 @@ export default function Kiosk() {
                 }}>
                   Toppings
                 </label>
-                <div style={{ 
+                <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
                   gap: '10px'
