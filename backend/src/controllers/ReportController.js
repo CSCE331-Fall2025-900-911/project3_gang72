@@ -14,28 +14,49 @@ dotenv.config();
 const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : undefined);
 
 const X_REPORT_SQL = `
+WITH receipt_totals AS (
+    SELECT
+        r.receipt_id,
+        r.order_time,
+        COALESCE(SUM(i.price), 0) AS total_price,
+        COALESCE(r.discount_amount, 0) AS discount_amount,
+        COALESCE(r.tip, 0) AS tip
+    FROM receipt r
+    LEFT JOIN orders o ON r.receipt_id = o.receipt_id
+    LEFT JOIN item i ON o.item_id = i.item_id
+    WHERE r.order_date = CURRENT_DATE
+    GROUP BY r.receipt_id, r.order_time, r.discount_amount, r.tip
+)
 SELECT
-		r.order_time AS hour,
-		COUNT(DISTINCT r.receipt_id) AS order_count,
-		COALESCE(SUM(i.price), 0) AS gross_sales,
-		COALESCE(SUM(r.tip), 0) AS total_tips
-FROM receipt r
-LEFT JOIN orders o ON r.receipt_id = o.receipt_id
-LEFT JOIN item i ON o.item_id = i.item_id
-WHERE r.order_date = CURRENT_DATE
-GROUP BY r.order_time
+    rt.order_time AS hour,
+    COUNT(DISTINCT rt.receipt_id) AS order_count,
+    COALESCE(SUM(GREATEST(rt.total_price - rt.discount_amount, 0)), 0) AS gross_sales,
+    COALESCE(SUM(rt.tip), 0) AS total_tips
+FROM receipt_totals rt
+GROUP BY rt.order_time
 ORDER BY hour;
 `;
 
 // Daily summary SQL: total orders, gross sales, total tips for CURRENT_DATE
 const zReportSQL = `
+WITH receipt_totals AS (
+    SELECT
+        r.receipt_id,
+        COALESCE(SUM(i.price), 0) AS total_price,
+        COALESCE(r.discount_amount, 0) AS discount_amount
+    FROM receipt r
+    LEFT JOIN orders o ON r.receipt_id = o.receipt_id
+    LEFT JOIN item i ON o.item_id = i.item_id
+    WHERE r.order_date = CURRENT_DATE
+    GROUP BY r.receipt_id, r.discount_amount
+)
 SELECT
     COUNT(DISTINCT r.receipt_id) AS total_orders,
-    COALESCE(SUM(i.price), 0) AS gross_sales,
-    COALESCE(SUM(r.tip), 0) AS total_tips
+    COALESCE(SUM(GREATEST(rt.total_price - rt.discount_amount, 0)), 0) AS gross_sales,
+    COALESCE(SUM(r.tip), 0) AS total_tips,
+    COALESCE(SUM(LEAST(rt.discount_amount, rt.total_price)), 0) AS total_discounts
 FROM receipt r
-LEFT JOIN orders o ON r.receipt_id = o.receipt_id
-LEFT JOIN item i ON o.item_id = i.item_id
+LEFT JOIN receipt_totals rt ON r.receipt_id = rt.receipt_id
 WHERE r.order_date = CURRENT_DATE
 `;
 
@@ -75,6 +96,7 @@ async function zReport() {
             total_orders: r.total_orders == null ? 0 : Number(r.total_orders),
             gross_sales: r.gross_sales == null ? 0 : Number(r.gross_sales),
             total_tips: r.total_tips == null ? 0 : Number(r.total_tips),
+            total_discounts: r.total_discounts == null ? 0 : Number(r.total_discounts),
         };
     } finally {
         client.release();

@@ -33,6 +33,8 @@ export default function Kiosk() {
     step: "idle",
     pendingDrink: null,
   });
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceActive, setVoiceActive] = useState(false);
 
   const formatPhone = (value = "") => {
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -42,8 +44,7 @@ export default function Kiosk() {
     if (digits.length > 6) parts.push(digits.slice(6, 10));
     return { formatted: parts.join("-"), digits };
   };
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [voiceActive, setVoiceActive] = useState(false);
+
   
   // SPEECH UTTER
   function speak(text) {
@@ -751,7 +752,40 @@ export default function Kiosk() {
               </button>
             </div>
           </div>
-          
+          <button
+            onClick={startVoiceOrder}
+            style={{
+              backgroundColor: voiceActive ? '#583e23' : '#aaa',
+              color: 'white',
+              padding: '12px 18px',
+              fontSize: '15px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: voiceActive ? 'pointer' : 'not-allowed',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            🎤 Start Voice Order
+          </button>
+             {/* Voice Toggle */}
+            <button
+              onClick={() => setVoiceActive(!voiceActive)}
+              style={{
+                backgroundColor: voiceActive ? '#28a745' : '#dc3545',
+                color: 'white',
+                padding: '12px 18px',
+                fontSize: '15px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              {voiceActive ? 'Voice: ON' : 'Voice: OFF'}
+            </button>
           <div style={{
             flex: 1,
             padding: '24px',
