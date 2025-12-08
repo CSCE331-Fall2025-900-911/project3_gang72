@@ -22,8 +22,7 @@ export default function Home() {
             <div className="home-container">
                 {/* Hero Section */}
                 <div className="hero-section">
-                    <h1>{t("Welcome to NexaVerse!")}</h1>
-                    <p>{t("Your complete boba shop management system. Select a module below to get started.")}</p>
+                    <h1>{t("Boba Bliss!")}</h1>
                 </div>
 
                 {/* Module Grid */}

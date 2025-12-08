@@ -8,6 +8,13 @@ export default function Manager() {
     const [ingredients, setIngredients] = useState([]);
     const [sales, setSales] = useState([]);
 
+    useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+  
     // Fetch employees
     useEffect(() => {
         fetch("/api/employees")
