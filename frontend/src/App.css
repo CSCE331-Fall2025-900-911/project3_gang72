@@ -245,6 +245,10 @@ body {
 
 /* MENU PAGE FIX — override Bootstrap and main-content */
 .menu-page-wrapper {
+    /* Remove unnecessary width/margin/padding resets on the wrapper */
+    /* If this wrapper is added *inside* main-content, these are okay, but 
+       based on App.jsx, it seems to wrap Menu component. Let's fix the 
+       main-content override for the menu page. */
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -258,7 +262,8 @@ body {
 }
 
 .menu-page-wrapper .main-content {
-    margin-left: 2400 !important;
+    /* FIX: Corrected margin-left to 240px to match sidebar width */
+    margin-left: 240px !important; 
     padding: 0 !important;
     width: 100% !important;
 }
@@ -266,7 +271,6 @@ body {
 .menu-page-wrapper .menu-board {
     width: 100% !important;
 }
-
 
 
 .module-icon {

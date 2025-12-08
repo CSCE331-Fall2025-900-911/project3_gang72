@@ -65,7 +65,7 @@ function App() {
           {/* Changed by Hiya */}
           {/* <Route path="/menu" element={<Menu />} /> */}
           <Route path="/menu" element={
-            <div className="menu-wrapper">
+            <div className="menu-page-wrapper">
               <Menu />
             </div>
           } />
