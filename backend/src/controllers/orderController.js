@@ -207,7 +207,7 @@ async function createOrder(req, res) {
           `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
         );
         const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
-        
+
         // Count only non-topping items as drinks
         const drinksInOrder = items.filter(it => !toppingIdSet.has(Number(it.itemId))).length;
 
@@ -229,10 +229,10 @@ async function createOrder(req, res) {
 
     // 4) create receipt (computes tip) and store discount info
     const { receiptId, tipAmount } = await createReceiptWithTip(
-      client, 
-      employeeId, 
-      customerId, 
-      Number(tipPercent || 0), 
+      client,
+      employeeId,
+      customerId,
+      Number(tipPercent || 0),
       totalAfterDiscount,
       discount,
       appliedReward,
