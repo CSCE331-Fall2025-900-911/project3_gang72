@@ -283,7 +283,7 @@ async function createOrder(req, res) {
       orderIds: insertedOrderIds,
       subtotal,
       discount,
-      total: totalAfterDiscount,
+      total: totalAfterDiscount + tipAmount,
       tipAmount,
       rewardApplied: appliedReward,
       rewardType,
