@@ -149,9 +149,8 @@ export default function Cashier() {
       });
       const data = await res.json();
       if (data.success) {
-        // Check if customer earned a free drink
-        if (data.freeDrink) {
-          alert(`🎉 FREE DRINK REWARD! 🎉\n\nCongratulations! Customer has earned a FREE DRINK!\n\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        if (data.rewardApplied) {
+          alert(`🎉 REWARD APPLIED! 🎉\n\nCongratulations! Customer received 20% off this order!\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
         } else {
           alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
         }
