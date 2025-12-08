@@ -23,6 +23,7 @@ export default function Kiosk() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [selectedSize, setSelectedSize] = useState("Small");
+  const [selectedIsHot, setSelectedIsHot] = useState(false);
 
   // CONVERSATION CONTEXT
   const [conversation, setConversation] = useState({
@@ -305,15 +306,23 @@ export default function Kiosk() {
       price,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
+      isHot: selectedIsHot,
       toppings: toppings.map((topping) => ({
         id: topping.id,
         name: topping.name,
         price: Number(topping.price),
       })),
+      customization: {
+        size: size.toLowerCase(),
+        isHot: selectedIsHot,
+        iceLevel: parseInt(iceLevel.replace('%', '')),
+        sugarLevel: parseInt(sugarLevel.replace('%', '')),
+      },
     };
 
     setCart((prev) => [...prev, drink]);
     setSelectedItem(null);
+    setSelectedIsHot(false);
   }
 
   function addToCartManual() {
@@ -331,15 +340,23 @@ export default function Kiosk() {
       price,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
+      isHot: selectedIsHot,
       toppings: selectedToppings.map((topping) => ({
         id: topping.id,
         name: topping.name,
         price: Number(topping.price),
       })),
+      customization: {
+        size: selectedSize.toLowerCase(),
+        isHot: selectedIsHot,
+        iceLevel: parseInt(iceLevel.replace('%', '')),
+        sugarLevel: parseInt(sugarLevel.replace('%', '')),
+      },
     };
 
     setCart((prev) => [...prev, drink]);
     setSelectedItem(null);
+    setSelectedIsHot(false);
   }
 
   const submitOrder = async () => {
@@ -381,6 +398,7 @@ export default function Kiosk() {
         itemId: d.id,
         name: `${d.name} (${d.size})`,
         price: d.price,
+        customization: d.customization,
       },
       ...(d.toppings || []).map((top) => ({
         itemId: top.id,
@@ -603,6 +621,7 @@ export default function Kiosk() {
     setSelectedToppings([]);
     setSugarLevel("100%");
     setIceLevel("100%");
+    setSelectedIsHot(false);
   };
 
   const toggleTopping = (topping) => {
@@ -1198,28 +1217,24 @@ export default function Kiosk() {
                 </button>
               </div>
 
-              <div
-                style={{
-                  padding: "24px",
-                  overflowY: "auto",
-                  flex: 1,
-                }}
-              >
-                <div style={{ marginBottom: "24px" }}>
-                  <label
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: "500",
-                      display: "block",
-                      marginBottom: "12px",
-                      color: "#333",
-                    }}
-                  >
+              <div style={{
+                padding: '24px',
+                overflowY: 'auto',
+                flex: 1
+              }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    display: 'block',
+                    marginBottom: '12px',
+                    color: '#333'
+                  }}>
                     {t("Size")}
                   </label>
                   <div style={{ display: "flex", gap: "12px" }}>
                     <button
-                      onClick={() => setSelectedSize("Small")}
+                      onClick={() => setSelectedSize('Small')}
                       style={{
                         flex: 1,
                         padding: "14px",
@@ -1256,6 +1271,54 @@ export default function Kiosk() {
                     </button>
                   </div>
                 </div>
+
+                {selectedItem.hotAvail && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      display: 'block',
+                      marginBottom: '12px',
+                      color: '#333'
+                    }}>
+                      {t("Temperature")}
+                    </label>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={() => setSelectedIsHot(false)}
+                        style={{
+                          flex: 1,
+                          padding: '14px',
+                          backgroundColor: !selectedIsHot ? '#333' : '#fff',
+                          color: !selectedIsHot ? '#fff' : '#666',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {t("Cold")}
+                      </button>
+                      <button
+                        onClick={() => setSelectedIsHot(true)}
+                        style={{
+                          flex: 1,
+                          padding: '14px',
+                          backgroundColor: selectedIsHot ? '#333' : '#fff',
+                          color: selectedIsHot ? '#fff' : '#666',
+                          border: '1px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '15px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {t("Hot")}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ marginBottom: "24px" }}>
                   <label
@@ -1307,15 +1370,17 @@ export default function Kiosk() {
                   <select
                     value={iceLevel}
                     onChange={(e) => setIceLevel(e.target.value)}
+                    disabled={selectedIsHot}
                     style={{
-                      width: "100%",
-                      padding: "12px",
-                      fontSize: "14px",
-                      border: "1px solid #ddd",
-                      borderRadius: "8px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      color: "#333",
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '14px',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      backgroundColor: selectedIsHot ? '#f5f5f5' : 'white',
+                      cursor: selectedIsHot ? 'not-allowed' : 'pointer',
+                      color: selectedIsHot ? '#999' : '#333',
+                      opacity: selectedIsHot ? 0.6 : 1
                     }}
                   >
                     <option>0%</option>

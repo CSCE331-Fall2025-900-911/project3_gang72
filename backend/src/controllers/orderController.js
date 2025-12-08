@@ -11,12 +11,23 @@ const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env
  *   "customer": { "firstName": "...", "lastName": "...", "phone": "..." },
  *   "tipPercent": 10,
  *   "items": [
- *     { "itemId": 1, "name": "Classic Milk Tea", "price": 4.99 },
+ *     { 
+ *       "itemId": 1, 
+ *       "name": "Classic Milk Tea", 
+ *       "price": 4.99,
+ *       "customization": {
+ *         "size": "small" | "large",
+ *         "isHot": true | false,
+ *         "iceLevel": 0 | 25 | 50 | 75 | 100 | 125,
+ *         "sugarLevel": 0 | 25 | 50 | 75 | 100 | 125
+ *       }
+ *     },
  *     { "itemId": 15, "name": "Boba Topping", "price": 0.50 }
  *   ]
  * }
  *
  * Note: paymentMethod is optional and is ignored (not stored) per your comment.
+ * Customization is optional and only applicable for drink items (non-toppings).
  */
 
 function normalizePhone(phone) {
@@ -42,16 +53,13 @@ async function createCustomer(client, first, last, phone) {
   const { formatted } = normalizePhone(phone);
   if (!formatted) throw new Error('Phone number must be 10 digits');
 
-  const nextIdSql = `SELECT COALESCE(MAX(customer_id), 0) + 1 AS next_id FROM customer`;
-  const nextIdRes = await client.query(nextIdSql);
-  const nextId = nextIdRes.rows[0].next_id;
-
   const insertSql = `
-    INSERT INTO customer (customer_id, first_name, last_name, phone_number, order_count)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO customer (first_name, last_name, phone_number, order_count)
+    VALUES ($1, $2, $3, $4)
+    RETURNING customer_id
   `;
-  await client.query(insertSql, [nextId, first || null, last || null, formatted, 0]);
-  return nextId;
+  const result = await client.query(insertSql, [first || null, last || null, formatted, 0]);
+  return result.rows[0].customer_id;
 }
 
 async function pickRandomEmployee(client) {
@@ -93,19 +101,17 @@ async function createReceiptWithTip(client, employeeId, customerId, tipPercent, 
 async function insertOrdersAndConsumeIngredients(client, receiptId, items) {
   // 1) get topping item_ids (case-insensitive)
   const toppingIdsRes = await client.query(
-    `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+    `SELECT item_id FROM item WHERE LOWER(category) = 'toppings'`
   );
   const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
 
-  // 2) compute next order_id and next drink_id (for toppingstodrinks.drink_id)
+  // 2) compute next order_id (toppingstodrinks.drink_id is SERIAL so auto-increments)
   const maxOrderRes = await client.query(`SELECT COALESCE(MAX(order_id), 0) AS max_id FROM orders`);
   let nextOrderId = maxOrderRes.rows[0].max_id + 1;
 
-  const maxDrinkRes = await client.query(`SELECT COALESCE(MAX(drink_id), 0) AS max_id FROM toppingstodrinks`);
-  let nextDrinkId = maxDrinkRes.rows[0].max_id + 1;
-
   const insertOrderSql = `INSERT INTO orders (order_id, receipt_id, item_id) VALUES ($1, $2, $3)`;
-  const insertToppingSql = `INSERT INTO toppingstodrinks (drink_id, order_id, item_id, topping_id) VALUES ($1, $2, $3, $4)`;
+  const insertToppingSql = `INSERT INTO toppingstodrinks (order_id, item_id, topping_id) VALUES ($1, $2, $3)`;
+  const insertCustomizationSql = `INSERT INTO drink_customization (order_id, size, is_hot, ice_level, sugar_level) VALUES ($1, $2, $3, $4, $5)`;
   const selectRecipeSql = `SELECT ingredient_id FROM recipe WHERE item_id = $1`;
   const updateIngredientSql = `UPDATE ingredient SET quantity = GREATEST(quantity - $1, 0) WHERE ingredient_id = $2`;
 
@@ -114,20 +120,30 @@ async function insertOrdersAndConsumeIngredients(client, receiptId, items) {
   let currentDrinkOrderId = -1;
   let currentDrinkItemId = -1;
 
+  console.log('Processing items for receipt:', receiptId);
+  console.log('Topping IDs:', Array.from(toppingIdSet));
+  console.log('Items to process:', items.map(it => ({ itemId: it.itemId, name: it.name })));
+
   for (const it of items) {
     const itemId = Number(it.itemId);
     if (Number.isNaN(itemId)) continue;
 
+    console.log(`Processing item ${itemId}, is topping: ${toppingIdSet.has(itemId)}`);
+
     if (toppingIdSet.has(itemId)) {
-      // Topping: attach to last drink if present
+      // Topping: only link to drink in toppingstodrinks, don't create separate order
       if (currentDrinkOrderId !== -1) {
-        await client.query(insertToppingSql, [nextDrinkId++, currentDrinkOrderId, currentDrinkItemId, itemId]);
+        console.log(`Linking topping ${itemId} to drink order ${currentDrinkOrderId} (item ${currentDrinkItemId})`);
+        await client.query(insertToppingSql, [currentDrinkOrderId, currentDrinkItemId, itemId]);
       } else {
-        // no drink for this topping — we'll still insert it as a standalone order
-        const orderId = nextOrderId++;
-        await client.query(insertOrderSql, [orderId, receiptId, itemId]);
-        insertedOrderIds.push(orderId);
-        // no topping link since no drink context
+        console.warn(`Topping ${itemId} found but no drink to link to`);
+      }
+
+      // Decrement topping ingredients from inventory
+      const recipeRes = await client.query(selectRecipeSql, [itemId]);
+      for (const row of recipeRes.rows) {
+        const ingId = row.ingredient_id;
+        await client.query(updateIngredientSql, [1, ingId]);
       }
     } else {
       // Drink: insert into orders
@@ -137,6 +153,23 @@ async function insertOrdersAndConsumeIngredients(client, receiptId, items) {
 
       currentDrinkOrderId = orderId;
       currentDrinkItemId = itemId;
+
+      // Insert customization if present
+      if (it.customization) {
+        const { size, isHot, iceLevel, sugarLevel } = it.customization;
+        const sizeValue = (size || 'small').toLowerCase();
+        const isHotValue = isHot === true;
+        const iceValue = Number(iceLevel) || 100;
+        const sugarValue = Number(sugarLevel) || 100;
+
+        await client.query(insertCustomizationSql, [
+          orderId,
+          sizeValue,
+          isHotValue,
+          iceValue,
+          sugarValue
+        ]);
+      }
 
       // Decrement ingredients per recipe: for each ingredient, subtract 1
       const recipeRes = await client.query(selectRecipeSql, [itemId]);
@@ -204,7 +237,7 @@ async function createOrder(req, res) {
         // 10th order: apply reward based on drinks in this order
         // Get topping IDs to exclude from drink count
         const toppingIdsRes = await client.query(
-          `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+          `SELECT item_id FROM item WHERE LOWER(category) = 'toppings'`
         );
         const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
 
@@ -364,7 +397,7 @@ async function getSales(req, res) {
 async function getMenu(req, res) {
   try {
     const result = await pool.query(
-      `SELECT item_id AS id, item_name AS name, category, price
+      `SELECT item_id AS id, item_name AS name, category, price, COALESCE(hot_avail, false) AS "hotAvail"
        FROM item
        ORDER BY item_id, item_name`
     );

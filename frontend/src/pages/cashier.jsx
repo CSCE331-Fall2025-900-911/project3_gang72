@@ -17,6 +17,7 @@ export default function Cashier() {
   const [currentItem, setCurrentItem] = useState(null);
   const [currentSize, setCurrentSize] = useState("Small");
   const [currentToppings, setCurrentToppings] = useState([]);
+  const [currentIsHot, setCurrentIsHot] = useState(false);
 
   const formatPhone = (value = "") => {
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -59,6 +60,7 @@ export default function Cashier() {
     setCurrentItem(item);
     setCurrentSize("Small");
     setCurrentToppings([]);
+    setCurrentIsHot(false);
   };
 
   const toggleTopping = (topping) => {
@@ -89,6 +91,13 @@ export default function Cashier() {
       })),
       sugar: currentSugar,
       ice: currentIce,
+      isHot: currentIsHot,
+      customization: {
+        size: currentSize.toLowerCase(),
+        isHot: currentIsHot,
+        iceLevel: parseInt(currentIce.replace('%', '')),
+        sugarLevel: parseInt(currentSugar.replace('%', '')),
+      },
       quantity: 1,
     };
 
@@ -99,6 +108,7 @@ export default function Cashier() {
     setCurrentToppings([]);
     setCurrentSugar("100%");
     setCurrentIce("100%");
+    setCurrentIsHot(false);
   };
 
   const removeFromCart = (index) => {
@@ -156,20 +166,19 @@ export default function Cashier() {
       return;
     }
 
-    const items = cart.flatMap((item) => 
-      Array(item.quantity).fill(null).flatMap(() => [
-        {
-          itemId: item.id,
-          name: `${item.name} (${item.size})`,
-          price: item.price,
-        },
-        ...item.toppings.map((t) => ({
-          itemId: t.id,
-          name: t.name,
-          price: t.price,
-        })),
-      ])
-    );
+    const items = cart.flatMap((item) => [
+      {
+        itemId: item.id,
+        name: `${item.name} (${item.size})`,
+        price: item.price,
+        customization: item.customization,
+      },
+      ...item.toppings.map((t) => ({
+        itemId: t.id,
+        name: t.name,
+        price: t.price,
+      })),
+    ]);
 
     const payload = {
       customer: {
@@ -412,6 +421,44 @@ export default function Cashier() {
                   </div>
                 </div>
 
+              {currentItem.hotAvail && (
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                    Temperature:
+                  </label>
+                  <div style={{ display: 'inline-flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setCurrentIsHot(false)}
+                      style={{
+                        padding: '8px 20px',
+                        backgroundColor: !currentIsHot ? '#583e23' : '#fff',
+                        color: !currentIsHot ? '#fff' : '#333',
+                        border: !currentIsHot ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cold
+                    </button>
+                    <button
+                      onClick={() => setCurrentIsHot(true)}
+                      style={{
+                        padding: '8px 20px',
+                        backgroundColor: currentIsHot ? '#583e23' : '#fff',
+                        color: currentIsHot ? '#fff' : '#333',
+                        border: currentIsHot ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Hot
+                    </button>
+                  </div>
+                </div>
+              )}
+
                 {/* Sugar level */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
@@ -448,16 +495,18 @@ export default function Cashier() {
                     {["0%", "25%", "50%", "75%", "100%", "125%"].map((lvl) => (
                       <button
                         key={lvl}
-                        onClick={() => setCurrentIce(lvl)}
-                        style={{
+                        onClick={() => !currentIsHot && setCurrentIce(lvl)}
+                        disabled={currentIsHot}
+                      style={{
                           flex: 1,
                           padding: '8px',
-                          backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
-                          color: currentIce === lvl ? '#fff' : '#333',
-                          border: currentIce === lvl ? 'none' : '1px solid #ddd',
+                          backgroundColor: currentIce === lvl && !currentIsHot ? '#583e23' : '#fff',
+                          color: currentIce === lvl && !currentIsHot ? '#fff' : '#333',
+                          border: currentIce === lvl && !currentIsHot ? 'none' : '1px solid #ddd',
                           borderRadius: '6px',
                           fontSize: '13px',
-                          cursor: 'pointer'
+                          cursor: currentIsHot ? 'not-allowed' : 'pointer',
+                        opacity: currentIsHot ? 0.5 : 1
                         }}
                       >
                         {lvl}
