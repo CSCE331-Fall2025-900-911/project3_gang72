@@ -31,8 +31,8 @@ body {
   padding: 0;
 }
 
-/* Sidebar Navbar Styles - Stronger selectors to override Bootstrap */
-.navbar.navbar-expand-lg {
+/* Sidebar Navbar Styles - More specific selector to not affect other navbars */
+.navbar.navbar-expand-lg.sidebar-nav {
   width: 240px !important;
   background: var(--olive-bark) !important;
   min-height: 100vh !important;
@@ -47,14 +47,14 @@ body {
   flex-shrink: 0 !important;
 }
 
-.navbar .container-fluid {
+.navbar.sidebar-nav .container-fluid {
   flex-direction: column !important;
   align-items: stretch !important;
   padding: 0 !important;
   width: 100% !important;
 }
 
-.navbar-brand {
+.navbar.sidebar-nav .navbar-brand {
   font-size: 1.5rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px;
@@ -65,18 +65,18 @@ body {
   width: 100%;
 }
 
-.navbar-toggler {
+.navbar.sidebar-nav .navbar-toggler {
   margin: 1rem;
   display: none;
 }
 
-.navbar-collapse {
+.navbar.sidebar-nav .navbar-collapse {
   flex-grow: 1;
   display: flex !important;
   flex-direction: column !important;
 }
 
-.navbar-nav {
+.navbar.sidebar-nav .navbar-nav {
   flex-direction: column !important;
   width: 100% !important;
   flex-grow: 1;
@@ -84,12 +84,12 @@ body {
   margin: 0 !important;
 }
 
-.navbar-nav .nav-item {
+.navbar.sidebar-nav .navbar-nav .nav-item {
   width: 100%;
   margin: 0 !important;
 }
 
-.navbar-nav .nav-link {
+.navbar.sidebar-nav .navbar-nav .nav-link {
   font-size: 1rem !important;
   font-weight: 500 !important;
   padding: 1rem 1.5rem !important;
@@ -100,18 +100,18 @@ body {
   border-radius: 0 !important;
 }
 
-.navbar-nav .nav-link:hover {
+.navbar.sidebar-nav .navbar-nav .nav-link:hover {
   background: rgba(255, 255, 255, 0.08) !important;
   color: white !important;
 }
 
-.navbar-nav .nav-link.active {
+.navbar.sidebar-nav .navbar-nav .nav-link.active {
   background: rgba(255, 255, 255, 0.15) !important;
   color: white !important;
 }
 
 /* Language Toggle in Sidebar */
-.navbar-nav .nav-item:last-child {
+.navbar.sidebar-nav .navbar-nav .nav-item:last-child {
   margin-top: auto !important;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 1rem;
@@ -332,35 +332,35 @@ body {
 }
 
 @media (max-width: 992px) {
-  .navbar.navbar-expand-lg {
+  .navbar.sidebar-nav {
     width: 100% !important;
     min-height: auto !important;
     position: relative !important;
   }
 
-  .navbar .container-fluid {
+  .navbar.sidebar-nav .container-fluid {
     flex-direction: row !important;
   }
 
-  .navbar-brand {
+  .navbar.sidebar-nav .navbar-brand {
     padding: 1rem 1.5rem !important;
     border-bottom: none;
     text-align: left;
   }
 
-  .navbar-toggler {
+  .navbar.sidebar-nav .navbar-toggler {
     display: block !important;
   }
 
-  .navbar-collapse {
+  .navbar.sidebar-nav .navbar-collapse {
     background: var(--olive-bark);
   }
 
-  .navbar-nav {
+  .navbar.sidebar-nav .navbar-nav {
     padding: 1rem 0 !important;
   }
 
-  .navbar-nav .nav-item:last-child {
+  .navbar.sidebar-nav .navbar-nav .nav-item:last-child {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 0.5rem !important;
   }

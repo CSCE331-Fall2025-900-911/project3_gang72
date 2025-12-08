@@ -37,7 +37,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 w-100">
+    <nav className="navbar navbar-expand-lg sidebar-nav navbar-dark bg-dark px-3 w-100">
       <div className="container-fluid">
         <Link className="navbar-brand" to="/">{t("Boba Bliss")}</Link>
 
