@@ -34,6 +34,15 @@ export default function Kiosk() {
     step: "idle",
     pendingDrink: null,
   });
+
+  const formatPhone = (value = "") => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    const parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 3));
+    if (digits.length > 3) parts.push(digits.slice(3, 6));
+    if (digits.length > 6) parts.push(digits.slice(6, 10));
+    return { formatted: parts.join("-"), digits };
+  };
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceActive, setVoiceActive] = useState(false);
   
@@ -251,8 +260,12 @@ export default function Kiosk() {
     if (spoken.includes("large")) size = "Large";
     if (spoken.includes("small")) size = "Small";
 
-    const phoneMatch = spoken.match(/\d{7,10}/);
+    const phoneMatch = spoken.match(/\d{10}/);
     let phone = phoneMatch ? phoneMatch[0] : null;
+    if (phone) {
+      const { formatted, digits } = formatPhone(phone);
+      phone = digits.length === 10 ? formatted : null;
+    }
 
     let drink = null;
     for (let item of menuItems) {
@@ -328,16 +341,29 @@ export default function Kiosk() {
 
   const submitOrder = async () => {
     let phone = customerPhone;
+    let phoneDigits = formatPhone(phone).digits;
 
-    if (!phone || phone.trim() === "") {
+    if (!phoneDigits) {
       if (usedSpeech) {
-        phone = "9" + Math.floor(100000000 + Math.random() * 900000000);
-        setCustomerPhone(phone);
+        const generated = "9" + Math.floor(100000000 + Math.random() * 900000000);
+        const { formatted, digits } = formatPhone(generated);
+        phone = formatted;
+        phoneDigits = digits;
+        setCustomerPhone(formatted);
       } else {
         alert(t("Customer phone is required!"));
         return;
       }
     }
+
+    if (phoneDigits.length !== 10) {
+      alert(t("Phone number must be 10 digits (format xxx-xxx-xxxx)."));
+      return;
+    }
+
+    const { formatted: normalizedPhone } = formatPhone(phoneDigits);
+    phone = normalizedPhone;
+    setCustomerPhone(normalizedPhone);
 
     if (cart.length === 0) {
       alert(t("Cart is empty!"));
@@ -360,7 +386,7 @@ export default function Kiosk() {
     ]);
 
     const payload = {
-      customer: { firstName: customerFirst, lastName: customerLast, phone },
+      customer: { firstName: customerFirst, lastName: customerLast, phone: phoneDigits },
       tipPercent: Number(tipPercent) || 0,
       items,
     };
@@ -375,14 +401,21 @@ export default function Kiosk() {
       const data = await res.json();
       if (data.success) {
         if (data.rewardApplied) {
-          speak(t("Congratulations! You received 20% off your order!"));
-          alert(t("🎉 REWARD APPLIED! 🎉\n\nYou received 20% off this order!\n\nReceipt") + ` #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+          const isFree = data.discount >= data.subtotal;
+          const rewardSpeech = isFree ? t("Great news! Your drink is free.") : t("You received 20% off your order!");
+          speak(rewardSpeech);
+          const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
+          const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
+          alert(`${rewardLabel}\n\n${rewardLine}\n\n${t("Receipt")} #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
         } else {
           speak(t("Your order has been placed."));
           alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
         }
         setCart([]);
         setTipPercent(0);
+        setCustomerPhone("");
+        setCustomerFirst("");
+        setCustomerLast("");
         setConversation({ step: "idle", pendingDrink: null });
       } else {
         alert(t("Order failed:") + " " + (data.error || ""));
@@ -458,10 +491,11 @@ export default function Kiosk() {
     const parsed = parseSpeech(spoken);
     const { drink, size, toppings, phone } = parsed;
 
-    if (phone) setCustomerPhone(phone);
-    else if (!customerPhone) {
+    if (phone) {
+      setCustomerPhone(phone);
+    } else if (!customerPhone) {
       const gen = "9" + Math.floor(100000000 + Math.random() * 900000000);
-      setCustomerPhone(gen);
+      setCustomerPhone(formatPhone(gen).formatted);
     }
 
     if (!drink) {
@@ -673,7 +707,7 @@ export default function Kiosk() {
                 type="text"
                 placeholder={t("Phone Number")}
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+                onChange={(e) => setCustomerPhone(formatPhone(e.target.value).formatted)}
                 style={{
                   padding: '10px 14px',
                   fontSize: '14px',
