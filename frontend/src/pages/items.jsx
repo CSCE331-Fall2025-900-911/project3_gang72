@@ -133,6 +133,29 @@ export default function Items() {
     setEditPrice("");
   };
 
+  // Delete item
+  const handleDeleteItem = async (itemId, itemName) => {
+    if (!window.confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/items/${itemId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert("Item deleted successfully!");
+        fetchData();
+      } else {
+        alert("Failed to delete item: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Error deleting item: " + err.message);
+    }
+  };
+
   // Update price
   const handleUpdatePrice = async (itemId) => {
     if (!editPrice || isNaN(Number(editPrice)) || Number(editPrice) <= 0) {
@@ -387,12 +410,20 @@ export default function Items() {
                             </button>
                           </>
                         ) : (
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => startEditPrice(item)}
-                          >
-                            Edit Price
-                          </button>
+                          <>
+                            <button
+                              className="btn btn-sm btn-outline-primary me-2"
+                              onClick={() => startEditPrice(item)}
+                            >
+                              Edit Price
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDeleteItem(item.id, item.name)}
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>

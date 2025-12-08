@@ -136,6 +136,7 @@ app.get('/api/menu', menuCtrl.getItemsHandler || orderCtrl.getMenu);
 app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler || orderCtrl.updateItemPrice);
 app.get('/api/categories', menuCtrl.getCategories);
 app.post('/api/items', menuCtrl.addItem);
+app.delete('/api/items/:id', menuCtrl.deleteItem);
 
 // ===== Orders =====
 app.post('/api/orders', orderCtrl.createOrder);
