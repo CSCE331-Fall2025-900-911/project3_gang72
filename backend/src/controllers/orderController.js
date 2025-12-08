@@ -19,23 +19,38 @@ const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env
  * Note: paymentMethod is optional and is ignored (not stored) per your comment.
  */
 
+function normalizePhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(0, 10);
+  if (digits.length !== 10) return { digits, formatted: null };
+  const formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return { digits, formatted };
+}
+
 async function findCustomerIdByPhone(client, phone) {
-  const sql = `SELECT customer_id FROM customer WHERE phone_number = $1`;
-  const { rows } = await client.query(sql, [phone]);
+  const { digits } = normalizePhone(phone);
+  if (digits.length !== 10) return null;
+
+  const sql = `SELECT customer_id
+               FROM customer
+               WHERE regexp_replace(phone_number, '\\D', '', 'g') = $1`;
+  const { rows } = await client.query(sql, [digits]);
   if (rows.length) return rows[0].customer_id;
   return null;
 }
 
 async function createCustomer(client, first, last, phone) {
+  const { formatted } = normalizePhone(phone);
+  if (!formatted) throw new Error('Phone number must be 10 digits');
+
   const nextIdSql = `SELECT COALESCE(MAX(customer_id), 0) + 1 AS next_id FROM customer`;
   const nextIdRes = await client.query(nextIdSql);
   const nextId = nextIdRes.rows[0].next_id;
 
   const insertSql = `
-    INSERT INTO customer (customer_id, first_name, last_name, phone_number, drink_count)
+    INSERT INTO customer (customer_id, first_name, last_name, phone_number, order_count)
     VALUES ($1, $2, $3, $4, $5)
   `;
-  await client.query(insertSql, [nextId, first || null, last || null, phone, 0]);
+  await client.query(insertSql, [nextId, first || null, last || null, formatted, 0]);
   return nextId;
 }
 
@@ -142,8 +157,19 @@ async function createOrder(req, res) {
   if (!customer || !customer.phone) {
     return res.status(400).json({ success: false, error: 'Customer phone is required' });
   }
+  if (!customer.firstName || !customer.firstName.trim()) {
+    return res.status(400).json({ success: false, error: 'Customer first name is required' });
+  }
+  if (!customer.lastName || !customer.lastName.trim()) {
+    return res.status(400).json({ success: false, error: 'Customer last name is required' });
+  }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
+  }
+
+  const { digits: phoneDigits, formatted: phoneFormatted } = normalizePhone(customer.phone);
+  if (!phoneFormatted) {
+    return res.status(400).json({ success: false, error: 'Phone number must be 10 digits (format xxx-xxx-xxxx)' });
   }
 
   // compute subtotal from provided item prices (client must pass prices)
@@ -151,57 +177,45 @@ async function createOrder(req, res) {
     const p = Number(it.price);
     return acc + (Number.isFinite(p) ? p : 0);
   }, 0);
+
+  const drinkItems = items.filter(it => !it.name || !it.name.toLowerCase().includes('topping'));
+  const drinksInOrder = drinkItems.length;
+
   let discount = 0;
-  let applyDiscount = false;
+  let appliedReward = false;
+  let rewardType = null;
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     // 1) find or create customer
-    let customerId = await findCustomerIdByPhone(client, customer.phone);
-    let appliedReward = false;
+    let customerId = await findCustomerIdByPhone(client, phoneFormatted);
 
     if (!customerId) {
-      customerId = await createCustomer(client, customer.firstName || null, customer.lastName || null, customer.phone);
+      customerId = await createCustomer(client, customer.firstName, customer.lastName, phoneFormatted);
     } else {
-      // Get current drink count
-      const countRes = await client.query(
-        `SELECT COALESCE(drink_count, 0) AS drink_count FROM customer WHERE customer_id = $1`,
+      // Increment order count by 1 per order and check if it's the 10th
+      const updateRes = await client.query(
+        `UPDATE customer SET order_count = COALESCE(order_count, 0) + 1 WHERE customer_id = $1 RETURNING order_count`,
         [customerId]
       );
-      const currentCount = countRes.rows[0].drink_count;
+      const newOrderCount = updateRes.rows[0].order_count;
 
-      // Count number of drinks (non-topping items) in this order
-      const drinkItems = items.filter(it => {
-        // Exclude toppings - you may need to adjust this logic based on your item structure
-        return !it.name || !it.name.toLowerCase().includes('topping');
-      });
-      const drinksInOrder = drinkItems.length;
-
-      // Check if customer gets a reward (20% off every 10th drink)
-      if ((currentCount + drinksInOrder) >= 10) {
-        applyDiscount = true;
-        appliedReward = true;
-        // Reset count after reward
-        const newCount = (currentCount + drinksInOrder) - 10;
-        await client.query(
-          `UPDATE customer SET drink_count = $1 WHERE customer_id = $2`,
-          [newCount, customerId]
-        );
-      } else {
-        // Increment drink count
-        await client.query(
-          `UPDATE customer SET drink_count = COALESCE(drink_count, 0) + $1 WHERE customer_id = $2`,
-          [drinksInOrder, customerId]
-        );
+      // Check if this is the 10th order (mod 10 = 0)
+      if (newOrderCount % 10 === 0) {
+        // 10th order: apply reward based on drinks in this order
+        if (drinksInOrder === 1) {
+          discount = subtotal;
+          rewardType = 'single-drink-free';
+        } else if (drinksInOrder > 1) {
+          discount = Number((subtotal * 0.2).toFixed(2));
+          rewardType = 'multi-drink-20pct';
+        }
+        appliedReward = discount > 0;
       }
     }
 
-    // 2) apply 20% discount if eligible
-    if (applyDiscount) {
-      discount = Number((subtotal * 0.2).toFixed(2));
-    }
     const totalAfterDiscount = subtotal - discount;
 
     // 3) pick random employee
@@ -224,6 +238,7 @@ async function createOrder(req, res) {
       total: totalAfterDiscount,
       tipAmount,
       rewardApplied: appliedReward,
+      rewardType,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => { });

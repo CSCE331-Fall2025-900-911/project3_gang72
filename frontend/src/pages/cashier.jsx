@@ -18,6 +18,15 @@ export default function Cashier() {
   const [currentSize, setCurrentSize] = useState("Small");
   const [currentToppings, setCurrentToppings] = useState([]);
 
+  const formatPhone = (value = "") => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    const parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 3));
+    if (digits.length > 3) parts.push(digits.slice(3, 6));
+    if (digits.length > 6) parts.push(digits.slice(6, 10));
+    return { formatted: parts.join("-"), digits };
+  };
+
   useEffect(() => {
     fetch("/api/menu")
       .then((res) => res.json())
@@ -109,8 +118,15 @@ export default function Cashier() {
   const total = subtotal + tipAmount;
 
   const submitOrder = async () => {
-    if (!customerPhone) {
+    const { digits: phoneDigits } = formatPhone(customerPhone);
+
+    if (phoneDigits.length === 0) {
       alert("Customer phone is required!");
+      return;
+    }
+
+    if (phoneDigits.length !== 10) {
+      alert("Phone number must be 10 digits (format xxx-xxx-xxxx).");
       return;
     }
     if (cart.length === 0) {
@@ -135,7 +151,7 @@ export default function Cashier() {
       customer: {
         firstName: customerFirst,
         lastName: customerLast,
-        phone: customerPhone,
+        phone: phoneDigits,
       },
       tipPercent: Number(tipPercent) || 0,
       items,
@@ -150,7 +166,10 @@ export default function Cashier() {
       const data = await res.json();
       if (data.success) {
         if (data.rewardApplied) {
-          alert(`🎉 REWARD APPLIED! 🎉\n\nCongratulations! Customer received 20% off this order!\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+          const isFree = data.discount >= data.subtotal;
+          const rewardLabel = isFree ? "FREE DRINK APPLIED!" : "20% OFF APPLIED!";
+          const rewardLine = isFree ? "This drink is free!" : "20% off applied for multiple drinks.";
+          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
         } else {
           alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
         }
@@ -315,7 +334,7 @@ export default function Cashier() {
               type="text"
               placeholder="Phone Number *"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => setCustomerPhone(formatPhone(e.target.value).formatted)}
               className="form-control mb-2"
             />
             <div className="row g-2">
@@ -463,7 +482,7 @@ export default function Cashier() {
             <button
               className="btn btn-success btn-lg"
               onClick={submitOrder}
-              disabled={cart.length === 0 || !customerPhone}
+              disabled={cart.length === 0 || formatPhone(customerPhone).digits.length !== 10}
             >
               Complete Order
             </button>
