@@ -362,12 +362,10 @@ export default function Kiosk() {
       });
 
       const data = await res.json();
-
       if (data.success) {
-        // Check if customer earned a free drink
-        if (data.freeDrink) {
-          speak(t("Congratulations! You have earned a free drink!"));
-          alert(t("🎉 FREE DRINK REWARD! 🎉\n\nCongratulations! You have earned a FREE DRINK!\n\nReceipt") + ` #${data.receiptId}`);
+        if (data.rewardApplied) {
+          speak(t("Congratulations! You received 20% off your order!"));
+          alert(t("🎉 REWARD APPLIED! 🎉\n\nYou received 20% off this order!\n\nReceipt") + ` #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
         } else {
           speak(t("Your order has been placed."));
           alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);

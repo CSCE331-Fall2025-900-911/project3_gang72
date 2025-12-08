@@ -146,11 +146,13 @@ async function createOrder(req, res) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
   }
 
-  // compute total from provided item prices (client must pass prices)
-  const total = items.reduce((acc, it) => {
+  // compute subtotal from provided item prices (client must pass prices)
+  let subtotal = items.reduce((acc, it) => {
     const p = Number(it.price);
     return acc + (Number.isFinite(p) ? p : 0);
   }, 0);
+  let discount = 0;
+  let applyDiscount = false;
 
   const client = await pool.connect();
   try {
@@ -158,7 +160,7 @@ async function createOrder(req, res) {
 
     // 1) find or create customer
     let customerId = await findCustomerIdByPhone(client, customer.phone);
-    let hasFreedrink = false;
+    let appliedReward = false;
 
     if (!customerId) {
       customerId = await createCustomer(client, customer.firstName || null, customer.lastName || null, customer.phone);
@@ -177,13 +179,15 @@ async function createOrder(req, res) {
       });
       const drinksInOrder = drinkItems.length;
 
-      // Check if customer gets a free drink (every 10th drink)
-      if (currentCount >= 9) {
-        hasFreedrink = true;
-        // Reset count after free drink
+      // Check if customer gets a reward (20% off every 10th drink)
+      if ((currentCount + drinksInOrder) >= 10) {
+        applyDiscount = true;
+        appliedReward = true;
+        // Reset count after reward
+        const newCount = (currentCount + drinksInOrder) - 10;
         await client.query(
           `UPDATE customer SET drink_count = $1 WHERE customer_id = $2`,
-          [drinksInOrder - 1, customerId]
+          [newCount, customerId]
         );
       } else {
         // Increment drink count
@@ -194,13 +198,19 @@ async function createOrder(req, res) {
       }
     }
 
-    // 2) pick random employee
+    // 2) apply 20% discount if eligible
+    if (applyDiscount) {
+      discount = Number((subtotal * 0.2).toFixed(2));
+    }
+    const totalAfterDiscount = subtotal - discount;
+
+    // 3) pick random employee
     const employeeId = await pickRandomEmployee(client);
 
-    // 3) create receipt (computes tip)
-    const { receiptId, tipAmount } = await createReceiptWithTip(client, employeeId, customerId, Number(tipPercent || 0), total);
+    // 4) create receipt (computes tip)
+    const { receiptId, tipAmount } = await createReceiptWithTip(client, employeeId, customerId, Number(tipPercent || 0), totalAfterDiscount);
 
-    // 4) insert orders and update inventory
+    // 5) insert orders and update inventory
     const insertedOrderIds = await insertOrdersAndConsumeIngredients(client, receiptId, items);
 
     await client.query('COMMIT');
@@ -209,9 +219,11 @@ async function createOrder(req, res) {
       success: true,
       receiptId,
       orderIds: insertedOrderIds,
-      total,
+      subtotal,
+      discount,
+      total: totalAfterDiscount,
       tipAmount,
-      freeDrink: hasFreedrink,
+      rewardApplied: appliedReward,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => { });
