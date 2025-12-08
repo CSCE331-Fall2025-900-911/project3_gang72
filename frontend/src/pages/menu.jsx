@@ -1,35 +1,48 @@
 import { useEffect, useState, useMemo } from "react";
-import { useLanguage } from "../context/LanguageContext";
 
-const ALL = "All";
+// Mock language context for demo
+const useLanguage = () => ({
+  t: (key) => {
+    const translations = {
+      "BOBA MENU": "BOBA MENU",
+      "Handcrafted Daily": "Handcrafted Daily",
+      "Search drinks...": "Search drinks...",
+      "No items found": "No items found",
+      "Thank You": "Thank You",
+      "Made Fresh with Premium Ingredients": "Made Fresh with Premium Ingredients",
+      "Other": "Other"
+    };
+    return translations[key] || key;
+  }
+});
 
-const CAT_COLORS = {
-  [ALL]: "from-amber-400 via-yellow-300 to-orange-400",
-  "Milk Tea": "from-pink-300 via-rose-300 to-pink-400",
-  "Coffee": "from-amber-300 via-orange-300 to-amber-400",
-  "Tea Latte": "from-green-300 via-emerald-300 to-teal-300",
-  "Slush Series": "from-cyan-300 via-sky-300 to-blue-300",
-  "Slush": "from-indigo-300 via-purple-300 to-violet-300",
-  "Toppings": "from-fuchsia-300 via-pink-300 to-rose-300",
-};
-
-const CARD_GRADIENTS = [
-  "from-yellow-100 via-amber-50 to-orange-100",
-  "from-rose-100 via-pink-50 to-fuchsia-100",
-  "from-cyan-100 via-sky-50 to-blue-100",
-  "from-green-100 via-emerald-50 to-teal-100",
-  "from-purple-100 via-violet-50 to-indigo-100",
-  "from-orange-100 via-red-50 to-pink-100",
-];
-
-export default function Menu() {
+export default function MenuBoard() {
   const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState(ALL);
-  const [query, setQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    // Mock data for demo - replace with your actual fetch
+    // setTimeout(() => {
+    //   setMenuItems([
+    //     { id: 1, name: "Classic Milk Tea", price: 5.50, category: "Milk Tea" },
+    //     { id: 2, name: "Taro Milk Tea", price: 6.00, category: "Milk Tea" },
+    //     { id: 3, name: "Thai Tea", price: 5.75, category: "Milk Tea" },
+    //     { id: 4, name: "Matcha Latte", price: 6.50, category: "Specialty" },
+    //     { id: 5, name: "Brown Sugar Boba", price: 6.25, category: "Specialty" },
+    //     { id: 6, name: "Mango Smoothie", price: 6.00, category: "Fruit Tea" },
+    //     { id: 7, name: "Strawberry Tea", price: 5.50, category: "Fruit Tea" },
+    //     { id: 8, name: "Passion Fruit Tea", price: 5.75, category: "Fruit Tea" },
+    //     { id: 9, name: "Lychee Tea", price: 5.50, category: "Fruit Tea" },
+    //     { id: 10, name: "Peach Tea", price: 5.50, category: "Fruit Tea" },
+    //     { id: 11, name: "Jasmine Green Tea", price: 4.50, category: "Classic Tea" },
+    //     { id: 12, name: "Oolong Tea", price: 4.75, category: "Classic Tea" },
+    //   ]);
+    //   setLoading(false);
+    // }, 500);
+
+    // Your actual fetch code:
     fetch("/api/menu")
       .then((res) => res.json())
       .then((data) => {
@@ -46,283 +59,314 @@ export default function Menu() {
       });
   }, []);
 
-  const categories = useMemo(
-    () => [ALL, ...new Set(menuItems.map((i) => i.category).filter(Boolean))],
-    [menuItems]
-  );
+  const groupedItems = useMemo(() => {
+    const filtered = searchQuery
+      ? menuItems.filter((item) =>
+          item.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : menuItems;
 
-  const filtered = useMemo(
-    () =>
-      menuItems.filter(
-        (i) =>
-          (active === ALL || i.category === active) &&
-          (!query || i.name.toLowerCase().includes(query.toLowerCase()))
-      ),
-    [menuItems, active, query]
-  );
+    const groups = {};
+    filtered.forEach((item) => {
+      if (item.id && item.name && item.price != null) {
+        const cat = item.category || t("Other");
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(item);
+      }
+    });
 
-  // ========== VOICE COMMANDS - AFTER filtered is defined ==========
-  useEffect(() => {
-    const voiceController = window.voiceController;
+    return groups;
+  }, [menuItems, searchQuery, t]);
 
-    if (voiceController) {
-      // Filter by category
-      voiceController.registerCommand(
-        ['show all', 'all items', 'show everything', 'view all'],
-        () => {
-          setActive(ALL);
-          voiceController.speak('Showing all items');
-        }
-      );
-
-      voiceController.registerCommand(
-        ['show milk tea', 'milk tea', 'filter milk tea'],
-        () => {
-          setActive('Milk Tea');
-          voiceController.speak('Showing milk tea');
-        }
-      );
-
-      voiceController.registerCommand(
-        ['show coffee', 'coffee', 'filter coffee'],
-        () => {
-          setActive('Coffee');
-          voiceController.speak('Showing coffee');
-        }
-      );
-
-      voiceController.registerCommand(
-        ['show tea latte', 'tea latte', 'filter tea latte'],
-        () => {
-          setActive('Tea Latte');
-          voiceController.speak('Showing tea latte');
-        }
-      );
-
-      voiceController.registerCommand(
-        ['show slush', 'slush', 'filter slush', 'slush series'],
-        () => {
-          const slushCat = categories.find(c => c.toLowerCase().includes('slush'));
-          if (slushCat) {
-            setActive(slushCat);
-            voiceController.speak('Showing slush drinks');
-          }
-        }
-      );
-
-      voiceController.registerCommand(
-        ['show toppings', 'toppings', 'filter toppings'],
-        () => {
-          setActive('Toppings');
-          voiceController.speak('Showing toppings');
-        }
-      );
-
-      // Search functionality
-      voiceController.registerCommand(
-        ['search', 'find', 'look for'],
-        () => {
-          const searchInput = document.querySelector('input[placeholder*="Search"]');
-          if (searchInput) {
-            searchInput.focus();
-            voiceController.speak('What would you like to search for?');
-          }
-        }
-      );
-
-      voiceController.registerCommand(
-        ['clear search', 'reset search'],
-        () => {
-          setQuery('');
-          setActive(ALL);
-          voiceController.speak('Search cleared');
-        }
-      );
-
-      // Navigation
-      voiceController.registerCommand(
-        ['scroll to top', 'go to top', 'top of page'],
-        () => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          voiceController.speak('Scrolling to top');
-        }
-      );
-
-      voiceController.registerCommand(
-        ['how many items', 'count items', 'total items'],
-        () => {
-          const count = filtered.length;
-          voiceController.speak(`There are ${count} items`);
-        }
-      );
-    }
-  }, [filtered, active, categories]);
+  const categories = Object.keys(groupedItems).sort();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mb-4"></div>
-          <p className="text-amber-700 text-lg font-medium">{t("Loading menu...")} 🧋</p>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        background: '#fff3e0'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            border: '4px solid #78350f',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
+          <p style={{ marginTop: '16px', fontSize: '20px', fontWeight: '600', color: '#78350f' }}>
+            Loading Menu...
+          </p>
         </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="main-content">
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-pink-50 text-amber-900 font-sans relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-64 h-64 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-1/2 w-64 h-64 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    <div style={{
+      width: '100vw',
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #fff3e0, #ffe0b2, #fff3e0)',
+      margin: '0',
+      padding: '0',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Decorative Images */}
+      <div style={{
+        position: 'fixed',
+        left: '20px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        fontSize: '120px',
+        opacity: '0.15',
+        pointerEvents: 'none',
+        zIndex: '1'
+      }}>🧋</div>
+      
+      <div style={{
+        position: 'fixed',
+        right: '20px',
+        top: '30%',
+        fontSize: '120px',
+        opacity: '0.15',
+        pointerEvents: 'none',
+        zIndex: '1'
+      }}>☕</div>
+
+      {/* Main Content */}
+      <div style={{ position: 'relative', zIndex: '10', padding: '40px 20px' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{
+            display: 'inline-block',
+            background: 'white',
+            borderRadius: '24px',
+            padding: '32px 48px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            border: '4px solid #78350f'
+          }}>
+            <h1 style={{
+              fontSize: '64px',
+              fontWeight: '900',
+              color: '#78350f',
+              margin: '0 0 16px 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '24px'
+            }}>
+              ☕ {t("BOBA MENU")} 🧋
+            </h1>
+            <p style={{
+              fontSize: '24px',
+              color: '#92400e',
+              fontWeight: '600',
+              fontStyle: 'italic',
+              margin: '0'
+            }}>
+              ━━━ {t("Handcrafted Daily")} ━━━
+            </p>
+          </div>
+
+          {/* Search */}
+          <div style={{ maxWidth: '500px', margin: '32px auto 0' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("Search drinks...")}
+              style={{
+                width: '100%',
+                padding: '16px 24px',
+                fontSize: '18px',
+                background: 'white',
+                border: '3px solid #78350f',
+                borderRadius: '16px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                outline: 'none'
+              }}
+            />
+          </div>
         </div>
 
-        {/* Header */}
-        <header className="sticky top-0 z-30 backdrop-blur-lg bg-white/70 border-b border-amber-200/50 shadow-lg">
-          <div className="relative max-w-7xl mx-auto px-6 py-6">
-            {/* Logo and Title */}
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                <div className="relative bg-gradient-to-br from-amber-100 to-orange-100 p-4 rounded-full shadow-2xl border-4 border-white">
-                  <span className="text-6xl">🧋</span>
-                </div>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm mb-2">
-                {t("Boba Menu")}
-              </h1>
-              <p className="text-amber-700/80 text-lg">✨ {t("Sip the sunshine, taste the joy!")} 🧋</p>
-            </div>
-
-            {/* Voice Commands Helper */}
-            <div className="bg-gradient-to-r from-amber-100 to-orange-100 border-2 border-amber-300 rounded-lg p-3 mb-4 text-center max-w-2xl mx-auto">
-              <p className="text-amber-800 text-sm font-medium">
-                🎤 <strong>{t("Voice Commands")}:</strong> {t("Say 'show [category]', 'search', 'clear search', or click any item!")}
-              </p>
-            </div>
-
-            {/* Category Pills */}
-            <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide justify-center flex-wrap">
-              {categories.map((cat) => {
-                const gradient = CAT_COLORS[cat] || CAT_COLORS[ALL];
-                const isActive = active === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setActive(cat)}
-                    data-category={cat}
-                    className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 transform hover:scale-105 border-2
-                    ${isActive
-                        ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-transparent scale-105`
-                        : "bg-white/90 text-amber-700 hover:bg-amber-50 border-amber-200/50 shadow-md"
-                      }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative max-w-xl mx-auto">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={`🔍 ${t("Search your favorite drink...")}`}
-                className="w-full rounded-full border-2 border-amber-200/50 bg-white/90 px-6 py-3 text-base focus:outline-none focus:ring-4 focus:ring-amber-300/50 focus:border-amber-400 shadow-lg transition-all"
-              />
-            </div>
+        {/* No Results */}
+        {categories.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '80px 20px',
+            background: 'white',
+            borderRadius: '24px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            maxWidth: '800px',
+            margin: '0 auto'
+          }}>
+            <span style={{ fontSize: '96px', display: 'block', marginBottom: '24px' }}>😔</span>
+            <p style={{ fontSize: '36px', fontWeight: '700', color: '#374151', margin: '0' }}>
+              {t("No items found")}
+            </p>
           </div>
-        </header>
+        ) : (
+          /* HORIZONTAL CATEGORIES */
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '32px',
+              overflowX: 'auto',
+              padding: '0 20px 32px',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#78350f #fef3c7'
+            }}>
+              {categories.map((category) => {
+                const items = groupedItems[category];
 
-        {/* Menu Grid */}
-        <main className="max-w-7xl mx-auto px-6 py-12 relative z-10">
-          {filtered.length === 0 ? (
-            <div className="text-center py-20">
-              <span className="text-6xl mb-4 block">🔍</span>
-              <p className="text-amber-700 text-xl">{t("No items found")}</p>
-              <p className="text-amber-600 mt-2">{t("Try a different search or category!")}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-              {filtered.map((item, i) => {
-                const gradient = CARD_GRADIENTS[i % CARD_GRADIENTS.length];
                 return (
                   <div
-                    key={item.id}
-                    data-item-name={item.name}
-                    className={`group bg-gradient-to-br ${gradient} rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-white/50 overflow-hidden backdrop-blur-sm cursor-pointer`}
+                    key={category}
+                    style={{
+                      flexShrink: '0',
+                      width: '400px',
+                      background: 'white',
+                      borderRadius: '24px',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                      border: '4px solid #78350f',
+                      overflow: 'hidden'
+                    }}
                   >
-                    {/* Image Container */}
-                    <div className="relative h-32 bg-white/40 flex items-center justify-center overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/20"></div>
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-24 w-24 object-cover rounded-2xl shadow-md group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => {
-                          e.target.src = "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=400&q=80";
-                        }}
-                      />
+                    {/* Category Header */}
+                    <div style={{
+                      background: 'linear-gradient(to right, #78350f, #92400e)',
+                      color: 'white',
+                      padding: '24px 32px',
+                      textAlign: 'center'
+                    }}>
+                      <h2 style={{
+                        fontSize: '36px',
+                        fontWeight: '900',
+                        margin: '0',
+                        letterSpacing: '1px'
+                      }}>
+                        {category}
+                      </h2>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-4 text-center">
-                      <h3 className="text-sm font-bold text-amber-900 leading-tight mb-1 line-clamp-2 min-h-[2.5rem]">
-                        {item.name}
-                      </h3>
-                      <p className="text-xs text-amber-700/70 mb-2">{item.category}</p>
-                      <div className="bg-white/60 rounded-full px-4 py-1.5 inline-block shadow-sm">
-                        <p className="text-base font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                          ${Number(item.price).toFixed(2)}
-                        </p>
-                      </div>
+                    {/* Menu Items */}
+                    <div style={{ padding: '32px' }}>
+                      {items.map((item, idx) => (
+                        <div 
+                          key={item.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            paddingBottom: '20px',
+                            marginBottom: '20px',
+                            borderBottom: idx < items.length - 1 ? '2px dotted #fbbf24' : 'none'
+                          }}
+                        >
+                          <span style={{
+                            flex: '1',
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            color: '#1f2937'
+                          }}>
+                            {item.name}
+                          </span>
+                          <span style={{
+                            fontSize: '24px',
+                            fontWeight: '900',
+                            color: '#78350f'
+                          }}>
+                            ${Number(item.price).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
               })}
             </div>
-          )}
-        </main>
+
+            {/* Scroll Hint */}
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <p style={{
+                color: '#78350f',
+                fontWeight: '600',
+                fontSize: '18px',
+                margin: '0',
+                animation: 'pulse 2s infinite'
+              }}>
+                ← Scroll to see more categories →
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
-        <footer className="py-10 text-center text-amber-700/70 text-sm relative z-10 border-t border-amber-200/30 backdrop-blur-sm bg-white/30">
-          <p className="mb-2">✨ {t("Soak & sip the sweetness")} ✨</p>
-          <p className="text-xs">{t("Made with love")} 💛</p>
-        </footer>
+        <div style={{
+          textAlign: 'center',
+          marginTop: '64px',
+          background: 'white',
+          borderRadius: '24px',
+          padding: '32px 48px',
+          maxWidth: '800px',
+          margin: '64px auto 0',
+          border: '4px solid #78350f',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
+        }}>
+          <p style={{
+            fontSize: '36px',
+            fontWeight: '900',
+            color: '#78350f',
+            margin: '0 0 8px 0'
+          }}>
+            ✨ {t("Thank You")} ✨
+          </p>
+          <p style={{
+            fontSize: '18px',
+            color: '#92400e',
+            fontStyle: 'italic',
+            fontWeight: '600',
+            margin: '0'
+          }}>
+            {t("Made Fresh with Premium Ingredients")}
+          </p>
+        </div>
+      </div>
 
-        <style>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+      {/* Scrollbar Styles */}
+      <style>{`
+        div::-webkit-scrollbar {
+          height: 12px;
         }
-        .animate-blob {
-          animation: blob 7s infinite;
+        div::-webkit-scrollbar-track {
+          background: #fef3c7;
+          border-radius: 10px;
         }
-        .animation-delay-2000 {
-          animation-delay: 2s;
+        div::-webkit-scrollbar-thumb {
+          background: #78350f;
+          border-radius: 10px;
+          border: 2px solid #fef3c7;
         }
-        .animation-delay-4000 {
-          animation-delay: 4s;
+        div::-webkit-scrollbar-thumb:hover {
+          background: #92400e;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
-      </div>
     </div>
   );
 }

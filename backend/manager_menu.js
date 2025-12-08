@@ -132,7 +132,33 @@ app.get('/api/reports/aov-by-category', orderCtrl.getAOVByCategory);
 
 // Report endpoints
 app.get('/api/x-report', reportCtrl.xReportHandler);
-app.get('/api/z-report', reportCtrl.zReportHandler);
+app.post('/api/z-report', reportCtrl.zReportHandler);  // Change GET to POST
+app.get('/api/z-report/status', async (req, res) => {
+  const { hasZReportBeenRunToday } = require('./src/controllers/ReportController');
+  try {
+    const existingReport = await hasZReportBeenRunToday();
+    
+    if (existingReport) {
+      return res.status(200).json({
+        success: true,
+        alreadyRun: true,
+        summary: existingReport
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      alreadyRun: false
+    });
+  } catch (error) {
+    console.error('Error checking Z-Report status:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 const dailyHandler = reportCtrl.dailySummaryHandler || reportCtrl.zReportHandler || reportCtrl.zReport;
 if (typeof dailyHandler === 'function') {
   app.get('/api/daily-summary', dailyHandler);
@@ -152,6 +178,7 @@ app.get('/api/menu', menuCtrl.getItemsHandler || orderCtrl.getMenu);
 app.put('/api/menu/:id/price', menuCtrl.setItemPriceHandler || orderCtrl.updateItemPrice);
 app.get('/api/categories', menuCtrl.getCategories);
 app.post('/api/items', menuCtrl.addItem);
+app.delete('/api/items/:id', menuCtrl.deleteItem);
 
 // ===== Orders =====
 app.post('/api/orders', orderCtrl.createOrder);

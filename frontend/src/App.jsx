@@ -17,7 +17,7 @@ import Login from "./Login";
 import './highContrast.css'
 import './App.css'
 
-// Protected Route component - requires @tamu.edu email
+// Protected Route component
 function ProtectedRoute({ children }) {
   const location = useLocation();
   const userStr = sessionStorage.getItem('user');
@@ -29,9 +29,9 @@ function ProtectedRoute({ children }) {
   try {
     const user = JSON.parse(userStr);
 
-    if (!user.email || !user.email.toLowerCase().endsWith('@tamu.edu')) {
+    if (!user.email) {
       sessionStorage.removeItem('user');
-      return <Navigate to="/login" state={{ from: location.pathname, error: 'Only @tamu.edu email addresses are authorized.' }} replace />;
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
   } catch (e) {
     console.error('Failed to parse user data:', e);
@@ -42,16 +42,20 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function App() {
+// Wrapper to conditionally show navbar
+function AppContent() {
+  const location = useLocation();
+  const isManagerPage = location.pathname.startsWith('/manager');
+
   return (
-    <BrowserRouter>
-      <VoiceNavigationButton /> {/* ADD THIS - the button will show on all pages */}
+    <>
+      <VoiceNavigationButton />
       <HighContrastToggle />
-      <Navbar />
-      <div className="container-fluid mt-4">
+      
+      {/* Show different layouts for manager vs regular pages */}
+      {isManagerPage ? (
+        // Manager pages - no regular navbar, no container wrapper
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/manager" element={<ProtectedRoute><Manager /></ProtectedRoute>}>
             <Route path="employees" element={<Employees />} />
             <Route path="ingredients" element={<Ingredients />} />
@@ -60,11 +64,37 @@ function App() {
             <Route path="xreport" element={<XReport />} />
             <Route path="zreport" element={<ZReport />} />
           </Route>
-          <Route path="/cashier" element={<ProtectedRoute><Cashier /></ProtectedRoute>} />
-          <Route path="/kiosk" element={<Kiosk />} />
-          <Route path="/menu" element={<Menu />} />
         </Routes>
-      </div>
+      ) : (
+        // Regular pages - show navbar and container
+        <>
+          <Navbar />
+          <div className="container-fluid mt-4">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/cashier" element={<ProtectedRoute><Cashier /></ProtectedRoute>} />
+              <Route path="/kiosk" element={<Kiosk />} />
+              {/* Changed by Hiya */}
+          {/* <Route path="/menu" element={<Menu />} /> */}
+          <Route path="/menu" element={
+            <div className="menu-page-wrapper">
+              <Menu />
+            </div>
+          } />
+
+            </Routes>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

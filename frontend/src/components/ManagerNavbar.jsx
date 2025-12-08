@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 export default function ManagerNavbar() {
     const navigate = useNavigate();
+    const location = useLocation();
     const userStr = sessionStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
 
@@ -29,55 +30,282 @@ export default function ManagerNavbar() {
         }
     };
 
+    const isActive = (path) => {
+        return location.pathname === path;
+    };
+
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark manager-navbar">
-            <div className="container">
-                <Link className="navbar-brand" to="/manager">Manager Dashboard</Link>
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#managerNavbar"
-                    aria-controls="managerNavbar"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation"
+        <nav style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            color: 'white',
+            backgroundColor: '#583e23'
+        }}>
+            {/* Brand/Logo */}
+            <div style={{
+                padding: '1.5rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                textAlign: 'center'
+            }}>
+                <Link 
+                    to="/manager" 
+                    style={{ 
+                        color: 'white', 
+                        textDecoration: 'none' 
+                    }}
                 >
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="collapse navbar-collapse" id="managerNavbar">
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/employees">Employees</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/ingredients">Ingredients</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/sales">Sales</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/items">Items</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/xreport">X-Report</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/manager/zreport">Z-Report</Link>
-                        </li>
-                        {user && (
-                            <li className="nav-item">
-                                <button
-                                    className="btn btn-logout"
-                                    onClick={handleLogout}
-                                    title={user.email}
-                                >
-                                    Logout
-                                </button>
-                            </li>
-                        )}
-                    </ul>
-                </div>
+                    📊 Manager
+                </Link>
             </div>
+
+            {/* Navigation Links - Vertical Stack */}
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                paddingTop: '1rem'
+            }}>
+                <Link 
+                    to="/manager"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    🏠 Dashboard
+                </Link>
+                
+                <Link 
+                    to="/manager/employees"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/employees') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/employees') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/employees')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/employees')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    👥 Employees
+                </Link>
+                
+                <Link 
+                    to="/manager/ingredients"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/ingredients') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/ingredients') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/ingredients')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/ingredients')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    🧪 Ingredients
+                </Link>
+                
+                <Link 
+                    to="/manager/sales"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/sales') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/sales') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/sales')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/sales')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    💰 Sales
+                </Link>
+                
+                <Link 
+                    to="/manager/items"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/items') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/items') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/items')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/items')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    🧋 Items
+                </Link>
+                
+                <Link 
+                    to="/manager/xreport"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/xreport') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/xreport') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/xreport')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/xreport')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    📈 X-Report
+                </Link>
+                
+                <Link 
+                    to="/manager/zreport"
+                    style={{
+                        display: 'block',
+                        padding: '1rem 1.5rem',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        textDecoration: 'none',
+                        backgroundColor: isActive('/manager/zreport') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                        borderLeft: isActive('/manager/zreport') ? '4px solid #FFB88C' : '4px solid transparent',
+                        transition: 'all 0.2s ease',
+                        fontSize: '1rem',
+                        fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isActive('/manager/zreport')) {
+                            e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!isActive('/manager/zreport')) {
+                            e.target.style.backgroundColor = 'transparent';
+                        }
+                    }}
+                >
+                    📊 Z-Report
+                </Link>
+            </div>
+
+            {/* User Info & Logout */}
+            {user && (
+                <div style={{
+                    padding: '1rem 1.5rem',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginTop: 'auto'
+                }}>
+                    <div style={{
+                        fontSize: '0.85rem',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        marginBottom: '0.5rem'
+                    }}>
+                        Signed in as
+                    </div>
+                    <div style={{
+                        fontSize: '0.9rem',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        marginBottom: '0.75rem',
+                        wordBreak: 'break-word'
+                    }}>
+                        {user.email}
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            backgroundColor: '#FFB88C',
+                            color: '#583e23',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.95rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#FFA366';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#FFB88C';
+                        }}
+                    >
+                        🚪 Logout
+                    </button>
+                </div>
+            )}
         </nav>
     );
 }

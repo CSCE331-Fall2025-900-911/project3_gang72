@@ -19,23 +19,38 @@ const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env
  * Note: paymentMethod is optional and is ignored (not stored) per your comment.
  */
 
+function normalizePhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(0, 10);
+  if (digits.length !== 10) return { digits, formatted: null };
+  const formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return { digits, formatted };
+}
+
 async function findCustomerIdByPhone(client, phone) {
-  const sql = `SELECT customer_id FROM customer WHERE phone_number = $1`;
-  const { rows } = await client.query(sql, [phone]);
+  const { digits } = normalizePhone(phone);
+  if (digits.length !== 10) return null;
+
+  const sql = `SELECT customer_id
+               FROM customer
+               WHERE regexp_replace(phone_number, '\\D', '', 'g') = $1`;
+  const { rows } = await client.query(sql, [digits]);
   if (rows.length) return rows[0].customer_id;
   return null;
 }
 
 async function createCustomer(client, first, last, phone) {
+  const { formatted } = normalizePhone(phone);
+  if (!formatted) throw new Error('Phone number must be 10 digits');
+
   const nextIdSql = `SELECT COALESCE(MAX(customer_id), 0) + 1 AS next_id FROM customer`;
   const nextIdRes = await client.query(nextIdSql);
   const nextId = nextIdRes.rows[0].next_id;
 
   const insertSql = `
-    INSERT INTO customer (customer_id, first_name, last_name, phone_number, rewards_points)
+    INSERT INTO customer (customer_id, first_name, last_name, phone_number, order_count)
     VALUES ($1, $2, $3, $4, $5)
   `;
-  await client.query(insertSql, [nextId, first || null, last || null, phone, 0]);
+  await client.query(insertSql, [nextId, first || null, last || null, formatted, 0]);
   return nextId;
 }
 
@@ -46,7 +61,7 @@ async function pickRandomEmployee(client) {
   return 1; // fallback
 }
 
-async function createReceiptWithTip(client, employeeId, customerId, tipPercent, subtotal) {
+async function createReceiptWithTip(client, employeeId, customerId, tipPercent, subtotal, discountAmount = 0, rewardApplied = false, rewardType = null) {
   const tipAmount = Number((subtotal * (tipPercent / 100)).toFixed(2));
 
   // Generate next receipt_id
@@ -55,12 +70,12 @@ async function createReceiptWithTip(client, employeeId, customerId, tipPercent, 
   );
   const nextReceiptId = nextIdRes.rows[0].next_id;
 
-  // Insert with generated receipt_id
+  // Insert with generated receipt_id including discount fields
   const result = await client.query(
-    `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip)
-     VALUES ($1, $2, $3, CURRENT_DATE, ((EXTRACT(HOUR FROM NOW())::integer % 13) + 11), $4)
+    `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip, discount_amount, reward_applied, reward_type)
+     VALUES ($1, $2, $3, CURRENT_DATE, ((EXTRACT(HOUR FROM NOW())::integer % 13) + 11), $4, $5, $6, $7)
      RETURNING receipt_id`,
-    [nextReceiptId, employeeId, customerId, tipAmount]
+    [nextReceiptId, employeeId, customerId, tipAmount, discountAmount, rewardApplied, rewardType]
   );
 
   return { receiptId: result.rows[0].receipt_id, tipAmount };
@@ -142,40 +157,89 @@ async function createOrder(req, res) {
   if (!customer || !customer.phone) {
     return res.status(400).json({ success: false, error: 'Customer phone is required' });
   }
+  if (!customer.firstName || !customer.firstName.trim()) {
+    return res.status(400).json({ success: false, error: 'Customer first name is required' });
+  }
+  if (!customer.lastName || !customer.lastName.trim()) {
+    return res.status(400).json({ success: false, error: 'Customer last name is required' });
+  }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
   }
 
-  // compute total from provided item prices (client must pass prices)
-  const total = items.reduce((acc, it) => {
+  const { digits: phoneDigits, formatted: phoneFormatted } = normalizePhone(customer.phone);
+  if (!phoneFormatted) {
+    return res.status(400).json({ success: false, error: 'Phone number must be 10 digits (format xxx-xxx-xxxx)' });
+  }
+
+  // compute subtotal from provided item prices (client must pass prices)
+  let subtotal = items.reduce((acc, it) => {
     const p = Number(it.price);
     return acc + (Number.isFinite(p) ? p : 0);
   }, 0);
+
+  let discount = 0;
+  let appliedReward = false;
+  let rewardType = null;
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     // 1) find or create customer
-    let customerId = await findCustomerIdByPhone(client, customer.phone);
+    let customerId = await findCustomerIdByPhone(client, phoneFormatted);
+
     if (!customerId) {
-      customerId = await createCustomer(client, customer.firstName || null, customer.lastName || null, customer.phone);
+      customerId = await createCustomer(client, customer.firstName, customer.lastName, phoneFormatted);
     } else {
-      // update rewards points: add floor(total)
-      const rewardToAdd = Math.floor(total);
-      await client.query(
-        `UPDATE customer SET rewards_points = COALESCE(rewards_points,0) + $1 WHERE customer_id = $2`,
-        [rewardToAdd, customerId]
+      // Increment order count by 1 per order and check if it's the 10th
+      const updateRes = await client.query(
+        `UPDATE customer SET order_count = COALESCE(order_count, 0) + 1 WHERE customer_id = $1 RETURNING order_count`,
+        [customerId]
       );
+      const newOrderCount = updateRes.rows[0].order_count;
+
+      // Check if this is the 10th order (mod 10 = 0)
+      if (newOrderCount % 10 === 0) {
+        // 10th order: apply reward based on drinks in this order
+        // Get topping IDs to exclude from drink count
+        const toppingIdsRes = await client.query(
+          `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+        );
+        const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
+
+        // Count only non-topping items as drinks
+        const drinksInOrder = items.filter(it => !toppingIdSet.has(Number(it.itemId))).length;
+
+        if (drinksInOrder === 1) {
+          discount = subtotal;
+          rewardType = 'single-drink-free';
+        } else if (drinksInOrder > 1) {
+          discount = Number((subtotal * 0.2).toFixed(2));
+          rewardType = 'multi-drink-20pct';
+        }
+        appliedReward = discount > 0;
+      }
     }
 
-    // 2) pick random employee
+    const totalAfterDiscount = subtotal - discount;
+
+    // 3) pick random employee
     const employeeId = await pickRandomEmployee(client);
 
-    // 3) create receipt (computes tip)
-    const { receiptId, tipAmount } = await createReceiptWithTip(client, employeeId, customerId, Number(tipPercent || 0), total);
+    // 4) create receipt (computes tip) and store discount info
+    const { receiptId, tipAmount } = await createReceiptWithTip(
+      client,
+      employeeId,
+      customerId,
+      Number(tipPercent || 0),
+      totalAfterDiscount,
+      discount,
+      appliedReward,
+      rewardType
+    );
 
-    // 4) insert orders and update inventory
+    // 5) insert orders and update inventory
     const insertedOrderIds = await insertOrdersAndConsumeIngredients(client, receiptId, items);
 
     await client.query('COMMIT');
@@ -184,8 +248,12 @@ async function createOrder(req, res) {
       success: true,
       receiptId,
       orderIds: insertedOrderIds,
-      total,
+      subtotal,
+      discount,
+      total: totalAfterDiscount,
       tipAmount,
+      rewardApplied: appliedReward,
+      rewardType,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => { });

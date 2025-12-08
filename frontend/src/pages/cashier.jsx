@@ -14,10 +14,18 @@ export default function Cashier() {
   const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
-  // Current item being customized
   const [currentItem, setCurrentItem] = useState(null);
   const [currentSize, setCurrentSize] = useState("Small");
   const [currentToppings, setCurrentToppings] = useState([]);
+
+  const formatPhone = (value = "") => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    const parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 3));
+    if (digits.length > 3) parts.push(digits.slice(3, 6));
+    if (digits.length > 6) parts.push(digits.slice(6, 10));
+    return { formatted: parts.join("-"), digits };
+  };
 
   useEffect(() => {
     fetch("/api/menu")
@@ -26,16 +34,13 @@ export default function Cashier() {
         if (data.success && Array.isArray(data.items)) {
           setMenuItems(data.items);
           setAvailableToppings(
-            data.items.filter((i) =>
-              i.category?.toLowerCase().includes("topping")
-            )
+            data.items.filter((i) => i.category?.toLowerCase().includes("topping"))
           );
         }
       })
       .catch(console.error);
   }, []);
 
-  // Filter out toppings and group by category
   const drinksAndFood = menuItems.filter(
     (item) => !item.category?.toLowerCase().includes("topping")
   );
@@ -100,7 +105,6 @@ export default function Cashier() {
     setTipPercent(0);
   };
 
-  // Calculate totals
   const subtotal = cart.reduce(
     (sum, item) =>
       sum + item.price + item.toppings.reduce((s, t) => s + t.price, 0),
@@ -110,8 +114,10 @@ export default function Cashier() {
   const total = subtotal + tipAmount;
 
   const submitOrder = async () => {
-    if (!customerPhone) {
-      alert("Customer phone is required!");
+    const { digits: phoneDigits } = formatPhone(customerPhone);
+
+    if (phoneDigits.length !== 10) {
+      alert("Phone number must be 10 digits.");
       return;
     }
     if (cart.length === 0) {
@@ -136,7 +142,7 @@ export default function Cashier() {
       customer: {
         firstName: customerFirst,
         lastName: customerLast,
-        phone: customerPhone,
+        phone: phoneDigits,
       },
       tipPercent: Number(tipPercent) || 0,
       items,
@@ -149,293 +155,256 @@ export default function Cashier() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+
       if (data.success) {
-        alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
-        // Clear form
-        setCart([]);
-        setTipPercent(0);
+        alert(`Order placed! Total: $${data.total.toFixed(2)}`);
+        clearCart();
         setCustomerPhone("");
         setCustomerFirst("");
         setCustomerLast("");
-        setPaymentMethod("Cash");
-        setCurrentItem(null);
       } else {
-        alert("Order failed: " + data.error);
+        alert("Order failed.");
       }
     } catch (err) {
-      console.error(err);
       alert("Error placing order");
     }
   };
 
   return (
-    <div className="main-content">
-      <div className="cashier-container">
-        <div className="cashier-layout">
-          {/* Left side - Menu */}
-          <div className="menu-section">
-            <div className="section-header">
-              <h2 className="page-title">🧋 Point of Sale</h2>
-            </div>
+    <div className="main-content" style={{ width: "100%", minHeight: "100vh", display: "flex" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* LEFT SIDE - MENU */}
+        <div style={{ flex: "1 1 58%", padding: "24px", overflowY: "auto" }}>
+          <h2>POS - Cashier</h2>
 
-            {/* Category tabs */}
-            <div className="category-tabs">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`category-tab ${selectedCategory === cat ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+          {/* Category Tabs */}
+          <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: "10px 20px",
+                  background: selectedCategory === cat ? "#583e23" : "#fff",
+                  color: selectedCategory === cat ? "#fff" : "#333",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  cursor: "pointer",
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
-            {/* Menu grid */}
-            <div className="menu-grid">
-              {filteredItems.map((item) => (
-                <button
-                  key={item.id}
-                  className={`menu-item ${currentItem?.id === item.id ? "selected" : ""}`}
-                  onClick={() => selectItem(item)}
-                >
-                  <div className="menu-item-name">{item.name}</div>
-                  <div className="menu-item-price">
-                    ${Number(item.price).toFixed(2)}
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* Menu Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            {filteredItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => selectItem(item)}
+                style={{
+                  padding: "20px",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  background: currentItem?.id === item.id ? "#28a745" : "#fff",
+                  color: currentItem?.id === item.id ? "#fff" : "#333",
+                }}
+              >
+                <div style={{ fontWeight: 600 }}>{item.name}</div>
+                <div>${Number(item.price).toFixed(2)}</div>
+              </button>
+            ))}
+          </div>
 
-            {/* Item customization panel */}
-            {currentItem && (
-              <div className="customization-panel">
-                <h5 className="customize-title">{currentItem.name}</h5>
+          {/* CUSTOMIZATION PANEL */}
+          {currentItem && (
+            <div style={{ marginTop: "20px", padding: "20px", background: "#fff", borderRadius: "8px", border: "1px solid #ddd" }}>
+              <h4>{currentItem.name}</h4>
 
-                <div className="customize-section">
-                  <label className="customize-label">Size:</label>
-                  <div className="button-group">
-                    <button
-                      className={`option-btn ${currentSize === "Small" ? "active" : ""}`}
-                      onClick={() => setCurrentSize("Small")}
-                    >
-                      Small
-                    </button>
-                    <button
-                      className={`option-btn ${currentSize === "Large" ? "active" : ""}`}
-                      onClick={() => setCurrentSize("Large")}
-                    >
-                      Large (+$1.00)
-                    </button>
-                  </div>
+              {/* Size */}
+              <div style={{ marginBottom: "16px" }}>
+                <label>Size:</label>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    onClick={() => setCurrentSize("Small")}
+                    className={currentSize === "Small" ? "active-btn" : ""}
+                  >
+                    Small
+                  </button>
+                  <button
+                    onClick={() => setCurrentSize("Large")}
+                    className={currentSize === "Large" ? "active-btn" : ""}
+                  >
+                    Large (+$1.00)
+                  </button>
                 </div>
-
-                <div className="customize-section">
-                  <label className="customize-label">Toppings:</label>
-                  <div className="toppings-grid">
-                    {availableToppings.map((topping) => (
-                      <button
-                        key={topping.id}
-                        className={`topping-btn ${currentToppings.find((t) => t.id === topping.id) ? "active" : ""
-                          }`}
-                        onClick={() => toggleTopping(topping)}
-                      >
-                        {topping.name} (+${Number(topping.price).toFixed(2)})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="customize-section">
-                  <label className="customize-label">Sugar Level:</label>
-                  <div className="button-group">
-                    {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                      <button
-                        key={lvl}
-                        className={`option-btn small ${currentSugar === lvl ? "active" : ""}`}
-                        onClick={() => setCurrentSugar(lvl)}
-                      >
-                        {lvl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="customize-section">
-                  <label className="customize-label">Ice Level:</label>
-                  <div className="button-group">
-                    {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                      <button
-                        key={lvl}
-                        className={`option-btn small ${currentIce === lvl ? "active" : ""}`}
-                        onClick={() => setCurrentIce(lvl)}
-                      >
-                        {lvl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button className="add-to-cart-btn" onClick={addToCart}>
-                  Add to Cart
-                </button>
               </div>
+
+              {/* Toppings */}
+              <div style={{ marginBottom: "16px" }}>
+                <label>Toppings:</label>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {availableToppings.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => toggleTopping(t)}
+                      className={currentToppings.some((x) => x.id === t.id) ? "active-btn" : ""}
+                    >
+                      {t.name} (+${Number(t.price).toFixed(2)})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sugar */}
+              <div style={{ marginBottom: "16px" }}>
+                <label>Sugar:</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => setCurrentSugar(lvl)}
+                      className={currentSugar === lvl ? "active-btn" : ""}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ice */}
+              <div style={{ marginBottom: "16px" }}>
+                <label>Ice:</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => setCurrentIce(lvl)}
+                      className={currentIce === lvl ? "active-btn" : ""}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button className="add-btn" onClick={addToCart}>
+                Add to Cart
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT SIDE - CART */}
+        <div style={{ flex: "1 1 42%", padding: "24px", borderLeft: "1px solid #ddd" }}>
+          <h3>Current Order</h3>
+
+          {/* Customer Info */}
+          <input
+            type="text"
+            placeholder="Phone Number"
+            value={customerPhone}
+            onChange={(e) => setCustomerPhone(e.target.value)}
+            style={{ width: "100%", marginBottom: "10px" }}
+          />
+
+          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+            <input
+              type="text"
+              placeholder="First Name"
+              value={customerFirst}
+              onChange={(e) => setCustomerFirst(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <input
+              type="text"
+              placeholder="Last Name"
+              value={customerLast}
+              onChange={(e) => setCustomerLast(e.target.value)}
+              style={{ flex: 1 }}
+            />
+          </div>
+
+          {/* Cart Items */}
+          <div style={{ maxHeight: "300px", overflowY: "auto", marginBottom: "20px" }}>
+            {cart.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#777" }}>No items in cart</p>
+            ) : (
+              cart.map((item, i) => (
+                <div key={i} style={{ border: "1px solid #ddd", padding: "10px", borderRadius: "8px", marginBottom: "10px" }}>
+                  <strong>
+                    {item.name} ({item.size})
+                  </strong>
+                  <br />
+                  {item.toppings.length > 0 && (
+                    <small>Toppings: {item.toppings.map((t) => t.name).join(", ")}</small>
+                  )}
+                  <br />
+                  <small>Sugar {item.sugar} | Ice {item.ice}</small>
+                  <div style={{ marginTop: "8px", display: "flex", justifyContent: "space-between" }}>
+                    <strong>
+                      $
+                      {(item.price +
+                        item.toppings.reduce((s, t) => s + t.price, 0)).toFixed(2)}
+                    </strong>
+                    <button onClick={() => removeFromCart(i)} style={{ color: "red" }}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
 
-          {/* Right side - Cart & Checkout */}
-          <div className="cart-section">
-            <h4 className="cart-title">Current Order</h4>
+          {/* Payment Method */}
+          <label>Payment Method:</label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{ width: "100%", marginBottom: "20px" }}
+          >
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Digital">Digital Wallet</option>
+          </select>
 
-            {/* Customer info */}
-            <div className="customer-info">
-              <input
-                type="text"
-                placeholder="Phone Number *"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="input-field"
-              />
-              <div className="input-row">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={customerFirst}
-                  onChange={(e) => setCustomerFirst(e.target.value)}
-                  className="input-field half"
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={customerLast}
-                  onChange={(e) => setCustomerLast(e.target.value)}
-                  className="input-field half"
-                />
-              </div>
-            </div>
+          {/* Tip */}
+          <label>Tip (%):</label>
+          <input
+            type="number"
+            value={tipPercent}
+            onChange={(e) => setTipPercent(e.target.value)}
+            min="0"
+            max="100"
+            style={{ width: "100%", marginBottom: "10px" }}
+          />
 
-            {/* Cart items */}
-            <div className="cart-items">
-              {cart.length === 0 ? (
-                <p className="empty-cart">No items in cart</p>
-              ) : (
-                <div>
-                  {cart.map((item, i) => (
-                    <div key={i} className="cart-item">
-                      <div className="cart-item-content">
-                        <div className="cart-item-details">
-                          <div className="cart-item-name">
-                            {item.name} ({item.size})
-                          </div>
-                          {item.toppings.length > 0 && (
-                            <div className="cart-item-toppings">
-                              {item.toppings.map((t) => t.name).join(", ")}
-                            </div>
-                          )}
-                          <div className="cart-item-options">
-                            Sugar: {item.sugar} | Ice: {item.ice}
-                          </div>
-                        </div>
-                        <div className="cart-item-actions">
-                          <div className="cart-item-price">
-                            $
-                            {(
-                              item.price +
-                              item.toppings.reduce((s, t) => s + t.price, 0)
-                            ).toFixed(2)}
-                          </div>
-                          <button
-                            className="remove-btn"
-                            onClick={() => removeFromCart(i)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Payment options */}
-            <div className="payment-section">
-              <label className="section-label">Payment Method:</label>
-              <select
-                className="select-field"
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="Digital">Digital Wallet</option>
-              </select>
-            </div>
-
-            {/* Tip */}
-            <div className="tip-section">
-              <label className="section-label">Tip %:</label>
-              <div className="tip-input-group">
-                <input
-                  type="number"
-                  value={tipPercent}
-                  onChange={(e) => setTipPercent(e.target.value)}
-                  className="input-field tip-input"
-                  min="0"
-                  max="100"
-                />
-                <span className="tip-suffix">%</span>
-              </div>
-              <div className="tip-buttons">
-                <button className="tip-btn" onClick={() => setTipPercent(10)}>
-                  10%
-                </button>
-                <button className="tip-btn" onClick={() => setTipPercent(15)}>
-                  15%
-                </button>
-                <button className="tip-btn" onClick={() => setTipPercent(20)}>
-                  20%
-                </button>
-                <button className="tip-btn" onClick={() => setTipPercent(0)}>
-                  No Tip
-                </button>
-              </div>
-            </div>
-
-            {/* Totals */}
-            <div className="totals-section">
-              <div className="total-row">
-                <span>Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="total-row">
-                <span>Tip ({tipPercent}%):</span>
-                <span>${tipAmount.toFixed(2)}</span>
-              </div>
-              <div className="total-row grand-total">
-                <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="action-buttons">
-              <button
-                className="complete-order-btn"
-                onClick={submitOrder}
-                disabled={cart.length === 0 || !customerPhone}
-              >
-                Complete Order
+          <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+            {[10, 15, 20, 0].map((v) => (
+              <button key={v} onClick={() => setTipPercent(v)}>
+                {v}%
               </button>
-              <button
-                className="clear-cart-btn"
-                onClick={clearCart}
-                disabled={cart.length === 0}
-              >
-                Clear Cart
-              </button>
-            </div>
+            ))}
           </div>
+
+          {/* Summary */}
+          <div style={{ marginBottom: "20px" }}>
+            <div>Subtotal: ${subtotal.toFixed(2)}</div>
+            <div>Tip: ${tipAmount.toFixed(2)}</div>
+            <hr />
+            <div style={{ fontWeight: "700" }}>Total: ${total.toFixed(2)}</div>
+          </div>
+
+          <button className="submit-btn" onClick={submitOrder} style={{ width: "100%", padding: "12px" }}>
+            Submit Order
+          </button>
         </div>
       </div>
     </div>

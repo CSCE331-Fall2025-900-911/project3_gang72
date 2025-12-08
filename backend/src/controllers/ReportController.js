@@ -8,34 +8,55 @@
  */
 
 const { Pool } = require('pg');
-const dotenv = require('dotenv'); 
+const dotenv = require('dotenv');
 dotenv.config();
 
 const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : undefined);
 
 const X_REPORT_SQL = `
+WITH receipt_totals AS (
+    SELECT
+        r.receipt_id,
+        r.order_time,
+        COALESCE(SUM(i.price), 0) AS total_price,
+        COALESCE(r.discount_amount, 0) AS discount_amount,
+        COALESCE(r.tip, 0) AS tip
+    FROM receipt r
+    LEFT JOIN orders o ON r.receipt_id = o.receipt_id
+    LEFT JOIN item i ON o.item_id = i.item_id
+    WHERE r.order_date = CURRENT_DATE
+    GROUP BY r.receipt_id, r.order_time, r.discount_amount, r.tip
+)
 SELECT
-		r.order_time AS hour,
-		COUNT(DISTINCT r.receipt_id) AS order_count,
-		COALESCE(SUM(i.price), 0) AS gross_sales,
-		COALESCE(SUM(r.tip), 0) AS total_tips
-FROM receipt r
-LEFT JOIN orders o ON r.receipt_id = o.receipt_id
-LEFT JOIN item i ON o.item_id = i.item_id
-WHERE r.order_date = CURRENT_DATE
-GROUP BY r.order_time
+    rt.order_time AS hour,
+    COUNT(DISTINCT rt.receipt_id) AS order_count,
+    COALESCE(SUM(GREATEST(rt.total_price - rt.discount_amount, 0)), 0) AS gross_sales,
+    COALESCE(SUM(rt.tip), 0) AS total_tips
+FROM receipt_totals rt
+GROUP BY rt.order_time
 ORDER BY hour;
 `;
 
 // Daily summary SQL: total orders, gross sales, total tips for CURRENT_DATE
 const zReportSQL = `
+WITH receipt_totals AS (
+    SELECT
+        r.receipt_id,
+        COALESCE(SUM(i.price), 0) AS total_price,
+        COALESCE(r.discount_amount, 0) AS discount_amount
+    FROM receipt r
+    LEFT JOIN orders o ON r.receipt_id = o.receipt_id
+    LEFT JOIN item i ON o.item_id = i.item_id
+    WHERE r.order_date = CURRENT_DATE
+    GROUP BY r.receipt_id, r.discount_amount
+)
 SELECT
     COUNT(DISTINCT r.receipt_id) AS total_orders,
-    COALESCE(SUM(i.price), 0) AS gross_sales,
-    COALESCE(SUM(r.tip), 0) AS total_tips
+    COALESCE(SUM(GREATEST(rt.total_price - rt.discount_amount, 0)), 0) AS gross_sales,
+    COALESCE(SUM(r.tip), 0) AS total_tips,
+    COALESCE(SUM(LEAST(rt.discount_amount, rt.total_price)), 0) AS total_discounts
 FROM receipt r
-LEFT JOIN orders o ON r.receipt_id = o.receipt_id
-LEFT JOIN item i ON o.item_id = i.item_id
+LEFT JOIN receipt_totals rt ON r.receipt_id = rt.receipt_id
 WHERE r.order_date = CURRENT_DATE
 `;
 
@@ -75,21 +96,66 @@ async function zReport() {
             total_orders: r.total_orders == null ? 0 : Number(r.total_orders),
             gross_sales: r.gross_sales == null ? 0 : Number(r.gross_sales),
             total_tips: r.total_tips == null ? 0 : Number(r.total_tips),
+            total_discounts: r.total_discounts == null ? 0 : Number(r.total_discounts),
         };
     } finally {
         client.release();
     }
 }
 
+// In-memory cache for Z-report (per day)
+let zReportCache = {
+    date: null,
+    summary: null
+};
+
+/**
+ * Check if Z-report has already been run today
+ */
+async function hasZReportBeenRunToday() {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    if (zReportCache.date === today && zReportCache.summary) {
+        return zReportCache.summary;
+    }
+    
+    return null;
+}
+
+/**
+ * Mark Z-report as run for today with the summary data
+ */
+async function markZReportAsRun(summary) {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    zReportCache.date = today;
+    zReportCache.summary = summary;
+}
+
 async function zReportHandler(req, res) {
     try {
+        // Check if Z-report has already been run today
+        const existingReport = await hasZReportBeenRunToday();
+        if (existingReport) {
+            // Return the existing report data
+            return res.status(200).json({
+                success: true,
+                summary: existingReport,
+                alreadyRun: true
+            });
+        }
+
+        // Generate the Z-report
         const summary = await zReport();
-        res.json({ success: true, summary });
+
+        // Mark Z-report as run with the summary
+        await markZReportAsRun(summary);
+
+        res.json({ success: true, summary, alreadyRun: false });
     } catch (err) {
         console.error('Error running daily summary', err);
         res.status(500).json({ success: false, error: err.message });
     }
 }
 
-module.exports = { runXReport, xReportHandler, X_REPORT_SQL, zReport, zReportHandler, zReportSQL };
+module.exports = { runXReport, xReportHandler, X_REPORT_SQL, zReport, zReportHandler, zReportSQL, hasZReportBeenRunToday, markZReportAsRun };
 
