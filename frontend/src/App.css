@@ -329,6 +329,32 @@ body > div:first-child {
   --module-color: #FFB88C;
 }
 
+/* MENU PAGE FIX — override Bootstrap and main-content */
+.menu-page-wrapper {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.menu-page-wrapper .container,
+.menu-page-wrapper .container-fluid {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.menu-page-wrapper .main-content {
+    margin-left: 2400 !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+
+.menu-page-wrapper .menu-board {
+    width: 100% !important;
+}
+
+
+
 .module-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
