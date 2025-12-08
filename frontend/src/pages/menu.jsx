@@ -121,7 +121,6 @@ export default function MenuBoard() {
       padding: '0',
       position: 'relative',
       overflow: 'hidden',
-      marginLeft: '240px'
     }}>
       {/* Decorative Images */}
       <div style={{
