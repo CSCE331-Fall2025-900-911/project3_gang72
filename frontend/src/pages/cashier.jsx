@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Cashier() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
@@ -121,16 +123,16 @@ export default function Cashier() {
     const { digits: phoneDigits } = formatPhone(customerPhone);
 
     if (phoneDigits.length === 0) {
-      alert("Customer phone is required!");
+      alert(t("Customer phone is required!"));
       return;
     }
 
     if (phoneDigits.length !== 10) {
-      alert("Phone number must be 10 digits (format xxx-xxx-xxxx).");
+      alert(t("Phone number must be 10 digits (format xxx-xxx-xxxx)."));
       return;
     }
     if (cart.length === 0) {
-      alert("Cart is empty!");
+      alert(t("Cart is empty!"));
       return;
     }
 
@@ -167,11 +169,11 @@ export default function Cashier() {
       if (data.success) {
         if (data.rewardApplied) {
           const isFree = data.discount >= data.subtotal;
-          const rewardLabel = isFree ? "FREE DRINK APPLIED!" : "20% OFF APPLIED!";
-          const rewardLine = isFree ? "This drink is free!" : "20% off applied for multiple drinks.";
-          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+          const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
+          const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
+          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\n${t("Receipt #")} ${data.receiptId}\n${t("Subtotal:")} $${data.subtotal.toFixed(2)}\n${t("Discount:")} -$${data.discount.toFixed(2)}\n${t("Total:")} $${data.total.toFixed(2)}`);
         } else {
-          alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+          alert(`${t("Order placed successfully!")}\n${t("Receipt #")} ${data.receiptId}\n${t("Total:")} $${data.total.toFixed(2)}`);
         }
         // Clear form
         setCart([]);
@@ -181,12 +183,12 @@ export default function Cashier() {
         setCustomerLast("");
         setPaymentMethod("Cash");
         setCurrentItem(null);
-      } else {
-        alert("Order failed: " + data.error);
+        } else {
+        alert(t("Order failed:") + " " + data.error);
       }
     } catch (err) {
       console.error(err);
-      alert("Error placing order");
+      alert(t("Error placing order"));
     }
   };
 
@@ -217,7 +219,7 @@ export default function Cashier() {
             fontWeight: '600',
             color: '#333'
           }}>
-            POS - Cashier
+            {t("POS - Cashier")}
           </h2>
 
           {/* Category tabs */}
@@ -242,8 +244,8 @@ export default function Cashier() {
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                >
-                  {cat}
+                  >
+                  {t(cat)}
                 </button>
               ))}
             </div>
@@ -288,7 +290,7 @@ export default function Cashier() {
                     wordWrap: 'break-word',
                     width: '100%'
                   }}>
-                    {item.name}
+                    {t(item.name)}
                   </div>
                   <div style={{ 
                     fontSize: '13px',
@@ -311,12 +313,12 @@ export default function Cashier() {
               borderRadius: '8px'
             }}>
               <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
-                {currentItem.name}
+                {t(currentItem.name)}
               </h5>
               
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Size:
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  {t("Size:")}
                 </label>
                 <div style={{ display: 'inline-flex', gap: '8px' }}>
                   <button
@@ -330,8 +332,8 @@ export default function Cashier() {
                       fontSize: '14px',
                       cursor: 'pointer'
                     }}
-                  >
-                    Small
+                    >
+                    {t("Small")}
                   </button>
                   <button
                     onClick={() => setCurrentSize("Large")}
@@ -344,15 +346,15 @@ export default function Cashier() {
                       fontSize: '14px',
                       cursor: 'pointer'
                     }}
-                  >
-                    Large (+$1.00)
+                    >
+                    {t("Large") + ' (+$1.00)'}
                   </button>
                 </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Toppings:
+                  {t("Toppings:")}
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {availableToppings.map((topping) => (
@@ -369,7 +371,7 @@ export default function Cashier() {
                         cursor: 'pointer'
                       }}
                     >
-                      {topping.name} (+${Number(topping.price).toFixed(2)})
+                      {t(topping.name)}{' (+$' + Number(topping.price).toFixed(2) + ')'}
                     </button>
                   ))}
                 </div>
@@ -377,7 +379,7 @@ export default function Cashier() {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Sugar Level:
+                  {t("Sugar Level:")}
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
@@ -394,8 +396,8 @@ export default function Cashier() {
                         fontSize: '13px',
                         cursor: 'pointer'
                       }}
-                    >
-                      {lvl}
+                      >
+                      {t(lvl)}
                     </button>
                   ))}
                 </div>
@@ -403,7 +405,7 @@ export default function Cashier() {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Ice Level:
+                  {t("Ice Level:")}
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
@@ -420,8 +422,8 @@ export default function Cashier() {
                         fontSize: '13px',
                         cursor: 'pointer'
                       }}
-                    >
-                      {lvl}
+                      >
+                      {t(lvl)}
                     </button>
                   ))}
                 </div>
@@ -442,7 +444,7 @@ export default function Cashier() {
                   marginTop: '8px'
                 }}
               >
-                Add to Cart
+                {t("Add to Cart")}
               </button>
             </div>
           )}
@@ -464,14 +466,14 @@ export default function Cashier() {
             fontWeight: '600',
             color: '#333'
           }}>
-            Current Order
+            {t("Current Order")}
           </h4>
 
           {/* Customer info */}
           <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
-              placeholder="Phone Number *"
+              placeholder={t("Phone Number *")}
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
               style={{
@@ -486,7 +488,7 @@ export default function Cashier() {
             <div style={{ display: 'flex', gap: '12px' }}>
               <input
                 type="text"
-                placeholder="First Name"
+                placeholder={t("First Name")}
                 value={customerFirst}
                 onChange={(e) => setCustomerFirst(e.target.value)}
                 style={{
@@ -499,7 +501,7 @@ export default function Cashier() {
               />
               <input
                 type="text"
-                placeholder="Last Name"
+                placeholder={t("Last Name")}
                 value={customerLast}
                 onChange={(e) => setCustomerLast(e.target.value)}
                 style={{
@@ -530,7 +532,7 @@ export default function Cashier() {
                 marginTop: '20px',
                 fontSize: '14px'
               }}>
-                No items in cart
+                {t("No items in cart")}
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -544,22 +546,22 @@ export default function Cashier() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '600', marginBottom: '4px', fontSize: '14px' }}>
-                          {item.name} ({item.size})
+                          {t(item.name)} ({t(item.size)})
                         </div>
                         {item.toppings.length > 0 && (
-                          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-                            {item.toppings.map((t) => t.name).join(", ")}
-                          </div>
-                        )}
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                              {item.toppings.map((tp) => t(tp.name)).join(", ")}
+                            </div>
+                          )}
                         <div style={{ fontSize: '12px', color: '#666' }}>
-                          Sugar: {item.sugar} | Ice: {item.ice}
+                          {t("Sugar")}: {item.sugar} | {t("Ice")}: {item.ice}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', marginLeft: '12px' }}>
                         <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '15px' }}>
                           ${(item.price + item.toppings.reduce((s, t) => s + t.price, 0)).toFixed(2)}
                         </div>
-                        <button
+                          <button
                           onClick={() => removeFromCart(i)}
                           style={{
                             padding: '4px 12px',
@@ -571,7 +573,7 @@ export default function Cashier() {
                             cursor: 'pointer'
                           }}
                         >
-                          Remove
+                          {t("Remove")}
                         </button>
                       </div>
                     </div>
@@ -584,7 +586,7 @@ export default function Cashier() {
           {/* Payment options */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
-              Payment Method:
+              {t("Payment Method:")}
             </label>
             <select
               value={paymentMethod}
@@ -599,16 +601,16 @@ export default function Cashier() {
                 cursor: 'pointer'
               }}
             >
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="Digital">Digital Wallet</option>
+              <option value="Cash">{t("Cash")}</option>
+              <option value="Card">{t("Card")}</option>
+              <option value="Digital">{t("Digital Wallet")}</option>
             </select>
           </div>
 
           {/* Tip */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
-              Tip %:
+              {t("Tip %:")}
             </label>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
@@ -652,8 +654,8 @@ export default function Cashier() {
                     fontSize: '13px',
                     cursor: 'pointer'
                   }}
-                >
-                  {tip === 0 ? 'No Tip' : `${tip}%`}
+                  >
+                  {tip === 0 ? t("No Tip") : `${tip}%`}
                 </button>
               ))}
             </div>
@@ -672,7 +674,7 @@ export default function Cashier() {
               fontSize: '14px',
               color: '#666'
             }}>
-              <span>Subtotal:</span>
+              <span>{t("Subtotal:")}</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
             <div style={{ 
@@ -682,7 +684,7 @@ export default function Cashier() {
               fontSize: '14px',
               color: '#666'
             }}>
-              <span>Tip ({tipPercent}%):</span>
+              <span>{t("Tip")} ({tipPercent}%):</span>
               <span>${tipAmount.toFixed(2)}</span>
             </div>
             <div style={{ 
@@ -694,7 +696,7 @@ export default function Cashier() {
               paddingTop: '12px',
               color: '#333'
             }}>
-              <span>Total:</span>
+              <span>{t("Total:")}</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
@@ -716,7 +718,7 @@ export default function Cashier() {
                 cursor: (cart.length === 0 || formatPhone(customerPhone).digits.length !== 10) ? 'not-allowed' : 'pointer'
               }}
             >
-              Complete Order
+              {t("Complete Order")}
             </button>
             <button
               onClick={clearCart}
@@ -733,7 +735,7 @@ export default function Cashier() {
                 cursor: cart.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              Clear Cart
+              {t("Clear Cart")}
             </button>
           </div>
         </div>
