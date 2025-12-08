@@ -608,7 +608,7 @@ export default function Kiosk() {
             marginBottom: '20px',
             paddingLeft: '8px'
           }}>
-            Categories
+            {t("Categories")}
           </div>
 
           {weather && (
@@ -654,8 +654,8 @@ export default function Kiosk() {
                   e.currentTarget.style.backgroundColor = '#fff';
                 }
               }}
-            >
-              {cat}
+              >
+              {t(cat)}
             </button>
           ))}
         </div>
@@ -808,7 +808,7 @@ export default function Kiosk() {
                     color: '#333',
                     marginBottom: '6px'
                   }}>
-                    {item.name}
+                    {t(item.name)}
                   </div>
                   <div style={{
                     fontSize: '16px',
@@ -868,14 +868,14 @@ export default function Kiosk() {
                       marginBottom: '6px',
                       color: '#333'
                     }}>
-                      {drink.name} ({drink.size})
+                      {t(drink.name)} ({t(drink.size)})
                     </div>
                     <div style={{
                       fontSize: '13px',
                       color: '#666',
                       marginBottom: '6px'
                     }}>
-                      Sugar: {drink.sugarLevel} | Ice: {drink.iceLevel}
+                      {t("Sugar")}:{' '}{drink.sugarLevel} {' | '} {t("Ice")}:{' '}{drink.iceLevel}
                     </div>
                     <div style={{
                       fontWeight: '600',
@@ -895,7 +895,7 @@ export default function Kiosk() {
                       }}>
                         {drink.toppings.map((t) => (
                           <div key={t.id}>
-                            + {t.name} (${Number(t.price).toFixed(2)})
+                            + {t(t.name)} (${Number(t.price).toFixed(2)})
                           </div>
                         ))}
                       </div>
@@ -1120,7 +1120,7 @@ export default function Kiosk() {
                     marginBottom: '12px',
                     color: '#333'
                   }}>
-                    Sugar Level
+                    {t("Sugar Level")}
                   </label>
                   <select
                     value={sugarLevel}
@@ -1152,7 +1152,7 @@ export default function Kiosk() {
                     marginBottom: '12px',
                     color: '#333'
                   }}>
-                    Ice Level
+                    {t("Ice Level")}
                   </label>
                   <select
                     value={iceLevel}
@@ -1184,7 +1184,7 @@ export default function Kiosk() {
                     marginBottom: '12px',
                     color: '#333'
                   }}>
-                    Toppings
+                    {t("Toppings")}
                   </label>
                   <div style={{
                     display: 'grid',
@@ -1207,7 +1207,7 @@ export default function Kiosk() {
                           textAlign: 'center'
                         }}
                       >
-                        {topping.name}
+                        {t(topping.name)}
                         <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
                           +${Number(topping.price).toFixed(2)}
                         </div>
