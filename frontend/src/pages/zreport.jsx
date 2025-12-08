@@ -6,7 +6,6 @@ export default function ZReport() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [alreadyRun, setAlreadyRun] = useState(false);
-    const [alreadyRun, setAlreadyRun] = useState(false);
 
     useEffect(() => {
         checkZReportStatus();
@@ -17,21 +16,24 @@ export default function ZReport() {
         setError(null);
         fetch('/api/z-report')
             .then(res => {
+                // Check if it's a 403 (already run)
+                if (res.status === 403) {
+                    setAlreadyRun(true);
+                    setLoading(false);
+                    return res.json();
+                }
                 if (!res.ok) {
-                    {
                     throw new Error('Failed to fetch Z-Report');
                 }
-                }
+                setAlreadyRun(false);
                 return res.json();
             })
             .then(data => {
                 if (data.success) {
                     setReportData(data.summary || {});
                     setAlreadyRun(data.alreadyRun || false);
-                    setAlreadyRun(data.alreadyRun || false);
                 } else {
                     setError(data.error || 'Unknown error');
-                    setAlreadyRun(data.alreadyRun || false);
                     setAlreadyRun(data.alreadyRun || false);
                 }
                 setLoading(false);
@@ -63,6 +65,8 @@ export default function ZReport() {
     const avgOrderValue = reportData && reportData.total_orders > 0
         ? reportData.gross_sales / reportData.total_orders
         : 0;
+
+    const discountLoss = reportData?.total_discounts || 0;
 
     return (
         <div className="container mt-4">
@@ -171,6 +175,10 @@ export default function ZReport() {
                                         <tr>
                                             <td className="fw-bold">Gross Sales</td>
                                             <td className="text-success fw-bold">{formatCurrency(reportData.gross_sales || 0)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="fw-bold">Discounts Applied (Loss)</td>
+                                            <td className="text-danger fw-bold">-{formatCurrency(discountLoss)}</td>
                                         </tr>
                                         <tr>
                                             <td className="fw-bold">Total Tips</td>
