@@ -1,88 +1,94 @@
+// frontend/src/components/VoiceRecorder.jsx
 import { useState, useEffect, useRef } from "react";
 
-export default function VoiceRecorder({ onText, onSilenceTimeout, onFiveMinuteTimeout }) {
+export default function VoiceRecorder({
+  onText,
+  onSilenceTimeout,
+  onFiveMinuteTimeout,
+}) {
   const [recording, setRecording] = useState(false);
   const [status, setStatus] = useState("");
+
   const mediaRecorderRef = useRef(null);
   const audioStreamRef = useRef(null);
-  const silenceTimerRef = useRef(null);
+  const chunksRef = useRef([]);
+
   const repeatQuestionTimerRef = useRef(null);
   const fiveMinuteTimerRef = useRef(null);
 
   // ------------------------------
-  // SPEAK HELPER (female voice)
+  // TIMERS (silence + inactivity)
   // ------------------------------
-  function speak(text) {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = speechSynthesis.getVoices().find((v) =>
-      v.name.toLowerCase().includes("female")
-    );
-    speechSynthesis.speak(utter);
-  }
+  const resetTimers = () => {
+    if (repeatQuestionTimerRef.current) {
+      clearTimeout(repeatQuestionTimerRef.current);
+    }
+    if (fiveMinuteTimerRef.current) {
+      clearTimeout(fiveMinuteTimerRef.current);
+    }
+
+    // 30s since last recognized speech → ask again
+    repeatQuestionTimerRef.current = setTimeout(() => {
+      if (typeof onSilenceTimeout === "function") {
+        onSilenceTimeout();
+      }
+    }, 30_000);
+
+    // 5m since last recognized speech → auto-order
+    fiveMinuteTimerRef.current = setTimeout(() => {
+      if (typeof onFiveMinuteTimeout === "function") {
+        onFiveMinuteTimeout();
+      }
+    }, 300_000);
+  };
+
+  const clearTimers = () => {
+    if (repeatQuestionTimerRef.current) {
+      clearTimeout(repeatQuestionTimerRef.current);
+      repeatQuestionTimerRef.current = null;
+    }
+    if (fiveMinuteTimerRef.current) {
+      clearTimeout(fiveMinuteTimerRef.current);
+      fiveMinuteTimerRef.current = null;
+    }
+  };
 
   // ------------------------------
-  // START CONTINUOUS LISTENING
+  // START RECORDING
   // ------------------------------
-  const startListening = async () => {
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream;
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-
-      setRecording(true);
-      setStatus("Listening… 🎤");
-
-      let chunks = [];
-      let lastSoundTime = Date.now();
-
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      source.connect(analyser);
-
-      const detectSilence = () => {
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(data);
-        const volume = data.reduce((a, b) => a + b) / data.length;
-
-        // Adjust threshold if needed
-        if (volume < 10) {
-          if (Date.now() - lastSoundTime > 1200) {
-            // Silence detected → stop recording
-            if (mediaRecorder.state === "recording") {
-              mediaRecorder.stop();
-            }
-          }
-        } else {
-          lastSoundTime = Date.now();
-        }
-
-        if (recording) requestAnimationFrame(detectSilence);
-      };
+      chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        chunks.push(e.data);
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
       };
 
       mediaRecorder.onstop = async () => {
-        if (chunks.length === 0) {
-          restartListening();
+        const chunks = chunksRef.current;
+        chunksRef.current = [];
+
+        if (!chunks.length) {
+          setStatus("");
           return;
         }
 
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        chunks = [];
-
         setStatus("Processing speech...");
 
+        const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
         formData.append("audio", blob);
 
         try {
-          const res = await fetch("/api/speech-to-text", {
+          // NOTE: new endpoint used in your updated branch
+          const res = await fetch("/api/speech", {
             method: "POST",
             body: formData,
           });
@@ -90,24 +96,22 @@ export default function VoiceRecorder({ onText, onSilenceTimeout, onFiveMinuteTi
           const data = await res.json();
 
           if (data.text && data.text.trim() !== "") {
-            // We got speech → reset inactivity timers
+            if (typeof onText === "function") {
+              onText(data.text);
+            }
+            // Recognized speech → reset inactivity timers
             resetTimers();
-
-            if (onText) onText(data.text);
           }
         } catch (err) {
           console.error("Speech processing error:", err);
+        } finally {
+          setStatus("");
         }
-
-        // After processing → restart listening
-        restartListening();
       };
 
       mediaRecorder.start();
-      requestAnimationFrame(detectSilence);
-
-      // START GLOBAL TIMERS
-      resetTimers();
+      setRecording(true);
+      setStatus("Listening… 🎤");
     } catch (err) {
       console.error("Microphone error:", err);
       alert("Microphone access denied or error starting recording.");
@@ -115,38 +119,10 @@ export default function VoiceRecorder({ onText, onSilenceTimeout, onFiveMinuteTi
   };
 
   // ------------------------------
-  // RESTART LISTENING
+  // STOP RECORDING
   // ------------------------------
-  const restartListening = () => {
-    if (!recording) return; // Stop if turned off
-    startListening();
-  };
-
-  // ------------------------------
-  // RESET TIMERS
-  // ------------------------------
-  const resetTimers = () => {
-    // Clear old timers
-    if (repeatQuestionTimerRef.current) clearTimeout(repeatQuestionTimerRef.current);
-    if (fiveMinuteTimerRef.current) clearTimeout(fiveMinuteTimerRef.current);
-
-    // 30-second question repeat (silence)
-    repeatQuestionTimerRef.current = setTimeout(() => {
-      if (onSilenceTimeout) onSilenceTimeout();
-    }, 30000);
-
-    // 5-minute full inactivity → auto-order
-    fiveMinuteTimerRef.current = setTimeout(() => {
-      if (onFiveMinuteTimeout) onFiveMinuteTimeout();
-    }, 300000); // 5 minutes
-  };
-
-  // ------------------------------
-  // STOP EVERYTHING
-  // ------------------------------
-  const stopAll = () => {
+  const stopRecording = () => {
     setRecording(false);
-    setStatus("");
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -154,28 +130,50 @@ export default function VoiceRecorder({ onText, onSilenceTimeout, onFiveMinuteTi
 
     if (audioStreamRef.current) {
       audioStreamRef.current.getTracks().forEach((t) => t.stop());
+      audioStreamRef.current = null;
     }
-
-    clearTimeout(repeatQuestionTimerRef.current);
-    clearTimeout(fiveMinuteTimerRef.current);
   };
 
+  // ------------------------------
+  // CLEANUP ON UNMOUNT
+  // ------------------------------
   useEffect(() => {
-    return () => stopAll();
+    return () => {
+      stopRecording();
+      clearTimers();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleToggle = () => {
+    if (recording) {
+      // Stop listening → send audio once
+      stopRecording();
+    } else {
+      // Start listening
+      startRecording();
+    }
+  };
+
   return (
-    <div className="text-center mb-3">
-      {!recording ? (
-        <button className="btn btn-lg btn-warning w-100" onClick={startListening}>
-          🎤 Speak Order
-        </button>
-      ) : (
-        <button className="btn btn-lg btn-danger w-100" onClick={stopAll}>
-          ⏹ Stop Listening
-        </button>
+    <div className="text-center" style={{ maxWidth: 380 }}>
+      <button
+        className="btn btn-lg w-100"
+        onClick={handleToggle}
+        style={{
+          backgroundColor: recording ? "#dc3545" : "#ffb88c",
+          borderColor: recording ? "#dc3545" : "#ffb88c",
+          color: recording ? "#fff" : "#432818",
+          fontWeight: 600,
+        }}
+      >
+        {recording ? "⏹ Stop Speaking" : "🎤 Start Speaking"}
+      </button>
+      {status && (
+        <div className="mt-2 text-muted" style={{ fontSize: "0.9rem" }}>
+          {status}
+        </div>
       )}
-      {status && <div className="mt-2 text-muted">{status}</div>}
     </div>
   );
 }

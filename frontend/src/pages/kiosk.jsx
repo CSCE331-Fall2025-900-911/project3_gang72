@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
-
-// Mock VoiceRecorder component (keeps existing app structure until real recorder is wired)
-const VoiceRecorder = ({ onText, onSilenceTimeout, onFiveMinuteTimeout }) => {
-  return <div style={{ display: 'none' }} />;
-};
+import VoiceRecorder from "../components/VoiceRecorder.jsx"; // ⬅ USE REAL RECORDER
 
 export default function Kiosk() {
   const { t } = useLanguage();
@@ -33,8 +29,6 @@ export default function Kiosk() {
     step: "idle",
     pendingDrink: null,
   });
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [voiceActive, setVoiceActive] = useState(false);
 
   const formatPhone = (value = "") => {
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -45,8 +39,7 @@ export default function Kiosk() {
     return { formatted: parts.join("-"), digits };
   };
 
-  
-  // SPEECH UTTER
+  // SPEAK HELPER
   function speak(text) {
     try {
       const utter = new SpeechSynthesisUtterance(text);
@@ -75,20 +68,18 @@ export default function Kiosk() {
     95: "⛈️",
   };
 
-  // ========== VOICE COMMANDS (register) ==========
+  // ========== OPTIONAL GLOBAL VOICE COMMANDS (leave as-is) ==========
   useEffect(() => {
     const voiceController = window.voiceController;
     if (!voiceController) return;
 
-    const getCartLength = () => document.querySelectorAll(".cart-item")?.length || cart.length;
+    const getCartLength = () =>
+      document.querySelectorAll(".cart-item")?.length || cart.length;
 
     try {
-      voiceController.registerCommand(
-        ["order", "add", "I want"],
-        () => {
-          voiceController.speak("What would you like to order?");
-        }
-      );
+      voiceController.registerCommand(["order", "add", "I want"], () => {
+        voiceController.speak("What would you like to order?");
+      });
 
       voiceController.registerCommand(
         ["view cart", "show cart", "check cart", "what is in my cart"],
@@ -96,7 +87,9 @@ export default function Kiosk() {
           if (getCartLength() === 0) {
             voiceController.speak("Your cart is empty");
           } else {
-            voiceController.speak(`You have ${getCartLength()} items in your cart`);
+            voiceController.speak(
+              `You have ${getCartLength()} items in your cart`
+            );
           }
         }
       );
@@ -114,7 +107,13 @@ export default function Kiosk() {
       );
 
       voiceController.registerCommand(
-        ["place order", "checkout", "complete order", "finish order", "submit order"],
+        [
+          "place order",
+          "checkout",
+          "complete order",
+          "finish order",
+          "submit order",
+        ],
         () => {
           voiceController.speak("Placing your order");
           submitOrder();
@@ -207,7 +206,9 @@ export default function Kiosk() {
       console.warn("voiceController registration error:", err);
     }
 
-    return () => { };
+    return () => {
+      // no-op cleanup; depends on your voiceController implementation
+    };
   }, [cart, selectedSize, selectedToppings, menuItems, tipPercent, usedSpeech]);
 
   // ========== LOAD MENU ==========
@@ -218,10 +219,14 @@ export default function Kiosk() {
         if (data.success && Array.isArray(data.items)) {
           setMenuItems(data.items);
           setAvailableToppings(
-            data.items.filter((i) => i.category?.toLowerCase().includes("topping"))
+            data.items.filter((i) =>
+              i.category?.toLowerCase().includes("topping")
+            )
           );
 
-          const firstCategory = data.items.find(i => !i.category?.toLowerCase().includes("topping"))?.category;
+          const firstCategory = data.items.find(
+            (i) => !i.category?.toLowerCase().includes("topping")
+          )?.category;
           if (firstCategory) {
             setSelectedCategory(firstCategory);
           }
@@ -270,7 +275,8 @@ export default function Kiosk() {
     let drink = null;
     for (let item of menuItems) {
       const nm = item.name.toLowerCase();
-      const matched = words.every((w) => nm.includes(w)) || words.join(" ").includes(nm);
+      const matched =
+        words.every((w) => nm.includes(w)) || words.join(" ").includes(nm);
       if (matched && !item.category?.toLowerCase().includes("topping")) {
         drink = item;
         break;
@@ -287,7 +293,10 @@ export default function Kiosk() {
   function addDrinkToCart(drinkItem, size, toppings = []) {
     if (!drinkItem) return;
 
-    const price = size === "Large" ? Number(drinkItem.price) + 1 : Number(drinkItem.price);
+    const price =
+      size === "Large"
+        ? Number(drinkItem.price) + 1
+        : Number(drinkItem.price);
 
     const drink = {
       id: drinkItem.id,
@@ -296,10 +305,10 @@ export default function Kiosk() {
       price,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
-      toppings: toppings.map((t) => ({
-        id: t.id,
-        name: t.name,
-        price: Number(t.price),
+      toppings: toppings.map((topping) => ({
+        id: topping.id,
+        name: topping.name,
+        price: Number(topping.price),
       })),
     };
 
@@ -307,19 +316,13 @@ export default function Kiosk() {
     setSelectedItem(null);
   }
 
-  function startVoiceOrder() {
-  speak("Okay, you can start speaking. What would you like to order?");
-  
-  // Tell your voice controller to start listening
-  if (window.voiceController?.startListening) {
-    window.voiceController.startListening();
-  }
-}
-
   function addToCartManual() {
     if (!selectedItem) return;
 
-    const price = selectedSize === "Large" ? Number(selectedItem.price) + 1 : Number(selectedItem.price);
+    const price =
+      selectedSize === "Large"
+        ? Number(selectedItem.price) + 1
+        : Number(selectedItem.price);
 
     const drink = {
       id: selectedItem.id,
@@ -328,10 +331,10 @@ export default function Kiosk() {
       price,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
-      toppings: selectedToppings.map((t) => ({
-        id: t.id,
-        name: t.name,
-        price: Number(t.price),
+      toppings: selectedToppings.map((topping) => ({
+        id: topping.id,
+        name: topping.name,
+        price: Number(topping.price),
       })),
     };
 
@@ -345,7 +348,8 @@ export default function Kiosk() {
 
     if (!phoneDigits) {
       if (usedSpeech) {
-        const generated = "9" + Math.floor(100000000 + Math.random() * 900000000);
+        const generated =
+          "9" + Math.floor(100000000 + Math.random() * 900000000);
         const { formatted, digits } = formatPhone(generated);
         phone = formatted;
         phoneDigits = digits;
@@ -378,15 +382,19 @@ export default function Kiosk() {
         name: `${d.name} (${d.size})`,
         price: d.price,
       },
-      ...d.toppings.map((t) => ({
-        itemId: t.id,
-        name: t.name,
-        price: t.price,
+      ...(d.toppings || []).map((top) => ({
+        itemId: top.id,
+        name: top.name,
+        price: top.price,
       })),
     ]);
 
     const payload = {
-      customer: { firstName: customerFirst, lastName: customerLast, phone: phoneDigits },
+      customer: {
+        firstName: customerFirst,
+        lastName: customerLast,
+        phone: phoneDigits,
+      },
       tipPercent: Number(tipPercent) || 0,
       items,
     };
@@ -402,11 +410,25 @@ export default function Kiosk() {
       if (data.success) {
         if (data.rewardApplied) {
           const isFree = data.discount >= data.subtotal;
-          const rewardSpeech = isFree ? t("Great news! Your drink is free.") : t("You received 20% off your order!");
+          const rewardSpeech = isFree
+            ? t("Great news! Your drink is free.")
+            : t("You received 20% off your order!");
           speak(rewardSpeech);
-          const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
-          const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
-          alert(`${rewardLabel}\n\n${rewardLine}\n\n${t("Receipt")} #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+          const rewardLabel = isFree
+            ? t("FREE DRINK APPLIED!")
+            : t("20% OFF APPLIED!");
+          const rewardLine = isFree
+            ? t("This drink is free!")
+            : t("20% off applied for multiple drinks.");
+          alert(
+            `${rewardLabel}\n\n${rewardLine}\n\n${t("Receipt")} #${
+              data.receiptId
+            }\nSubtotal: $${data.subtotal.toFixed(
+              2
+            )}\nDiscount: -$${data.discount.toFixed(
+              2
+            )}\nTotal: $${data.total.toFixed(2)}`
+          );
         } else {
           speak(t("Your order has been placed."));
           alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
@@ -429,16 +451,20 @@ export default function Kiosk() {
     }
   };
 
+  // ========== VOICE HANDLERS ==========
   function handleVoice(text) {
+    console.log("🚀 Recognized Speech:", text);
     setUsedSpeech(true);
     const spoken = text.toLowerCase();
 
+    // REMOVE LAST
     if (spoken.includes("remove last")) {
       setCart((prev) => prev.slice(0, -1));
       speak("Removed the last drink.");
       return;
     }
 
+    // TIP
     const tipMatch = spoken.match(/tip (\d{1,2})/);
     if (tipMatch) {
       setTipPercent(Number(tipMatch[1]));
@@ -446,12 +472,18 @@ export default function Kiosk() {
       return;
     }
 
-    if (spoken.includes("done") || spoken.includes("finish") || spoken.includes("place order")) {
+    // FINISH ORDER
+    if (
+      spoken.includes("done") ||
+      spoken.includes("finish") ||
+      spoken.includes("place order")
+    ) {
       speak("Placing your order.");
       submitOrder();
       return;
     }
 
+    // AWAITING SIZE
     if (conversation.step === "awaitingSize") {
       let size = null;
       if (spoken.includes("large")) size = "Large";
@@ -471,6 +503,7 @@ export default function Kiosk() {
       return;
     }
 
+    // AWAITING TOPPINGS
     if (conversation.step === "awaitingToppings") {
       const { toppings } = parseSpeech(spoken);
       const finalToppings = toppings || [];
@@ -488,6 +521,7 @@ export default function Kiosk() {
       return;
     }
 
+    // NORMAL FLOW
     const parsed = parseSpeech(spoken);
     const { drink, size, toppings, phone } = parsed;
 
@@ -550,7 +584,13 @@ export default function Kiosk() {
     }, {});
 
   const subtotal = cart.reduce(
-    (sum, d) => sum + Number(d.price || 0) + (d.toppings?.reduce((s, t) => s + Number(t.price || 0), 0) || 0),
+    (sum, d) =>
+      sum +
+      Number(d.price || 0) +
+      (d.toppings?.reduce(
+        (s, t) => s + Number(t.price || 0),
+        0
+      ) || 0),
     0
   );
   const tipAmount = subtotal * (Number(tipPercent || 0) / 100);
@@ -565,9 +605,11 @@ export default function Kiosk() {
     setIceLevel("100%");
   };
 
-  const toggleTopping = (t) => {
+  const toggleTopping = (topping) => {
     setSelectedToppings((prev) =>
-      prev.find((x) => x.id === t.id) ? prev.filter((x) => x.id !== t.id) : [...prev, t]
+      prev.find((x) => x.id === topping.id)
+        ? prev.filter((x) => x.id !== topping.id)
+        : [...prev, topping]
     );
   };
 
@@ -575,56 +617,57 @@ export default function Kiosk() {
 
   return (
     <div className="main-content">
-      <div style={{
-        display: 'flex',
-        height: '100vh',
-        width: '100%',
-        backgroundColor: '#f5f5f5',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
-      }}>
-      {voiceEnabled && (
-        <VoiceRecorder
-          onText={handleVoice}
-          onSilenceTimeout={handleSilence}
-          onFiveMinuteTimeout={handleFiveMinuteTimeout}
-        />
-      )}
-
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+          width: "100%",
+          backgroundColor: "#f5f5f5",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}
+      >
         {/* LEFT SIDEBAR */}
-        <div style={{
-          width: '260px',
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e0e0e0',
-          padding: '24px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          overflowY: 'auto',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.05)'
-        }}>
-          <div style={{
-            color: '#333',
-            fontSize: '22px',
-            fontWeight: '700',
-            marginBottom: '20px',
-            paddingLeft: '8px'
-          }}>
+        <div
+          style={{
+            width: "260px",
+            backgroundColor: "#fff",
+            borderRight: "1px solid #e0e0e0",
+            padding: "24px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            overflowY: "auto",
+            boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
+          }}
+        >
+          <div
+            style={{
+              color: "#333",
+              fontSize: "22px",
+              fontWeight: "700",
+              marginBottom: "20px",
+              paddingLeft: "8px",
+            }}
+          >
             {t("Categories")}
           </div>
 
           {weather && (
-            <div style={{
-              color: '#333',
-              textAlign: 'center',
-              padding: '16px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              fontSize: '18px',
-              fontWeight: '500',
-              marginBottom: '16px'
-            }}>
-              {weatherIcons[weather.weatherCode] || "❓"} {weather.temperature}°F
+            <div
+              style={{
+                color: "#333",
+                textAlign: "center",
+                padding: "16px",
+                backgroundColor: "#f8f9fa",
+                border: "1px solid #e0e0e0",
+                borderRadius: "12px",
+                fontSize: "18px",
+                fontWeight: "500",
+                marginBottom: "16px",
+              }}
+            >
+              {weatherIcons[weather.weatherCode] || "❓"} {weather.temperature}°
+              F
             </div>
           )}
 
@@ -633,61 +676,92 @@ export default function Kiosk() {
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               style={{
-                padding: '18px 16px',
-                backgroundColor: selectedCategory === cat ? '#583e23' : '#fff',
-                color: selectedCategory === cat ? '#fff' : '#333',
-                border: selectedCategory === cat ? 'none' : '1px solid #e0e0e0',
-                borderRadius: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                textAlign: 'left',
-                boxShadow: selectedCategory === cat ? '0 2px 8px rgba(88,62,35,0.3)' : 'none'
+                padding: "18px 16px",
+                backgroundColor: selectedCategory === cat ? "#583e23" : "#fff",
+                color: selectedCategory === cat ? "#fff" : "#333",
+                border:
+                  selectedCategory === cat
+                    ? "none"
+                    : "1px solid #e0e0e0",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                textAlign: "left",
+                boxShadow:
+                  selectedCategory === cat
+                    ? "0 2px 8px rgba(88,62,35,0.3)"
+                    : "none",
               }}
               onMouseEnter={(e) => {
                 if (selectedCategory !== cat) {
-                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.backgroundColor = "#f8f9fa";
                 }
               }}
               onMouseLeave={(e) => {
                 if (selectedCategory !== cat) {
-                  e.currentTarget.style.backgroundColor = '#fff';
+                  e.currentTarget.style.backgroundColor = "#fff";
                 }
               }}
-              >
+            >
               {t(cat)}
             </button>
           ))}
         </div>
 
         {/* MAIN CONTENT */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-          <div style={{
-            backgroundColor: '#fff',
-            padding: '20px 30px',
-            borderBottom: '1px solid #e0e0e0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '600', color: '#333' }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          {/* HEADER */}
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "20px 30px",
+              borderBottom: "1px solid #e0e0e0",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "28px",
+                fontWeight: "600",
+                color: "#333",
+              }}
+            >
               {t("Kiosk Page")}
             </h1>
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                alignItems: "center",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
               <input
                 type="text"
                 placeholder={t("First Name")}
                 value={customerFirst}
                 onChange={(e) => setCustomerFirst(e.target.value)}
                 style={{
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  width: '130px'
+                  padding: "10px 14px",
+                  fontSize: "14px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  width: "130px",
                 }}
               />
               <input
@@ -696,256 +770,253 @@ export default function Kiosk() {
                 value={customerLast}
                 onChange={(e) => setCustomerLast(e.target.value)}
                 style={{
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  width: '130px'
+                  padding: "10px 14px",
+                  fontSize: "14px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  width: "130px",
                 }}
               />
               <input
                 type="text"
                 placeholder={t("Phone Number")}
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(formatPhone(e.target.value).formatted)}
+                onChange={(e) =>
+                  setCustomerPhone(formatPhone(e.target.value).formatted)
+                }
                 style={{
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  width: '150px'
+                  padding: "10px 14px",
+                  fontSize: "14px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  width: "150px",
                 }}
               />
-              <button
-              onClick={startVoiceOrder}
-              style={{
-                backgroundColor: voiceActive ? '#583e23' : '#aaa',
-                color: 'white',
-                padding: '12px 18px',
-                fontSize: '15px',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: voiceActive ? 'pointer' : 'not-allowed',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              🎤 Start Voice Order
-            </button>
-              {/* Voice Toggle */}
-              <button
-                onClick={() => setVoiceActive(!voiceActive)}
-                style={{
-                  backgroundColor: voiceActive ? '#28a745' : '#dc3545',
-                  color: 'white',
-                  padding: '12px 18px',
-                  fontSize: '15px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
-                {voiceActive ? 'Voice: ON' : 'Voice: OFF'}
-              </button>
+
+              {/* VOICE RECORDER BUTTON (Start/Stop Speaking) */}
+              <VoiceRecorder
+                onText={handleVoice}
+                onSilenceTimeout={handleSilence}
+                onFiveMinuteTimeout={handleFiveMinuteTimeout}
+              />
             </div>
           </div>
-          <button
-            onClick={startVoiceOrder}
+
+          {/* DRINK GRID */}
+          <div
             style={{
-              backgroundColor: voiceActive ? '#583e23' : '#aaa',
-              color: 'white',
-              padding: '12px 18px',
-              fontSize: '15px',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: voiceActive ? 'pointer' : 'not-allowed',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              flex: 1,
+              padding: "24px",
+              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+              gap: "16px",
+              alignContent: "start",
+              backgroundColor: "#fafafa",
             }}
           >
-            🎤 Start Voice Order
-          </button>
-             {/* Voice Toggle */}
-            <button
-              onClick={() => setVoiceActive(!voiceActive)}
-              style={{
-                backgroundColor: voiceActive ? '#28a745' : '#dc3545',
-                color: 'white',
-                padding: '12px 18px',
-                fontSize: '15px',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              {voiceActive ? 'Voice: ON' : 'Voice: OFF'}
-            </button>
-          <div style={{
-            flex: 1,
-            padding: '24px',
-            overflowY: 'auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '16px',
-            alignContent: 'start',
-            backgroundColor: '#fafafa'
-          }}>
-            {selectedCategory && groupedItems[selectedCategory]?.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => openItemModal(item)}
-                style={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '0',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '240px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                  e.currentTarget.style.borderColor = '#333';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = '#e0e0e0';
-                }}
-              >
-                <div style={{
-                  width: '100%',
-                  height: '150px',
-                  backgroundColor: '#f5f5f5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '56px'
-                }}>
-                  🧋
-                </div>
+            {selectedCategory &&
+              groupedItems[selectedCategory]?.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => openItemModal(item)}
+                  style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "12px",
+                    padding: 0,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "240px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0,0,0,0.1)";
+                    e.currentTarget.style.borderColor = "#333";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "150px",
+                      backgroundColor: "#f5f5f5",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "56px",
+                    }}
+                  >
+                    🧋
+                  </div>
 
-                <div style={{ padding: '14px', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <div style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    color: '#333',
-                    marginBottom: '6px'
-                  }}>
-                    {t(item.name)}
+                  <div
+                    style={{
+                      padding: "14px",
+                      textAlign: "center",
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "500",
+                        color: "#333",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {t(item.name)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: "#666",
+                      }}
+                    >
+                      ${Number(item.price).toFixed(2)}
+                    </div>
                   </div>
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: '#666'
-                  }}>
-                    ${Number(item.price).toFixed(2)}
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
 
-
-        {/* RIGHT SIDEBAR */}
-        <div style={{
-          width: '360px',
-          backgroundColor: '#fff',
-          borderLeft: '1px solid #e0e0e0',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #e0e0e0',
-            backgroundColor: '#fafafa'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600', color: '#333' }}>
+        {/* RIGHT SIDEBAR - CART */}
+        <div
+          style={{
+            width: "360px",
+            backgroundColor: "#fff",
+            borderLeft: "1px solid #e0e0e0",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "20px 24px",
+              borderBottom: "1px solid #e0e0e0",
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "22px",
+                fontWeight: "600",
+                color: "#333",
+              }}
+            >
               {t("Cart")}
             </h2>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
             {cart.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                color: '#999',
-                padding: '40px 20px',
-                fontSize: '15px'
-              }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "#999",
+                  padding: "40px 20px",
+                  fontSize: "15px",
+                }}
+              >
                 {t("No items added yet.")}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
                 {cart.map((drink, i) => (
-                  <div key={i} className="cart-item" style={{
-                    backgroundColor: '#fafafa',
-                    padding: '14px',
-                    borderRadius: '8px',
-                    border: '1px solid #e0e0e0'
-                  }}>
-                    <div style={{
-                      fontWeight: '500',
-                      fontSize: '14px',
-                      marginBottom: '6px',
-                      color: '#333'
-                    }}>
+                  <div
+                    key={i}
+                    className="cart-item"
+                    style={{
+                      backgroundColor: "#fafafa",
+                      padding: "14px",
+                      borderRadius: "8px",
+                      border: "1px solid #e0e0e0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: "500",
+                        fontSize: "14px",
+                        marginBottom: "6px",
+                        color: "#333",
+                      }}
+                    >
                       {t(drink.name)} ({t(drink.size)})
                     </div>
-                    <div style={{
-                      fontSize: '13px',
-                      color: '#666',
-                      marginBottom: '6px'
-                    }}>
-                      {t("Sugar")}:{' '}{drink.sugarLevel} {' | '} {t("Ice")}:{' '}{drink.iceLevel}
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#666",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {t("Sugar")}: {drink.sugarLevel} {" | "} {t("Ice")}:{" "}
+                      {drink.iceLevel}
                     </div>
-                    <div style={{
-                      fontWeight: '600',
-                      color: '#333',
-                      fontSize: '14px',
-                      marginBottom: '8px'
-                    }}>
+                    <div
+                      style={{
+                        fontWeight: "600",
+                        color: "#333",
+                        fontSize: "14px",
+                        marginBottom: "8px",
+                      }}
+                    >
                       ${Number(drink.price).toFixed(2)}
                     </div>
 
                     {drink.toppings?.length > 0 && (
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#666',
-                        marginBottom: '10px',
-                        paddingLeft: '8px'
-                      }}>
-                        {drink.toppings.map((t) => (
-                          <div key={t.id}>
-                            + {t(t.name)} (${Number(t.price).toFixed(2)})
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#666",
+                          marginBottom: "10px",
+                          paddingLeft: "8px",
+                        }}
+                      >
+                        {drink.toppings.map((top) => (
+                          <div key={top.id}>
+                            + {t(top.name)} (${Number(top.price).toFixed(2)})
                           </div>
                         ))}
                       </div>
                     )}
 
                     <button
-                      onClick={() => setCart((prev) => prev.filter((_, idx) => idx !== i))}
+                      onClick={() =>
+                        setCart((prev) =>
+                          prev.filter((_, idx) => idx !== i)
+                        )
+                      }
                       style={{
-                        backgroundColor: 'transparent',
-                        color: '#dc3545',
-                        border: '1px solid #dc3545',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: '500'
+                        backgroundColor: "transparent",
+                        color: "#dc3545",
+                        border: "1px solid #dc3545",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "500",
                       }}
                     >
                       {t("Remove")}
@@ -956,30 +1027,41 @@ export default function Kiosk() {
             )}
           </div>
 
-          <div style={{
-            padding: '20px 24px',
-            borderTop: '1px solid #e0e0e0',
-            backgroundColor: '#fafafa'
-          }}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', display: 'block', color: '#333' }}>
+          <div
+            style={{
+              padding: "20px 24px",
+              borderTop: "1px solid #e0e0e0",
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <div style={{ marginBottom: "16px" }}>
+              <label
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "8px",
+                  display: "block",
+                  color: "#333",
+                }}
+              >
                 {t("Tip %")}
               </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: "flex", gap: "8px" }}>
                 {[0, 10, 15, 20].map((tip) => (
                   <button
                     key={tip}
                     onClick={() => setTipPercent(tip)}
                     style={{
                       flex: 1,
-                      padding: '10px',
-                      backgroundColor: tipPercent === tip ? '#333' : '#fff',
-                      color: tipPercent === tip ? '#fff' : '#666',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      fontSize: '14px'
+                      padding: "10px",
+                      backgroundColor:
+                        tipPercent === tip ? "#333" : "#fff",
+                      color: tipPercent === tip ? "#fff" : "#666",
+                      border: "1px solid #ddd",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "500",
+                      fontSize: "14px",
                     }}
                   >
                     {tip}%
@@ -988,34 +1070,42 @@ export default function Kiosk() {
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px', fontSize: '15px' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '6px',
-                color: '#666'
-              }}>
+            <div style={{ marginBottom: "16px", fontSize: "15px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "6px",
+                  color: "#666",
+                }}
+              >
                 <span>{t("Subtotal")}:</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '10px',
-                color: '#666'
-              }}>
-                <span>{t("Tip")} ({tipPercent}%):</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "10px",
+                  color: "#666",
+                }}
+              >
+                <span>
+                  {t("Tip")} ({tipPercent}%):
+                </span>
                 <span>${tipAmount.toFixed(2)}</span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '18px',
-                fontWeight: '600',
-                paddingTop: '10px',
-                borderTop: '1px solid #ddd',
-                color: '#333'
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  paddingTop: "10px",
+                  borderTop: "1px solid #ddd",
+                  color: "#333",
+                }}
+              >
                 <span>{t("Total")}:</span>
                 <span>${total.toFixed(2)}</span>
               </div>
@@ -1025,16 +1115,16 @@ export default function Kiosk() {
               onClick={submitOrder}
               disabled={isSubmitting}
               style={{
-                width: '100%',
-                padding: '14px',
-                backgroundColor: isSubmitting ? '#ccc' : '#333',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s'
+                width: "100%",
+                padding: "14px",
+                backgroundColor: isSubmitting ? "#ccc" : "#333",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
               }}
             >
               {isSubmitting ? t("Processing...") : t("Place Order")}
@@ -1044,101 +1134,122 @@ export default function Kiosk() {
 
         {/* MODAL */}
         {selectedItem && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '600px',
-              maxHeight: '85vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-            }}>
-              <div style={{
-                padding: '24px',
-                borderBottom: '1px solid #e0e0e0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '600', color: '#333' }}>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "12px",
+                width: "90%",
+                maxWidth: "600px",
+                maxHeight: "85vh",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "24px",
+                  borderBottom: "1px solid #e0e0e0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "22px",
+                    fontWeight: "600",
+                    color: "#333",
+                  }}
+                >
                   {selectedItem.name}
                 </h2>
                 <button
                   onClick={() => setSelectedItem(null)}
                   style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    fontSize: '28px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '0',
-                    width: '32px',
-                    height: '32px',
-                    lineHeight: '28px'
+                    backgroundColor: "transparent",
+                    border: "none",
+                    fontSize: "28px",
+                    cursor: "pointer",
+                    color: "#999",
+                    padding: 0,
+                    width: "32px",
+                    height: "32px",
+                    lineHeight: "28px",
                   }}
                 >
                   ×
                 </button>
               </div>
 
-              <div style={{
-                padding: '24px',
-                overflowY: 'auto',
-                flex: 1
-              }}>
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    display: 'block',
-                    marginBottom: '12px',
-                    color: '#333'
-                  }}>
+              <div
+                style={{
+                  padding: "24px",
+                  overflowY: "auto",
+                  flex: 1,
+                }}
+              >
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "500",
+                      display: "block",
+                      marginBottom: "12px",
+                      color: "#333",
+                    }}
+                  >
                     {t("Size")}
                   </label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ display: "flex", gap: "12px" }}>
                     <button
-                      onClick={() => setSelectedSize('Small')}
+                      onClick={() => setSelectedSize("Small")}
                       style={{
                         flex: 1,
-                        padding: '14px',
-                        backgroundColor: selectedSize === 'Small' ? '#333' : '#fff',
-                        color: selectedSize === 'Small' ? '#fff' : '#666',
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
+                        padding: "14px",
+                        backgroundColor:
+                          selectedSize === "Small" ? "#333" : "#fff",
+                        color:
+                          selectedSize === "Small" ? "#fff" : "#666",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                        fontSize: "15px",
+                        fontWeight: "500",
+                        cursor: "pointer",
                       }}
                     >
                       {t("Small")}
                     </button>
                     <button
-                      onClick={() => setSelectedSize('Large')}
+                      onClick={() => setSelectedSize("Large")}
                       style={{
                         flex: 1,
-                        padding: '14px',
-                        backgroundColor: selectedSize === 'Large' ? '#333' : '#fff',
-                        color: selectedSize === 'Large' ? '#fff' : '#666',
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
+                        padding: "14px",
+                        backgroundColor:
+                          selectedSize === "Large" ? "#333" : "#fff",
+                        color:
+                          selectedSize === "Large" ? "#fff" : "#666",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                        fontSize: "15px",
+                        fontWeight: "500",
+                        cursor: "pointer",
                       }}
                     >
                       {t("Large")} (+$1.00)
@@ -1146,28 +1257,30 @@ export default function Kiosk() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    display: 'block',
-                    marginBottom: '12px',
-                    color: '#333'
-                  }}>
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "500",
+                      display: "block",
+                      marginBottom: "12px",
+                      color: "#333",
+                    }}
+                  >
                     {t("Sugar Level")}
                   </label>
                   <select
                     value={sugarLevel}
                     onChange={(e) => setSugarLevel(e.target.value)}
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      fontSize: '14px',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      backgroundColor: 'white',
-                      cursor: 'pointer',
-                      color: '#333'
+                      width: "100%",
+                      padding: "12px",
+                      fontSize: "14px",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: "white",
+                      cursor: "pointer",
+                      color: "#333",
                     }}
                   >
                     <option>0%</option>
@@ -1178,28 +1291,30 @@ export default function Kiosk() {
                   </select>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
-                  <label style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    display: 'block',
-                    marginBottom: '12px',
-                    color: '#333'
-                  }}>
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "500",
+                      display: "block",
+                      marginBottom: "12px",
+                      color: "#333",
+                    }}
+                  >
                     {t("Ice Level")}
                   </label>
                   <select
                     value={iceLevel}
                     onChange={(e) => setIceLevel(e.target.value)}
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      fontSize: '14px',
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      backgroundColor: 'white',
-                      cursor: 'pointer',
-                      color: '#333'
+                      width: "100%",
+                      padding: "12px",
+                      fontSize: "14px",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: "white",
+                      cursor: "pointer",
+                      color: "#333",
                     }}
                   >
                     <option>0%</option>
@@ -1211,38 +1326,57 @@ export default function Kiosk() {
                 </div>
 
                 <div>
-                  <label style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    display: 'block',
-                    marginBottom: '12px',
-                    color: '#333'
-                  }}>
+                  <label
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "500",
+                      display: "block",
+                      marginBottom: "12px",
+                      color: "#333",
+                    }}
+                  >
                     {t("Toppings")}
                   </label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                    gap: '10px'
-                  }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(140px, 1fr))",
+                      gap: "10px",
+                    }}
+                  >
                     {availableToppings.map((topping) => (
                       <button
                         key={topping.id}
                         onClick={() => toggleTopping(topping)}
                         style={{
-                          padding: '12px',
-                          backgroundColor: selectedToppings.find((x) => x.id === topping.id) ? '#333' : '#fff',
-                          color: selectedToppings.find((x) => x.id === topping.id) ? '#fff' : '#666',
-                          border: '1px solid #ddd',
-                          borderRadius: '8px',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          textAlign: 'center'
+                          padding: "12px",
+                          backgroundColor: selectedToppings.find(
+                            (x) => x.id === topping.id
+                          )
+                            ? "#333"
+                            : "#fff",
+                          color: selectedToppings.find(
+                            (x) => x.id === topping.id
+                          )
+                            ? "#fff"
+                            : "#666",
+                          border: "1px solid #ddd",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          textAlign: "center",
                         }}
                       >
                         {t(topping.name)}
-                        <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            marginTop: "4px",
+                            opacity: 0.8,
+                          }}
+                        >
                           +${Number(topping.price).toFixed(2)}
                         </div>
                       </button>
@@ -1251,25 +1385,27 @@ export default function Kiosk() {
                 </div>
               </div>
 
-              <div style={{
-                padding: '20px 24px',
-                borderTop: '1px solid #e0e0e0',
-                display: 'flex',
-                gap: '12px',
-                backgroundColor: '#fafafa'
-              }}>
+              <div
+                style={{
+                  padding: "20px 24px",
+                  borderTop: "1px solid #e0e0e0",
+                  display: "flex",
+                  gap: "12px",
+                  backgroundColor: "#fafafa",
+                }}
+              >
                 <button
                   onClick={() => setSelectedItem(null)}
                   style={{
                     flex: 1,
-                    padding: '14px',
-                    backgroundColor: '#fff',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
+                    padding: "14px",
+                    backgroundColor: "#fff",
+                    color: "#666",
+                    border: "1px solid #ddd",
+                    borderRadius: "8px",
+                    fontSize: "15px",
+                    fontWeight: "500",
+                    cursor: "pointer",
                   }}
                 >
                   {t("Cancel")}
@@ -1278,14 +1414,14 @@ export default function Kiosk() {
                   onClick={addToCartManual}
                   style={{
                     flex: 2,
-                    padding: '14px',
-                    backgroundColor: '#333',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '15px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
+                    padding: "14px",
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    cursor: "pointer",
                   }}
                 >
                   {t("Add to Cart")}
@@ -1295,44 +1431,61 @@ export default function Kiosk() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* LOADING OVERLAY */}
         {isSubmitting && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              border: '4px solid rgba(255,255,255,0.3)',
-              borderTop: '4px solid white',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite'
-            }} />
-            <h3 style={{ color: 'white', marginTop: '24px', fontSize: '20px', fontWeight: '500' }}>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <div
+              style={{
+                width: "60px",
+                height: "60px",
+                border: "4px solid rgba(255,255,255,0.3)",
+                borderTop: "4px solid white",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            <h3
+              style={{
+                color: "white",
+                marginTop: "24px",
+                fontSize: "20px",
+                fontWeight: "500",
+              }}
+            >
               {t("Processing Your Order...")}
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '15px', marginTop: '8px' }}>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.8)",
+                fontSize: "15px",
+                marginTop: "8px",
+              }}
+            >
               {t("Please wait")}
             </p>
           </div>
         )}
 
         <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );
