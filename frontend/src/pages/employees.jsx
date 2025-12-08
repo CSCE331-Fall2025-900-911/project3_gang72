@@ -1,5 +1,9 @@
 
 import { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import ManagerLayout from "../components/ManagerLayout";
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 export default function Employees() {
   const [employees, setEmployees] = useState([]);

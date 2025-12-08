@@ -64,9 +64,9 @@ export default function Home() {
                     <Link to="/menu" className="module-card menu">
                         <div className="module-icon">📋</div>
                         <h3 className="module-title">{t("Menu")}</h3>
-                        <div className="module-badge">{t("Management")}</div>
+                        <div className="module-badge">{t("Customer-facing menu")}</div>
                         <p className="module-description">
-                            {t("Create, edit, and manage menu items, pricing, and categories")}
+                            {t("Look and decide what items you want on menu")}
                         </p>
                         <div className="module-button">{t("Edit Menu")}</div>
                     </Link>
