@@ -4,7 +4,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function Home() {
     const { t, language } = useLanguage();
-    
+
     useEffect(() => {
         if (window.voiceController) {
             // Add home-specific helpful commands
@@ -18,14 +18,59 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="text-center mt-5">
-            <h1>{t("Welcome Home!")}</h1>
-            <p>{t("Choose a page below:")}</p>
-            <div className="d-flex justify-content-center gap-3 mt-4">
-                <Link to="/manager" className="btn btn-primary">{t("Manager")}</Link>
-                <Link to="/cashier" className="btn btn-success">{t("Cashier")}</Link>
-                <Link to="/kiosk" className="btn btn-primary">{t("Kiosk")}</Link>
-                <Link to="/menu" className="btn btn-success">{t("Menu")}</Link>
+        <div className="main-content">
+            <div className="home-container">
+                {/* Hero Section */}
+                <div className="hero-section">
+                    <h1>{t("Boba Bliss!")}</h1>
+                </div>
+
+                {/* Module Grid */}
+                <div className="module-grid">
+                    {/* Manager Module */}
+                    <Link to="/manager" className="module-card manager">
+                        <div className="module-icon">📊</div>
+                        <h3 className="module-title">{t("Manager")}</h3>
+                        <div className="module-badge">{t("Back Office")}</div>
+                        <p className="module-description">
+                            {t("Access analytics, reports, inventory management, and administrative tools")}
+                        </p>
+                        <div className="module-button">{t("Launch Manager")}</div>
+                    </Link>
+
+                    {/* Cashier Module */}
+                    <Link to="/cashier" className="module-card cashier">
+                        <div className="module-icon">💳</div>
+                        <h3 className="module-title">{t("Cashier")}</h3>
+                        <div className="module-badge">{t("Front of House")}</div>
+                        <p className="module-description">
+                            {t("Process customer orders and payments during service hours")}
+                        </p>
+                        <div className="module-button">{t("Launch Cashier")}</div>
+                    </Link>
+
+                    {/* Kiosk Module */}
+                    <Link to="/kiosk" className="module-card kiosk">
+                        <div className="module-icon">🖥️</div>
+                        <h3 className="module-title">{t("Kiosk")}</h3>
+                        <div className="module-badge">{t("Self-Service")}</div>
+                        <p className="module-description">
+                            {t("Customer-facing self-service ordering interface")}
+                        </p>
+                        <div className="module-button">{t("Launch Kiosk")}</div>
+                    </Link>
+
+                    {/* Menu Module */}
+                    <Link to="/menu" className="module-card menu">
+                        <div className="module-icon">📋</div>
+                        <h3 className="module-title">{t("Menu")}</h3>
+                        <div className="module-badge">{t("Management")}</div>
+                        <p className="module-description">
+                            {t("Create, edit, and manage menu items, pricing, and categories")}
+                        </p>
+                        <div className="module-button">{t("Edit Menu")}</div>
+                    </Link>
+                </div>
             </div>
         </div>
     );

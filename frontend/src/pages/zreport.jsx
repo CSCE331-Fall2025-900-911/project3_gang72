@@ -6,6 +6,7 @@ export default function ZReport() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [alreadyRun, setAlreadyRun] = useState(false);
+    const [alreadyRun, setAlreadyRun] = useState(false);
 
     useEffect(() => {
         checkZReportStatus();
@@ -17,7 +18,9 @@ export default function ZReport() {
         fetch('/api/z-report')
             .then(res => {
                 if (!res.ok) {
+                    {
                     throw new Error('Failed to fetch Z-Report');
+                }
                 }
                 return res.json();
             })
@@ -25,8 +28,10 @@ export default function ZReport() {
                 if (data.success) {
                     setReportData(data.summary || {});
                     setAlreadyRun(data.alreadyRun || false);
+                    setAlreadyRun(data.alreadyRun || false);
                 } else {
                     setError(data.error || 'Unknown error');
+                    setAlreadyRun(data.alreadyRun || false);
                     setAlreadyRun(data.alreadyRun || false);
                 }
                 setLoading(false);

@@ -10,13 +10,22 @@ export default function Cashier() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [currentSugar, setCurrentSugar] = useState("100%");
-const [currentIce, setCurrentIce] = useState("100%");
+  const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   // Current item being customized
   const [currentItem, setCurrentItem] = useState(null);
   const [currentSize, setCurrentSize] = useState("Small");
   const [currentToppings, setCurrentToppings] = useState([]);
+
+  const formatPhone = (value = "") => {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    const parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 3));
+    if (digits.length > 3) parts.push(digits.slice(3, 6));
+    if (digits.length > 6) parts.push(digits.slice(6, 10));
+    return { formatted: parts.join("-"), digits };
+  };
 
   useEffect(() => {
     fetch("/api/menu")
@@ -109,8 +118,15 @@ const [currentIce, setCurrentIce] = useState("100%");
   const total = subtotal + tipAmount;
 
   const submitOrder = async () => {
-    if (!customerPhone) {
+    const { digits: phoneDigits } = formatPhone(customerPhone);
+
+    if (phoneDigits.length === 0) {
       alert("Customer phone is required!");
+      return;
+    }
+
+    if (phoneDigits.length !== 10) {
+      alert("Phone number must be 10 digits (format xxx-xxx-xxxx).");
       return;
     }
     if (cart.length === 0) {
@@ -135,7 +151,7 @@ const [currentIce, setCurrentIce] = useState("100%");
       customer: {
         firstName: customerFirst,
         lastName: customerLast,
-        phone: customerPhone,
+        phone: phoneDigits,
       },
       tipPercent: Number(tipPercent) || 0,
       items,
@@ -149,7 +165,14 @@ const [currentIce, setCurrentIce] = useState("100%");
       });
       const data = await res.json();
       if (data.success) {
-        alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        if (data.rewardApplied) {
+          const isFree = data.discount >= data.subtotal;
+          const rewardLabel = isFree ? "FREE DRINK APPLIED!" : "20% OFF APPLIED!";
+          const rewardLine = isFree ? "This drink is free!" : "20% off applied for multiple drinks.";
+          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+        } else {
+          alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+        }
         // Clear form
         setCart([]);
         setTipPercent(0);
@@ -181,11 +204,10 @@ const [currentIce, setCurrentIce] = useState("100%");
                 <button
                   key={cat}
                   type="button"
-                  className={`btn ${
-                    selectedCategory === cat
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
+                  className={`btn ${selectedCategory === cat
+                    ? "btn-primary"
+                    : "btn-outline-primary"
+                    }`}
                   onClick={() => setSelectedCategory(cat)}
                 >
                   {cat}
@@ -200,11 +222,10 @@ const [currentIce, setCurrentIce] = useState("100%");
               {filteredItems.map((item) => (
                 <div key={item.id} className="col-6 col-lg-4">
                   <button
-                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${
-                      currentItem?.id === item.id
-                        ? "btn-success"
-                        : "btn-outline-secondary"
-                    }`}
+                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${currentItem?.id === item.id
+                      ? "btn-success"
+                      : "btn-outline-secondary"
+                      }`}
                     onClick={() => selectItem(item)}
                     style={{ minHeight: "80px" }}
                   >
@@ -222,22 +243,20 @@ const [currentIce, setCurrentIce] = useState("100%");
           {currentItem && (
             <div className="mt-3 p-3 border rounded bg-white">
               <h5>{currentItem.name}</h5>
-              
+
               <div className="mb-2">
                 <label className="form-label fw-bold">Size:</label>
                 <div className="btn-group ms-2" role="group">
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
-                    }`}
+                    className={`btn btn-sm ${currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
+                      }`}
                     onClick={() => setCurrentSize("Small")}
                   >
                     Small
                   </button>
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
-                    }`}
+                    className={`btn btn-sm ${currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
+                      }`}
                     onClick={() => setCurrentSize("Large")}
                   >
                     Large (+$1.00)
@@ -251,11 +270,10 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {availableToppings.map((topping) => (
                     <button
                       key={topping.id}
-                      className={`btn btn-sm ${
-                        currentToppings.find((t) => t.id === topping.id)
-                          ? "btn-success"
-                          : "btn-outline-secondary"
-                      }`}
+                      className={`btn btn-sm ${currentToppings.find((t) => t.id === topping.id)
+                        ? "btn-success"
+                        : "btn-outline-secondary"
+                        }`}
                       onClick={() => toggleTopping(topping)}
                     >
                       {topping.name} (+${Number(topping.price).toFixed(2)})
@@ -270,9 +288,8 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
+                      className={`btn btn-sm ${currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
+                        }`}
                       onClick={() => setCurrentSugar(lvl)}
                     >
                       {lvl}
@@ -287,9 +304,8 @@ const [currentIce, setCurrentIce] = useState("100%");
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentIce === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
+                      className={`btn btn-sm ${currentIce === lvl ? "btn-primary" : "btn-outline-primary"
+                        }`}
                       onClick={() => setCurrentIce(lvl)}
                     >
                       {lvl}
@@ -318,7 +334,7 @@ const [currentIce, setCurrentIce] = useState("100%");
               type="text"
               placeholder="Phone Number *"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => setCustomerPhone(formatPhone(e.target.value).formatted)}
               className="form-control mb-2"
             />
             <div className="row g-2">
@@ -466,7 +482,7 @@ const [currentIce, setCurrentIce] = useState("100%");
             <button
               className="btn btn-success btn-lg"
               onClick={submitOrder}
-              disabled={cart.length === 0 || !customerPhone}
+              disabled={cart.length === 0 || formatPhone(customerPhone).digits.length !== 10}
             >
               Complete Order
             </button>

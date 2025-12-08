@@ -5,8 +5,8 @@ body.high-contrast-mode {
     color: #fff !important;
 }
 
-/* Text and content */
-body.high-contrast-mode * {
+/* Text and content - More selective targeting */
+body.high-contrast-mode *:not(.navbar):not(.navbar *) {
     background-color: #000 !important;
     color: #fff !important;
     border-color: #fff !important;
@@ -17,23 +17,56 @@ body.high-contrast-mode * {
     background-image: none !important;
 }
 
+/* Navbar specific - keep it functional */
+body.high-contrast-mode .navbar,
+body.high-contrast-mode .navbar * {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+}
+
+body.high-contrast-mode .navbar {
+    border-right: 3px solid #fff !important;
+}
+
+body.high-contrast-mode .navbar-brand {
+    border-bottom: 3px solid #fff !important;
+}
+
+body.high-contrast-mode .nav-link {
+    border: 2px solid transparent !important;
+}
+
+body.high-contrast-mode .nav-link:hover,
+body.high-contrast-mode .nav-link:focus {
+    background-color: #333 !important;
+    border: 2px solid #ffff00 !important;
+    outline: none !important;
+}
+
+body.high-contrast-mode .nav-link.active {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 2px solid #fff !important;
+}
+
 /* Links - bright yellow for maximum visibility */
-body.high-contrast-mode a,
+body.high-contrast-mode a:not(.nav-link):not(.navbar-brand),
 body.high-contrast-mode .btn-link {
     color: #ffff00 !important;
     text-decoration: underline !important;
     font-weight: bold !important;
 }
 
-body.high-contrast-mode a:hover,
-body.high-contrast-mode a:focus {
+body.high-contrast-mode a:not(.nav-link):hover,
+body.high-contrast-mode a:not(.nav-link):focus {
     color: #ffff00 !important;
     background-color: #333 !important;
     outline: 3px solid #ffff00 !important;
 }
 
 /* Buttons - distinct colors for different types */
-body.high-contrast-mode button,
+body.high-contrast-mode button:not(.nav-link),
 body.high-contrast-mode .btn {
     background-color: #000 !important;
     color: #fff !important;
@@ -42,7 +75,7 @@ body.high-contrast-mode .btn {
     padding: 10px 20px !important;
 }
 
-body.high-contrast-mode button:hover,
+body.high-contrast-mode button:not(.nav-link):hover,
 body.high-contrast-mode .btn:hover {
     background-color: #fff !important;
     color: #000 !important;
@@ -89,6 +122,10 @@ body.high-contrast-mode textarea {
     padding: 10px !important;
 }
 
+body.high-contrast-mode input::placeholder {
+    color: #aaa !important;
+}
+
 body.high-contrast-mode input:focus,
 body.high-contrast-mode select:focus,
 body.high-contrast-mode textarea:focus {
@@ -99,9 +136,27 @@ body.high-contrast-mode textarea:focus {
 /* Cards and containers */
 body.high-contrast-mode .card,
 body.high-contrast-mode .modal-content,
-body.high-contrast-mode .list-group-item {
+body.high-contrast-mode .list-group-item,
+body.high-contrast-mode .module-card {
     background-color: #000 !important;
     border: 3px solid #fff !important;
+}
+
+/* Module cards hover state */
+body.high-contrast-mode .module-card:hover {
+    background-color: #222 !important;
+    border: 3px solid #ffff00 !important;
+    transform: none !important;
+}
+
+/* Hero section */
+body.high-contrast-mode .hero-section {
+    background: #000 !important;
+    border: 3px solid #fff !important;
+}
+
+body.high-contrast-mode .hero-section::before {
+    display: none !important;
 }
 
 /* Headers */
@@ -115,6 +170,7 @@ body.high-contrast-mode h6 {
     font-weight: bold !important;
     border-bottom: 3px solid #fff !important;
     padding-bottom: 5px !important;
+    margin-bottom: 15px !important;
 }
 
 /* Tables */
@@ -187,19 +243,37 @@ body.high-contrast-mode img {
     filter: contrast(2) brightness(1.2) !important;
 }
 
-/* Navigation */
-body.high-contrast-mode .navbar,
-body.high-contrast-mode nav {
-    background-color: #000 !important;
-    border-bottom: 3px solid #fff !important;
-}
-
 /* Selected/Active states */
-body.high-contrast-mode .active,
+body.high-contrast-mode .active:not(.nav-link),
 body.high-contrast-mode .selected {
     background-color: #ffff00 !important;
     color: #000 !important;
     border: 3px solid #ffff00 !important;
+}
+
+/* Kiosk specific elements */
+body.high-contrast-mode .cart-item {
+    background-color: #111 !important;
+    border: 2px solid #fff !important;
+}
+
+/* Weather widget */
+body.high-contrast-mode .weather-widget {
+    background-color: #000 !important;
+    border: 2px solid #fff !important;
+}
+
+/* Category buttons in kiosk */
+body.high-contrast-mode .category-button {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
+}
+
+body.high-contrast-mode .category-button:hover,
+body.high-contrast-mode .category-button.selected {
+    background-color: #fff !important;
+    color: #000 !important;
 }
 
 /* Screen reader text - keep visible in high contrast */
@@ -214,4 +288,22 @@ body.high-contrast-mode {
     font-size: 18px !important;
     line-height: 1.6 !important;
     letter-spacing: 0.5px !important;
+}
+
+/* Main content area */
+body.high-contrast-mode .main-content {
+    background-color: #000 !important;
+}
+
+/* Borders and separators */
+body.high-contrast-mode hr {
+    border-color: #fff !important;
+    border-width: 2px !important;
+}
+
+/* Language toggle */
+body.high-contrast-mode .language-toggle select {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 2px solid #fff !important;
 }
