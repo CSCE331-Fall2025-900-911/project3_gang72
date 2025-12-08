@@ -161,7 +161,7 @@ async function insertOrdersAndConsumeIngredients(client, receiptId, items) {
         const isHotValue = isHot === true;
         const iceValue = Number(iceLevel) || 100;
         const sugarValue = Number(sugarLevel) || 100;
-        
+
         await client.query(insertCustomizationSql, [
           orderId,
           sizeValue,
