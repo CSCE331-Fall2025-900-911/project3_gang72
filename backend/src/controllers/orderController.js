@@ -61,7 +61,7 @@ async function pickRandomEmployee(client) {
   return 1; // fallback
 }
 
-async function createReceiptWithTip(client, employeeId, customerId, tipPercent, subtotal) {
+async function createReceiptWithTip(client, employeeId, customerId, tipPercent, subtotal, discountAmount = 0, rewardApplied = false, rewardType = null) {
   const tipAmount = Number((subtotal * (tipPercent / 100)).toFixed(2));
 
   // Generate next receipt_id
@@ -70,12 +70,12 @@ async function createReceiptWithTip(client, employeeId, customerId, tipPercent, 
   );
   const nextReceiptId = nextIdRes.rows[0].next_id;
 
-  // Insert with generated receipt_id
+  // Insert with generated receipt_id including discount fields
   const result = await client.query(
-    `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip)
-     VALUES ($1, $2, $3, CURRENT_DATE, ((EXTRACT(HOUR FROM NOW())::integer % 13) + 11), $4)
+    `INSERT INTO receipt (receipt_id, employee_id, customer_id, order_date, order_time, tip, discount_amount, reward_applied, reward_type)
+     VALUES ($1, $2, $3, CURRENT_DATE, ((EXTRACT(HOUR FROM NOW())::integer % 13) + 11), $4, $5, $6, $7)
      RETURNING receipt_id`,
-    [nextReceiptId, employeeId, customerId, tipAmount]
+    [nextReceiptId, employeeId, customerId, tipAmount, discountAmount, rewardApplied, rewardType]
   );
 
   return { receiptId: result.rows[0].receipt_id, tipAmount };
@@ -178,9 +178,6 @@ async function createOrder(req, res) {
     return acc + (Number.isFinite(p) ? p : 0);
   }, 0);
 
-  const drinkItems = items.filter(it => !it.name || !it.name.toLowerCase().includes('topping'));
-  const drinksInOrder = drinkItems.length;
-
   let discount = 0;
   let appliedReward = false;
   let rewardType = null;
@@ -205,6 +202,15 @@ async function createOrder(req, res) {
       // Check if this is the 10th order (mod 10 = 0)
       if (newOrderCount % 10 === 0) {
         // 10th order: apply reward based on drinks in this order
+        // Get topping IDs to exclude from drink count
+        const toppingIdsRes = await client.query(
+          `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+        );
+        const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
+        
+        // Count only non-topping items as drinks
+        const drinksInOrder = items.filter(it => !toppingIdSet.has(Number(it.itemId))).length;
+
         if (drinksInOrder === 1) {
           discount = subtotal;
           rewardType = 'single-drink-free';
@@ -221,8 +227,17 @@ async function createOrder(req, res) {
     // 3) pick random employee
     const employeeId = await pickRandomEmployee(client);
 
-    // 4) create receipt (computes tip)
-    const { receiptId, tipAmount } = await createReceiptWithTip(client, employeeId, customerId, Number(tipPercent || 0), totalAfterDiscount);
+    // 4) create receipt (computes tip) and store discount info
+    const { receiptId, tipAmount } = await createReceiptWithTip(
+      client, 
+      employeeId, 
+      customerId, 
+      Number(tipPercent || 0), 
+      totalAfterDiscount,
+      discount,
+      appliedReward,
+      rewardType
+    );
 
     // 5) insert orders and update inventory
     const insertedOrderIds = await insertOrdersAndConsumeIngredients(client, receiptId, items);
