@@ -28,11 +28,11 @@ export default function Items() {
       document.body.classList.remove('manager-page');
     };
   }, []);
-  
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch items
       const itemsRes = await fetch("/api/menu");
       const itemsData = await itemsRes.json();
@@ -333,9 +333,8 @@ export default function Items() {
       <div className="mb-3">
         <div className="btn-group" role="group">
           <button
-            className={`btn ${
-              selectedCategory === "All" ? "btn-primary" : "btn-outline-primary"
-            }`}
+            className={`btn ${selectedCategory === "All" ? "btn-primary" : "btn-outline-primary"
+              }`}
             onClick={() => setSelectedCategory("All")}
           >
             All
@@ -343,9 +342,8 @@ export default function Items() {
           {categories.map((cat) => (
             <button
               key={cat}
-              className={`btn ${
-                selectedCategory === cat ? "btn-primary" : "btn-outline-primary"
-              }`}
+              className={`btn ${selectedCategory === cat ? "btn-primary" : "btn-outline-primary"
+                }`}
               onClick={() => setSelectedCategory(cat)}
             >
               {cat}
@@ -460,9 +458,9 @@ export default function Items() {
               <p className="display-6">
                 ${items.length > 0
                   ? (
-                      items.reduce((sum, item) => sum + Number(item.price), 0) /
-                      items.length
-                    ).toFixed(2)
+                    items.reduce((sum, item) => sum + Number(item.price), 0) /
+                    items.length
+                  ).toFixed(2)
                   : "0.00"}
               </p>
             </div>
