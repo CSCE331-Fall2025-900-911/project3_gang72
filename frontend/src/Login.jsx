@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-// Login page: Google OAuth with @tamu.edu email verification
+// Login page: Google OAuth
 export default function Login() {
     const buttonRef = useRef(null)
     const navigate = useNavigate()
@@ -124,19 +124,6 @@ export default function Login() {
     }
 
     function handleAuthSuccess(userData) {
-        // Check if email ends with @tamu.edu
-        if (!userData.email || !userData.email.toLowerCase().endsWith('@tamu.edu')) {
-            setError('Access denied. Only @tamu.edu email addresses are allowed.')
-            setLoading(false)
-            sessionStorage.removeItem('user')
-
-            // Reset the Google Sign-In button to allow selecting a different account
-            setTimeout(() => {
-                resetGoogleButton()
-            }, 100)
-            return
-        }
-
         // Store user data in sessionStorage
         sessionStorage.setItem('user', JSON.stringify(userData))
         setLoading(false)
@@ -188,9 +175,7 @@ export default function Login() {
                                 <div className="alert alert-warning" role="alert">
                                     <small>Google Sign-In is not configured. Please contact an administrator.</small>
                                 </div>
-                            )}                            <div className="mt-4 text-muted small">
-                                <p className="mb-0">Only @tamu.edu accounts can access</p>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,7 @@ import Login from "./Login";
 import './highContrast.css'
 import './App.css'
 
-// Protected Route component - requires @tamu.edu email
+// Protected Route component
 function ProtectedRoute({ children }) {
   const location = useLocation();
   const userStr = sessionStorage.getItem('user');
@@ -29,9 +29,9 @@ function ProtectedRoute({ children }) {
   try {
     const user = JSON.parse(userStr);
 
-    if (!user.email || !user.email.toLowerCase().endsWith('@tamu.edu')) {
+    if (!user.email) {
       sessionStorage.removeItem('user');
-      return <Navigate to="/login" state={{ from: location.pathname, error: 'Only @tamu.edu email addresses are authorized.' }} replace />;
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
   } catch (e) {
     console.error('Failed to parse user data:', e);
