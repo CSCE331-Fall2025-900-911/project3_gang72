@@ -28,11 +28,11 @@ export default function Items() {
       document.body.classList.remove('manager-page');
     };
   }, []);
-  
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch items
       const itemsRes = await fetch("/api/menu");
       const itemsData = await itemsRes.json();
@@ -131,6 +131,29 @@ export default function Items() {
   const cancelEdit = () => {
     setEditingId(null);
     setEditPrice("");
+  };
+
+  // Delete item
+  const handleDeleteItem = async (itemId, itemName) => {
+    if (!window.confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/items/${itemId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert("Item deleted successfully!");
+        fetchData();
+      } else {
+        alert("Failed to delete item: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Error deleting item: " + err.message);
+    }
   };
 
   // Update price
@@ -310,9 +333,8 @@ export default function Items() {
       <div className="mb-3">
         <div className="btn-group" role="group">
           <button
-            className={`btn ${
-              selectedCategory === "All" ? "btn-primary" : "btn-outline-primary"
-            }`}
+            className={`btn ${selectedCategory === "All" ? "btn-primary" : "btn-outline-primary"
+              }`}
             onClick={() => setSelectedCategory("All")}
           >
             All
@@ -320,9 +342,8 @@ export default function Items() {
           {categories.map((cat) => (
             <button
               key={cat}
-              className={`btn ${
-                selectedCategory === cat ? "btn-primary" : "btn-outline-primary"
-              }`}
+              className={`btn ${selectedCategory === cat ? "btn-primary" : "btn-outline-primary"
+                }`}
               onClick={() => setSelectedCategory(cat)}
             >
               {cat}
@@ -387,12 +408,20 @@ export default function Items() {
                             </button>
                           </>
                         ) : (
-                          <button
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => startEditPrice(item)}
-                          >
-                            Edit Price
-                          </button>
+                          <>
+                            <button
+                              className="btn btn-sm btn-outline-primary me-2"
+                              onClick={() => startEditPrice(item)}
+                            >
+                              Edit Price
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDeleteItem(item.id, item.name)}
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>
@@ -429,9 +458,9 @@ export default function Items() {
               <p className="display-6">
                 ${items.length > 0
                   ? (
-                      items.reduce((sum, item) => sum + Number(item.price), 0) /
-                      items.length
-                    ).toFixed(2)
+                    items.reduce((sum, item) => sum + Number(item.price), 0) /
+                    items.length
+                  ).toFixed(2)
                   : "0.00"}
               </p>
             </div>
