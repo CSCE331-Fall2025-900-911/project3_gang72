@@ -15,6 +15,7 @@ export default function Items() {
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [newHotAvail, setNewHotAvail] = useState(false);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
 
   // Edit price state
@@ -100,6 +101,7 @@ export default function Items() {
           name: newName.trim(),
           price: Number(newPrice),
           category: newCategory.trim(),
+          hotAvail: newHotAvail,
           ingredientIDs: selectedIngredients,
         }),
       });
@@ -110,6 +112,7 @@ export default function Items() {
         setNewName("");
         setNewPrice("");
         setNewCategory("");
+        setNewHotAvail(false);
         setSelectedIngredients([]);
         setShowAddForm(false);
         fetchData();
@@ -276,6 +279,21 @@ export default function Items() {
             </div>
 
             <div className="mb-3">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="hotAvailCheckbox"
+                  checked={newHotAvail}
+                  onChange={(e) => setNewHotAvail(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="hotAvailCheckbox">
+                  <strong>Hot Option Available</strong> - Check if this item can be served hot
+                </label>
+              </div>
+            </div>
+
+            <div className="mb-3">
               <label className="form-label fw-bold">Select Ingredients *</label>
               <div className="border rounded p-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
                 {ingredients.length === 0 ? (
@@ -319,6 +337,7 @@ export default function Items() {
                   setNewName("");
                   setNewPrice("");
                   setNewCategory("");
+                  setNewHotAvail(false);
                   setSelectedIngredients([]);
                 }}
               >
