@@ -1,20 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-
-// Mock language context for demo
-const useLanguage = () => ({
-  t: (key) => {
-    const translations = {
-      "BOBA MENU": "BOBA MENU",
-      "Handcrafted Daily": "Handcrafted Daily",
-      "Search drinks...": "Search drinks...",
-      "No items found": "No items found",
-      "Thank You": "Thank You",
-      "Made Fresh with Premium Ingredients": "Made Fresh with Premium Ingredients",
-      "Other": "Other"
-    };
-    return translations[key] || key;
-  }
-});
+import { useLanguage } from "../context/LanguageContext";
 
 export default function MenuBoard() {
   const { t } = useLanguage();
@@ -100,7 +85,7 @@ export default function MenuBoard() {
             margin: '0 auto'
           }}></div>
           <p style={{ marginTop: '16px', fontSize: '20px', fontWeight: '600', color: '#78350f' }}>
-            Loading Menu...
+            {t("Loading Menu...")}
           </p>
         </div>
         <style>{`
@@ -257,7 +242,7 @@ export default function MenuBoard() {
                         margin: '0',
                         letterSpacing: '1px'
                       }}>
-                        {category}
+                        {t(category)}
                       </h2>
                     </div>
 
@@ -281,7 +266,7 @@ export default function MenuBoard() {
                             fontWeight: '600',
                             color: '#1f2937'
                           }}>
-                            {item.name}
+                            {t(item.name)}
                           </span>
                           <span style={{
                             fontSize: '24px',
@@ -307,7 +292,7 @@ export default function MenuBoard() {
                 margin: '0',
                 animation: 'pulse 2s infinite'
               }}>
-                ← Scroll to see more categories →
+                ← {t("Scroll to see more categories")} →
               </p>
             </div>
           </div>
