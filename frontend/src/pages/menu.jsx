@@ -218,8 +218,8 @@ export default function Menu() {
                         ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-transparent scale-105`
                         : "bg-white/90 text-amber-700 hover:bg-amber-50 border-amber-200/50 shadow-md"
                       }`}
-                  >
-                    {cat}
+                    >
+                    {t(cat)}
                   </button>
                 );
               })}
@@ -271,9 +271,9 @@ export default function Menu() {
                     {/* Content */}
                     <div className="p-4 text-center">
                       <h3 className="text-sm font-bold text-amber-900 leading-tight mb-1 line-clamp-2 min-h-[2.5rem]">
-                        {item.name}
+                        {t(item.name)}
                       </h3>
-                      <p className="text-xs text-amber-700/70 mb-2">{item.category}</p>
+                      <p className="text-xs text-amber-700/70 mb-2">{t(item.category)}</p>
                       <div className="bg-white/60 rounded-full px-4 py-1.5 inline-block shadow-sm">
                         <p className="text-base font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                           ${Number(item.price).toFixed(2)}
