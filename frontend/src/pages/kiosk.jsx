@@ -1288,6 +1288,7 @@ export default function Kiosk() {
                     <option>50%</option>
                     <option>75%</option>
                     <option>100%</option>
+                    <option>125%</option>
                   </select>
                 </div>
 
@@ -1322,6 +1323,7 @@ export default function Kiosk() {
                     <option>50%</option>
                     <option>75%</option>
                     <option>100%</option>
+                    <option>125%</option>
                   </select>
                 </div>
 

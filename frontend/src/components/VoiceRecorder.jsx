@@ -88,7 +88,7 @@ export default function VoiceRecorder({
 
         try {
           // NOTE: new endpoint used in your updated branch
-          const res = await fetch("/api/speech", {
+          const res = await fetch("/api/speech-to-text", {
             method: "POST",
             body: formData,
           });
