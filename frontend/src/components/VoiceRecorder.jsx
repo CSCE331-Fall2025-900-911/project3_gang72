@@ -92,7 +92,7 @@ export default function VoiceRecorder({
             method: "POST",
             body: formData,
           });
-
+          // new things added
           const data = await res.json();
 
           if (data.text && data.text.trim() !== "") {
