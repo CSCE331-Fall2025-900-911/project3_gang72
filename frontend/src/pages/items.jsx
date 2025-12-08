@@ -281,7 +281,6 @@ export default function Items() {
             </div>
 
             <div className="mb-3">
-<<<<<<< HEAD
               <div className="form-check">
                 <input
                   className="form-check-input"
@@ -291,16 +290,13 @@ export default function Items() {
                   onChange={(e) => setNewHotAvail(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="hotAvailCheckbox">
-                  <strong>Hot Option Available</strong> - Check if this item can be served hot
+                  <strong>{t("Hot Option Available")}</strong> - {t("Check if this item can be served hot")}
                 </label>
               </div>
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-bold">Select Ingredients *</label>
-=======
               <label className="form-label fw-bold">{t("Select Ingredients *")}</label>
->>>>>>> translation-feature
               <div className="border rounded p-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
                 {ingredients.length === 0 ? (
                   <p className="text-muted">{t("No ingredients available")}</p>
@@ -333,24 +329,6 @@ export default function Items() {
             </div>
 
             <div>
-<<<<<<< HEAD
-              <button className="btn btn-success me-2" onClick={handleAddItem}>
-                Add Item
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewName("");
-                  setNewPrice("");
-                  setNewCategory("");
-                  setNewHotAvail(false);
-                  setSelectedIngredients([]);
-                }}
-              >
-                Cancel
-              </button>
-=======
                   <button className="btn btn-success me-2" onClick={handleAddItem}>
                     {t("Add Item")}
                   </button>
@@ -361,12 +339,12 @@ export default function Items() {
                       setNewName("");
                       setNewPrice("");
                       setNewCategory("");
+                      setNewHotAvail(false);
                       setSelectedIngredients([]);
                     }}
                   >
                     {t("Cancel")}
                   </button>
->>>>>>> translation-feature
             </div>
           </div>
         </div>
@@ -451,29 +429,20 @@ export default function Items() {
                             </button>
                           </>
                         ) : (
-<<<<<<< HEAD
                           <>
-                            <button
-                              className="btn btn-sm btn-outline-primary me-2"
-                              onClick={() => startEditPrice(item)}
-                            >
-                              Edit Price
-                            </button>
+                              <button
+                                className="btn btn-sm btn-outline-primary me-2"
+                                onClick={() => startEditPrice(item)}
+                              >
+                                {t("Edit Price")}
+                              </button>
                             <button
                               className="btn btn-sm btn-outline-danger"
                               onClick={() => handleDeleteItem(item.id, item.name)}
                             >
-                              Delete
+                              {t("Delete")}
                             </button>
                           </>
-=======
-                            <button
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => startEditPrice(item)}
-                            >
-                              {t("Edit Price")}
-                            </button>
->>>>>>> translation-feature
                         )}
                       </td>
                     </tr>

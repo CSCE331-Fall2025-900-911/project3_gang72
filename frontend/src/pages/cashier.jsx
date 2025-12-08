@@ -237,26 +237,15 @@ export default function Cashier() {
       }
     } catch (err) {
       console.error(err);
-<<<<<<< HEAD
-      alert("Error placing order");
+      alert(t("Error placing order"));
     } finally {
       setIsSubmitting(false);
-=======
-      alert(t("Error placing order"));
->>>>>>> translation-feature
     }
   };
 
   const { formatted: formattedPhone } = formatPhone(customerPhone);
 
   return (
-<<<<<<< HEAD
-    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div style={{ flex: '1 1 58%', display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: '#f8f9fa', overflowY: 'auto' }}>
-          <h2 style={{ marginBottom: '24px', fontSize: '28px', fontWeight: '600', color: '#333' }}>
-            POS - Cashier
-=======
     <div className="main-content" style={{ 
       width: '100%', 
       minHeight: '100vh',
@@ -284,7 +273,6 @@ export default function Cashier() {
             color: '#333'
           }}>
             {t("POS - Cashier")}
->>>>>>> translation-feature
           </h2>
 
           <div style={{ marginBottom: '24px' }}>
@@ -333,10 +321,6 @@ export default function Cashier() {
                     fontSize: '14px'
                   }}
                 >
-<<<<<<< HEAD
-                  <div style={{ fontWeight: '600', marginBottom: '8px', textAlign: 'center', wordWrap: 'break-word', width: '100%' }}>
-                    {item.name}
-=======
                   <div style={{ 
                     fontWeight: '600', 
                     marginBottom: '8px', 
@@ -345,7 +329,6 @@ export default function Cashier() {
                     width: '100%'
                   }}>
                     {t(item.name)}
->>>>>>> translation-feature
                   </div>
                   <div style={{ fontSize: '13px', opacity: currentItem?.id === item.id ? 0.9 : 0.7 }}>
                     ${Number(item.price).toFixed(2)}
@@ -356,188 +339,16 @@ export default function Cashier() {
           </div>
         </div>   
 
-<<<<<<< HEAD
         <div style={{ flex: '1 1 42%', display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: '#fff', borderLeft: '1px solid #e0e0e0', overflowY: 'auto' }}>
           <h4 style={{ marginBottom: '20px', fontSize: '22px', fontWeight: '600', color: '#333' }}>
-            Current Order
-=======
-          {/* Item customization panel */}
-          {currentItem && (
-            <div style={{
-              marginTop: '16px',
-              padding: '20px',
-              backgroundColor: '#fff',
-              border: '1px solid #ddd',
-              borderRadius: '8px'
-            }}>
-              <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
-                {t(currentItem.name)}
-              </h5>
-              
-              <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  {t("Size:")}
-                </label>
-                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                  <button
-                    onClick={() => setCurrentSize("Small")}
-                    style={{
-                      padding: '8px 20px',
-                      backgroundColor: currentSize === "Small" ? '#583e23' : '#fff',
-                      color: currentSize === "Small" ? '#fff' : '#333',
-                      border: currentSize === "Small" ? 'none' : '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}
-                    >
-                    {t("Small")}
-                  </button>
-                  <button
-                    onClick={() => setCurrentSize("Large")}
-                    style={{
-                      padding: '8px 20px',
-                      backgroundColor: currentSize === "Large" ? '#583e23' : '#fff',
-                      color: currentSize === "Large" ? '#fff' : '#333',
-                      border: currentSize === "Large" ? 'none' : '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}
-                    >
-                    {t("Large") + ' (+$1.00)'}
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  {t("Toppings:")}
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {availableToppings.map((topping) => (
-                    <button
-                      key={topping.id}
-                      onClick={() => toggleTopping(topping)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff',
-                        color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333',
-                        border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {t(topping.name)}{' (+$' + Number(topping.price).toFixed(2) + ')'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  {t("Sugar Level:")}
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      onClick={() => setCurrentSugar(lvl)}
-                      style={{
-                        flex: 1,
-                        padding: '8px',
-                        backgroundColor: currentSugar === lvl ? '#583e23' : '#fff',
-                        color: currentSugar === lvl ? '#fff' : '#333',
-                        border: currentSugar === lvl ? 'none' : '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                      }}
-                      >
-                      {t(lvl)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  {t("Ice Level:")}
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      onClick={() => setCurrentIce(lvl)}
-                      style={{
-                        flex: 1,
-                        padding: '8px',
-                        backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
-                        color: currentIce === lvl ? '#fff' : '#333',
-                        border: currentIce === lvl ? 'none' : '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                      }}
-                      >
-                      {t(lvl)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={addToCart}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#583e23',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  marginTop: '8px'
-                }}
-              >
-                {t("Add to Cart")}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right side - Cart & Checkout */}
-        <div style={{
-          flex: '1 1 42%',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px',
-          backgroundColor: '#fff',
-          borderLeft: '1px solid #e0e0e0',
-          overflowY: 'auto'
-        }}>
-          <h4 style={{ 
-            marginBottom: '20px',
-            fontSize: '22px',
-            fontWeight: '600',
-            color: '#333'
-          }}>
             {t("Current Order")}
->>>>>>> translation-feature
           </h4>
 
           <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
-<<<<<<< HEAD
-              placeholder="Phone Number * (xxx-xxx-xxxx)"
+              placeholder={t("Phone Number * (xxx-xxx-xxxx)")}
               value={formattedPhone}
-=======
-              placeholder={t("Phone Number *")}
-              value={customerPhone}
->>>>>>> translation-feature
               onChange={(e) => setCustomerPhone(e.target.value)}
               style={{ width: '100%', padding: '10px 14px', fontSize: '14px', border: '1px solid #ddd', borderRadius: '6px', marginBottom: '12px' }}
             />
@@ -561,10 +372,6 @@ export default function Cashier() {
 
           <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', padding: '12px', marginBottom: '20px', backgroundColor: '#fafafa' }}>
             {cart.length === 0 ? (
-<<<<<<< HEAD
-              <p style={{ textAlign: 'center', color: '#999', marginTop: '20px', fontSize: '14px' }}>
-                No items in cart
-=======
               <p style={{ 
                 textAlign: 'center',
                 color: '#999',
@@ -572,7 +379,6 @@ export default function Cashier() {
                 fontSize: '14px'
               }}>
                 {t("No items in cart")}
->>>>>>> translation-feature
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -589,11 +395,7 @@ export default function Cashier() {
                             </div>
                           )}
                         <div style={{ fontSize: '12px', color: '#666' }}>
-<<<<<<< HEAD
-                          {item.isHot ? 'Hot' : 'Cold'} | Sugar: {item.sugar} | Ice: {item.ice}
-=======
-                          {t("Sugar")}: {item.sugar} | {t("Ice")}: {item.ice}
->>>>>>> translation-feature
+                          {item.isHot ? t('Hot') : t('Cold')} | {t("Sugar")}: {item.sugar} | {t("Ice")}: {item.ice}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', marginLeft: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -617,23 +419,6 @@ export default function Cashier() {
                             +
                           </button>
                         </div>
-<<<<<<< HEAD
-=======
-                          <button
-                          onClick={() => removeFromCart(i)}
-                          style={{
-                            padding: '4px 12px',
-                            backgroundColor: 'transparent',
-                            color: '#dc3545',
-                            border: '1px solid #dc3545',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t("Remove")}
-                        </button>
->>>>>>> translation-feature
                       </div>
                     </div>
                   </div>
@@ -679,11 +464,6 @@ export default function Cashier() {
                 <button
                   key={tip}
                   onClick={() => setTipPercent(tip)}
-<<<<<<< HEAD
-                  style={{ flex: 1, padding: '8px', backgroundColor: '#fff', color: '#333', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
-                >
-                  {tip === 0 ? 'No Tip' : `${tip}%`}
-=======
                   style={{
                     flex: 1,
                     padding: '8px',
@@ -696,39 +476,14 @@ export default function Cashier() {
                   }}
                   >
                   {tip === 0 ? t("No Tip") : `${tip}%`}
->>>>>>> translation-feature
                 </button>
               ))}
             </div>
           </div>
 
-<<<<<<< HEAD
           <div style={{ borderTop: '1px solid #ddd', paddingTop: '16px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: '#666' }}>
-              <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: '#666' }}>
-              <span>Tip ({tipPercent}%):</span>
-              <span>${tipAmount.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', fontSize: '20px', borderTop: '2px solid #333', paddingTop: '12px', color: '#333' }}>
-              <span>Total:</span>
-=======
-          {/* Totals */}
-          <div style={{
-            borderTop: '1px solid #ddd',
-            paddingTop: '16px',
-            marginBottom: '20px'
-          }}>
-            <div style={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '8px',
-              fontSize: '14px',
-              color: '#666'
-            }}>
-              <span>{t("Subtotal:")}</span>
+              <span>{t("Subtotal")}:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
             <div style={{ 
@@ -750,8 +505,7 @@ export default function Cashier() {
               paddingTop: '12px',
               color: '#333'
             }}>
-              <span>{t("Total:")}</span>
->>>>>>> translation-feature
+              <span>{t("Total")}:</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
@@ -772,11 +526,7 @@ export default function Cashier() {
                 cursor: (isSubmitting || cart.length === 0 || formatPhone(customerPhone).digits.length !== 10) ? 'not-allowed' : 'pointer'
               }}
             >
-<<<<<<< HEAD
-              {isSubmitting ? 'Processing...' : 'Complete Order'}
-=======
-              {t("Complete Order")}
->>>>>>> translation-feature
+              {isSubmitting ? t('Processing...') : t("Complete Order")}
             </button>
             <button
               onClick={clearCart}
@@ -806,7 +556,7 @@ export default function Cashier() {
           <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "90%", maxWidth: "420px", maxHeight: "90vh", overflowY: "auto", padding: "20px", backgroundColor: "#fff", border: "1px solid #ddd", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h5 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-                {currentItem.name}
+                {t(currentItem.name)}
               </h5>
               <button onClick={closeCustomization} style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#666', border: '1px solid #ddd', borderRadius: '6px', fontSize: '18px', cursor: 'pointer', lineHeight: 1 }}>
                 ✕
@@ -814,24 +564,24 @@ export default function Cashier() {
             </div>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Size:</label>
+              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>{t("Size")}:</label>
               <div style={{ display: 'inline-flex', gap: '8px' }}>
                 <button onClick={() => setCurrentSize("Small")} style={{ padding: '8px 20px', backgroundColor: currentSize === "Small" ? '#583e23' : '#fff', color: currentSize === "Small" ? '#fff' : '#333', border: currentSize === "Small" ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>
-                  Small
+                  {t("Small")}
                 </button>
                 <button onClick={() => setCurrentSize("Large")} style={{ padding: '8px 20px', backgroundColor: currentSize === "Large" ? '#583e23' : '#fff', color: currentSize === "Large" ? '#fff' : '#333', border: currentSize === "Large" ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>
-                  Large (+$1.00)
+                  {t("Large")} (+$1.00)
                 </button>
               </div>
             </div>
 
             {availableToppings.length > 0 && (
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Toppings:</label>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>{t("Toppings")}:</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {availableToppings.map((topping) => (
                     <button key={topping.id} onClick={() => toggleTopping(topping)} style={{ padding: '6px 12px', backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff', color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333', border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
-                      {topping.name} (+${Number(topping.price).toFixed(2)})
+                      {t(topping.name)} (+${Number(topping.price).toFixed(2)})
                     </button>
                   ))}
                 </div>
@@ -840,20 +590,20 @@ export default function Cashier() {
 
             {currentItem.hotAvail && (
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Temperature:</label>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>{t("Temperature")}:</label>
                 <div style={{ display: 'inline-flex', gap: '8px' }}>
                   <button onClick={() => handleTemperatureChange(false)} style={{ padding: '8px 20px', backgroundColor: !currentIsHot ? '#583e23' : '#fff', color: !currentIsHot ? '#fff' : '#333', border: !currentIsHot ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>
-                    Cold
+                    {t("Cold")}
                   </button>
                   <button onClick={() => handleTemperatureChange(true)} style={{ padding: '8px 20px', backgroundColor: currentIsHot ? '#583e23' : '#fff', color: currentIsHot ? '#fff' : '#333', border: currentIsHot ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>
-                    Hot
+                    {t("Hot")}
                   </button>
                 </div>
               </div>
             )}
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Sugar Level:</label>
+              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>{t("Sugar Level")}:</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {["0%", "25%", "50%", "75%", "100%", "125%"].map((lvl) => (
                   <button key={lvl} onClick={() => setCurrentSugar(lvl)} style={{ flex: '1 1 30%', padding: '8px', backgroundColor: currentSugar === lvl ? '#583e23' : '#fff', color: currentSugar === lvl ? '#fff' : '#333', border: currentSugar === lvl ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>
@@ -864,7 +614,7 @@ export default function Cashier() {
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>Ice Level:</label>
+              <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>{t("Ice Level")}:</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {["0%", "25%", "50%", "75%", "100%", "125%"].map((lvl) => (
                   <button key={lvl} onClick={() => !currentIsHot && setCurrentIce(lvl)} disabled={currentIsHot} style={{ flex: '1 1 30%', padding: '8px', backgroundColor: currentIce === lvl && !currentIsHot ? '#583e23' : '#fff', color: currentIce === lvl && !currentIsHot ? '#fff' : '#333', border: currentIce === lvl && !currentIsHot ? 'none' : '1px solid #ddd', borderRadius: '6px', fontSize: '13px', cursor: currentIsHot ? 'not-allowed' : 'pointer', opacity: currentIsHot ? 0.5 : 1 }}>
@@ -875,7 +625,7 @@ export default function Cashier() {
             </div>
 
             <button onClick={addToCart} style={{ width: '100%', padding: '12px', backgroundColor: '#583e23', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
-              Add to Cart
+              {t("Add to Cart")}
             </button>
           </div>
         </>
