@@ -34,7 +34,9 @@ export default function Kiosk() {
     step: "idle",
     pendingDrink: null,
   });
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
 
+  
   // SPEECH UTTER
   function speak(text) {
     try {
@@ -292,6 +294,15 @@ export default function Kiosk() {
     setSelectedItem(null);
   }
 
+  function startVoiceOrder() {
+  speak("Okay, you can start speaking. What would you like to order?");
+  
+  // Tell your voice controller to start listening
+  if (window.voiceController?.startListening) {
+    window.voiceController.startListening();
+  }
+}
+
   function addToCartManual() {
     if (!selectedItem) return;
 
@@ -533,11 +544,13 @@ export default function Kiosk() {
         backgroundColor: '#f5f5f5',
         fontFamily: 'system-ui, -apple-system, sans-serif'
       }}>
+      {voiceEnabled && (
         <VoiceRecorder
           onText={handleVoice}
           onSilenceTimeout={handleSilence}
           onFiveMinuteTimeout={handleFiveMinuteTimeout}
         />
+      )}
 
         {/* LEFT SIDEBAR */}
         <div style={{
@@ -667,7 +680,40 @@ export default function Kiosk() {
               />
             </div>
           </div>
-
+          <button
+            onClick={startVoiceOrder}
+            style={{
+              backgroundColor: voiceActive ? '#583e23' : '#aaa',
+              color: 'white',
+              padding: '12px 18px',
+              fontSize: '15px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: voiceActive ? 'pointer' : 'not-allowed',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            🎤 Start Voice Order
+          </button>
+             {/* Voice Toggle */}
+            <button
+              onClick={() => setVoiceActive(!voiceActive)}
+              style={{
+                backgroundColor: voiceActive ? '#28a745' : '#dc3545',
+                color: 'white',
+                padding: '12px 18px',
+                fontSize: '15px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              {voiceActive ? 'Voice: ON' : 'Voice: OFF'}
+            </button>
           <div style={{
             flex: 1,
             padding: '24px',
