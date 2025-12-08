@@ -1,8 +1,10 @@
 // pages/sales.jsx
 import { useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Sales() {
+    const { t } = useLanguage();
     const { sales } = useOutletContext();
 
     // Report data states
@@ -107,12 +109,12 @@ export default function Sales() {
     return (
         <div className="container">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Sales Dashboard</h2>
+                <h2>{t("Sales Dashboard")}</h2>
                 <button
                     className="btn btn-outline-primary"
                     onClick={() => setShowReports(!showReports)}
                 >
-                    {showReports ? 'Show Sales List' : 'Show Reports'}
+                    {showReports ? t('Show Sales List') : t('Show Reports')}
                 </button>
             </div>
 
@@ -123,7 +125,7 @@ export default function Sales() {
                         <div className="card-body">
                             <div className="row align-items-end">
                                 <div className="col-md-4">
-                                    <label className="form-label">Start Date</label>
+                                    <label className="form-label">{t("Start Date")}</label>
                                     <input
                                         type="date"
                                         className="form-control"
@@ -132,7 +134,7 @@ export default function Sales() {
                                     />
                                 </div>
                                 <div className="col-md-4">
-                                    <label className="form-label">End Date</label>
+                                    <label className="form-label">{t("End Date")}</label>
                                     <input
                                         type="date"
                                         className="form-control"
@@ -145,7 +147,7 @@ export default function Sales() {
                                         className="btn btn-primary w-100"
                                         onClick={fetchReportData}
                                     >
-                                        Apply Date Range
+                                        {t("Apply Date Range")}
                                     </button>
                                 </div>
                             </div>
@@ -157,7 +159,7 @@ export default function Sales() {
                         <div className="col-md-3">
                             <div className="card text-center bg-primary text-white">
                                 <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">Total Revenue</h6>
+                                    <h6 className="card-subtitle mb-2">{t("Total Revenue")}</h6>
                                     <h3 className="card-title">{formatCurrency(totalRevenue)}</h3>
                                 </div>
                             </div>
@@ -165,7 +167,7 @@ export default function Sales() {
                         <div className="col-md-3">
                             <div className="card text-center bg-success text-white">
                                 <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">Total Orders</h6>
+                                    <h6 className="card-subtitle mb-2">{t("Total Orders")}</h6>
                                     <h3 className="card-title">{totalOrders}</h3>
                                 </div>
                             </div>
@@ -173,7 +175,7 @@ export default function Sales() {
                         <div className="col-md-3">
                             <div className="card text-center bg-info text-white">
                                 <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">Avg Order Value</h6>
+                                    <h6 className="card-subtitle mb-2">{t("Avg Order Value")}</h6>
                                     <h3 className="card-title">{formatCurrency(avgOrderValue)}</h3>
                                 </div>
                             </div>
@@ -181,11 +183,11 @@ export default function Sales() {
                         <div className="col-md-3">
                             <div className="card text-center bg-warning text-dark">
                                 <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">Peak Hours</h6>
+                                    <h6 className="card-subtitle mb-2">{t("Peak Hours")}</h6>
                                     <h3 className="card-title" style={{ fontSize: '1.2rem' }}>
                                         {peakHours.length > 0
                                             ? peakHours.map(h => h.formatted).join(', ')
-                                            : 'N/A'}
+                                            : t('N/A')}
                                     </h3>
                                 </div>
                             </div>
@@ -197,7 +199,7 @@ export default function Sales() {
                         <div className="col-md-6">
                             <div className="card">
                                 <div className="card-header bg-dark text-white">
-                                    <h5 className="mb-0">Most Popular Items</h5>
+                                    <h5 className="mb-0">{t("Most Popular Items")}</h5>
                                 </div>
                                 <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                     {popularItems.length > 0 ? (
@@ -205,14 +207,14 @@ export default function Sales() {
                                             {popularItems.slice(0, 10).map((item, idx) => (
                                                 <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>
-                                                        <strong>#{idx + 1}</strong> {item.name}
+                                                        <strong>#{idx + 1}</strong> {t(item.name)}
                                                     </span>
-                                                    <span className="badge bg-primary rounded-pill">{item.totalSold} sold</span>
+                                                    <span className="badge bg-primary rounded-pill">{item.totalSold} {t("sold")}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     ) : (
-                                        <p className="text-muted">No data available</p>
+                                        <p className="text-muted">{t("No data available")}</p>
                                     )}
                                 </div>
                             </div>
@@ -222,14 +224,14 @@ export default function Sales() {
                         <div className="col-md-6">
                             <div className="card">
                                 <div className="card-header bg-dark text-white">
-                                    <h5 className="mb-0">Orders by Hour</h5>
+                                    <h5 className="mb-0">{t("Orders by Hour")}</h5>
                                 </div>
                                 <div className="card-body">
                                     <div style={{ height: '350px', overflowX: 'auto' }}>
                                         {ordersByHour.length > 0 ? (
                                             <svg width="100%" height="340" viewBox="0 0 600 340">
                                                 {/* Y-axis label */}
-                                                <text x="10" y="20" fontSize="12" fill="#666">Orders</text>
+                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Orders")}</text>
 
                                                 {ordersByHour.map((item, idx) => {
                                                     const maxCount = Math.max(...ordersByHour.map(d => d.count));
@@ -269,7 +271,7 @@ export default function Sales() {
                                                 })}
                                             </svg>
                                         ) : (
-                                            <p className="text-muted">No data available</p>
+                                            <p className="text-muted">{t("No data available")}</p>
                                         )}
                                     </div>
                                 </div>
@@ -282,13 +284,13 @@ export default function Sales() {
                         <div className="col-md-6">
                             <div className="card">
                                 <div className="card-header bg-success text-white">
-                                    <h5 className="mb-0">Order Volume Over Time</h5>
+                                    <h5 className="mb-0">{t("Order Volume Over Time")}</h5>
                                 </div>
                                 <div className="card-body">
                                     <div style={{ height: '350px', overflowX: 'auto' }}>
                                         {orderVolume.length > 0 ? (
                                             <svg width="100%" height="340" viewBox="0 0 600 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">Orders</text>
+                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Orders")}</text>
 
                                                 {orderVolume.map((item, idx) => {
                                                     const maxCount = Math.max(...orderVolume.map(d => d.orderCount));
@@ -320,7 +322,7 @@ export default function Sales() {
                                                 })}
                                             </svg>
                                         ) : (
-                                            <p className="text-muted">No data available</p>
+                                            <p className="text-muted">{t("No data available")}</p>
                                         )}
                                     </div>
                                 </div>
@@ -331,13 +333,13 @@ export default function Sales() {
                         <div className="col-md-6">
                             <div className="card">
                                 <div className="card-header bg-warning text-dark">
-                                    <h5 className="mb-0">Revenue Over Time</h5>
+                                    <h5 className="mb-0">{t("Revenue Over Time")}</h5>
                                 </div>
                                 <div className="card-body">
                                     <div style={{ height: '350px', overflowX: 'auto' }}>
                                         {revenueChart.length > 0 ? (
                                             <svg width="100%" height="340" viewBox="0 0 600 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">Revenue ($)</text>
+                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Revenue")} ($)</text>
 
                                                 {revenueChart.map((item, idx) => {
                                                     const maxRevenue = Math.max(...revenueChart.map(d => parseFloat(d.revenue)));
@@ -369,7 +371,7 @@ export default function Sales() {
                                                 })}
                                             </svg>
                                         ) : (
-                                            <p className="text-muted">No data available</p>
+                                            <p className="text-muted">{t("No data available")}</p>
                                         )}
                                     </div>
                                 </div>
@@ -382,13 +384,13 @@ export default function Sales() {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="card-header bg-danger text-white">
-                                    <h5 className="mb-0">Average Order Value by Category</h5>
+                                    <h5 className="mb-0">{t("Average Order Value by Category")}</h5>
                                 </div>
                                 <div className="card-body">
                                     <div style={{ height: '350px', overflowX: 'auto' }}>
                                         {aovByCategory.length > 0 ? (
                                             <svg width="100%" height="340" viewBox="0 0 800 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">Avg Price ($)</text>
+                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Avg Price")} ($)</text>
 
                                                 {aovByCategory.map((item, idx) => {
                                                     const maxPrice = Math.max(...aovByCategory.map(d => parseFloat(d.avgPrice)));
@@ -428,7 +430,7 @@ export default function Sales() {
                                                 })}
                                             </svg>
                                         ) : (
-                                            <p className="text-muted">No data available</p>
+                                            <p className="text-muted">{t("No data available")}</p>
                                         )}
                                     </div>
                                 </div>
@@ -440,7 +442,7 @@ export default function Sales() {
                 /* Sales List View */
                 <div className="card">
                     <div className="card-header bg-dark text-white">
-                        <h5 className="mb-0">Recent Sales</h5>
+                        <h5 className="mb-0">{t("Recent Sales")}</h5>
                     </div>
                     <div className="card-body">
                         {sales && sales.length > 0 ? (
@@ -448,13 +450,13 @@ export default function Sales() {
                                 <table className="table table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Receipt #</th>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Employee ID</th>
-                                            <th>Customer ID</th>
-                                            <th>Total</th>
-                                            <th>Tip</th>
+                                            <th>{t("Receipt #")}</th>
+                                            <th>{t("Date")}</th>
+                                            <th>{t("Time")}</th>
+                                            <th>{t("Employee ID")}</th>
+                                            <th>{t("Customer ID")}</th>
+                                            <th>{t("Total")}</th>
+                                            <th>{t("Tip")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -473,7 +475,7 @@ export default function Sales() {
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-muted">No sales data found</p>
+                            <p className="text-muted">{t("No sales data found")}</p>
                         )}
                     </div>
                 </div>

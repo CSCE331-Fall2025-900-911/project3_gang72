@@ -281,7 +281,7 @@ export default function Ingredients() {
           <strong>⚠️ {t("Low Stock Alert:")}</strong>{" "}
           {ingredients
             .filter((ing) => Number(ing.quantity) < 20)
-            .map((ing) => ing.name)
+            .map((ing) => t(ing.name))
             .join(", ")}
         </div>
       )}
@@ -313,7 +313,7 @@ export default function Ingredients() {
                     return (
                       <tr key={ing.id} className={isOutOfStock ? "table-danger" : isLowStock ? "table-warning" : ""}>
                         <td>{ing.id}</td>
-                        <td className="fw-bold">{ing.name}</td>
+                        <td className="fw-bold">{t(ing.name)}</td>
                         <td>
                           {editingId === ing.id ? (
                             <div className="input-group input-group-sm" style={{ width: "150px" }}>
@@ -330,7 +330,7 @@ export default function Ingredients() {
                             <span>{qty.toFixed(2)}</span>
                           )}
                         </td>
-                        <td>{ing.unit}</td>
+                        <td>{t(ing.unit)}</td>
                         <td>
                           {isOutOfStock ? (
                             <span className="badge bg-danger">{t("Out of Stock")}</span>

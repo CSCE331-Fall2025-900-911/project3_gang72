@@ -354,7 +354,7 @@ export default function Items() {
                   {groupedItems[category].map((item) => (
                     <tr key={item.id}>
                       <td>{item.id}</td>
-                      <td className="fw-bold">{item.name}</td>
+                      <td className="fw-bold">{t(item.name)}</td>
                       <td>
                         {editingId === item.id ? (
                           <div className="input-group input-group-sm" style={{ width: "150px" }}>

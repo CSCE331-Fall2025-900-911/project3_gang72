@@ -1,6 +1,9 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import LanguageToggle from "./LanguageToggle";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ManagerNavbar() {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const userStr = sessionStorage.getItem('user');
@@ -63,7 +66,7 @@ export default function ManagerNavbar() {
                         textDecoration: 'none' 
                     }}
                 >
-                    📊 Manager
+                    📊 {t("Manager")}
                 </Link>
             </div>
 
@@ -98,7 +101,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    🏠 Dashboard
+                    🏠 {t("Dashboard")}
                 </Link>
                 
                 <Link 
@@ -125,7 +128,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    👥 Employees
+                    👥 {t("Employees")}
                 </Link>
                 
                 <Link 
@@ -152,7 +155,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    🧪 Ingredients
+                    🧪 {t("Ingredients")}
                 </Link>
                 
                 <Link 
@@ -179,7 +182,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    💰 Sales
+                    💰 {t("Sales")}
                 </Link>
                 
                 <Link 
@@ -206,7 +209,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    🧋 Items
+                    🧋 {t("Items")}
                 </Link>
                 
                 <Link 
@@ -233,7 +236,7 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    📈 X-Report
+                    📈 {t("X-Report")}
                 </Link>
                 
                 <Link 
@@ -260,23 +263,38 @@ export default function ManagerNavbar() {
                         }
                     }}
                 >
-                    📊 Z-Report
+                    📊 {t("Z-Report")}
                 </Link>
+            </div>
+
+            {/* Language Toggle */}
+            <div style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                marginTop: 'auto'
+            }}>
+                <div style={{
+                    fontSize: '0.85rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    marginBottom: '0.5rem'
+                }}>
+                    {t("Language")}
+                </div>
+                <LanguageToggle />
             </div>
 
             {/* User Info & Logout */}
             {user && (
                 <div style={{
                     padding: '1rem 1.5rem',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    marginTop: 'auto'
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
                     <div style={{
                         fontSize: '0.85rem',
                         color: 'rgba(255, 255, 255, 0.6)',
                         marginBottom: '0.5rem'
                     }}>
-                        Signed in as
+                        {t("Signed in as")}
                     </div>
                     <div style={{
                         fontSize: '0.9rem',
@@ -307,7 +325,7 @@ export default function ManagerNavbar() {
                             e.target.style.backgroundColor = '#FFB88C';
                         }}
                     >
-                        🚪 Logout
+                        🚪 {t("Logout")}
                     </button>
                 </div>
             )}
