@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Items() {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -77,19 +79,19 @@ export default function Items() {
   // Add new item
   const handleAddItem = async () => {
     if (!newName.trim()) {
-      alert("Item name is required");
+      alert(t("Item name is required"));
       return;
     }
     if (!newPrice || isNaN(Number(newPrice)) || Number(newPrice) <= 0) {
-      alert("Valid price is required");
+      alert(t("Valid price is required"));
       return;
     }
     if (!newCategory.trim()) {
-      alert("Category is required");
+      alert(t("Category is required"));
       return;
     }
     if (selectedIngredients.length === 0) {
-      alert("At least one ingredient is required");
+      alert(t("At least one ingredient is required"));
       return;
     }
 
@@ -108,7 +110,7 @@ export default function Items() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        alert("Item added successfully!");
+        alert(t("Item added successfully!"));
         setNewName("");
         setNewPrice("");
         setNewCategory("");
@@ -117,10 +119,10 @@ export default function Items() {
         setShowAddForm(false);
         fetchData();
       } else {
-        alert("Failed to add item: " + (data.error || "Unknown error"));
+        alert(t("Failed to add item:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error adding item: " + err.message);
+      alert(t("Error adding item:") + " " + err.message);
     }
   };
 
@@ -162,7 +164,7 @@ export default function Items() {
   // Update price
   const handleUpdatePrice = async (itemId) => {
     if (!editPrice || isNaN(Number(editPrice)) || Number(editPrice) <= 0) {
-      alert("Valid price is required");
+      alert(t("Valid price is required"));
       return;
     }
 
@@ -175,16 +177,16 @@ export default function Items() {
         }),
       });
 
-      if (res.ok) {
-        alert("Price updated successfully!");
+        if (res.ok) {
+        alert(t("Price updated successfully!"));
         cancelEdit();
         fetchData();
       } else {
         const data = await res.json();
-        alert("Failed to update price: " + (data.error || "Unknown error"));
+        alert(t("Failed to update price:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error updating price: " + err.message);
+      alert(t("Error updating price:") + " " + err.message);
     }
   };
 
@@ -217,12 +219,12 @@ export default function Items() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Menu Items Management</h2>
+        <h2>{t("Menu Items Management")}</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          {showAddForm ? "Cancel" : "+ Add Menu Item"}
+          {showAddForm ? t("Cancel") : t("+ Add Menu Item")}
         </button>
       </div>
 
@@ -236,38 +238,38 @@ export default function Items() {
       {showAddForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h5 className="card-title">Add New Menu Item</h5>
+            <h5 className="card-title">{t("Add New Menu Item")}</h5>
             <div className="row g-3 mb-3">
               <div className="col-md-4">
-                <label className="form-label">Item Name *</label>
+                <label className="form-label">{t("Item Name *")}</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g., Classic Milk Tea"
+                  placeholder={t("e.g., Classic Milk Tea")}
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Price ($) *</label>
+                <label className="form-label">{t("Price ($) *")}</label>
                 <input
                   type="number"
                   className="form-control"
                   value={newPrice}
                   onChange={(e) => setNewPrice(e.target.value)}
-                  placeholder="e.g., 4.99"
+                  placeholder={t("e.g., 4.99")}
                   min="0"
                   step="0.01"
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Category *</label>
+                <label className="form-label">{t("Category *")}</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="e.g., Milk Tea"
+                  placeholder={t("e.g., Milk Tea")}
                   list="categoryList"
                 />
                 <datalist id="categoryList">
@@ -279,6 +281,7 @@ export default function Items() {
             </div>
 
             <div className="mb-3">
+<<<<<<< HEAD
               <div className="form-check">
                 <input
                   className="form-check-input"
@@ -295,9 +298,12 @@ export default function Items() {
 
             <div className="mb-3">
               <label className="form-label fw-bold">Select Ingredients *</label>
+=======
+              <label className="form-label fw-bold">{t("Select Ingredients *")}</label>
+>>>>>>> translation-feature
               <div className="border rounded p-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
                 {ingredients.length === 0 ? (
-                  <p className="text-muted">No ingredients available</p>
+                  <p className="text-muted">{t("No ingredients available")}</p>
                 ) : (
                   <div className="row g-2">
                     {ingredients.map((ing) => (
@@ -310,9 +316,9 @@ export default function Items() {
                             checked={selectedIngredients.includes(ing.id)}
                             onChange={() => toggleIngredient(ing.id)}
                           />
-                          <label className="form-check-label" htmlFor={`ing-${ing.id}`}>
-                            {ing.name}
-                          </label>
+                              <label className="form-check-label" htmlFor={`ing-${ing.id}`}>
+                                {t(ing.name)}
+                              </label>
                         </div>
                       </div>
                     ))}
@@ -320,13 +326,14 @@ export default function Items() {
                 )}
               </div>
               {selectedIngredients.length > 0 && (
-                <div className="mt-2 text-muted small">
-                  Selected: {selectedIngredients.length} ingredient(s)
-                </div>
+                    <div className="mt-2 text-muted small">
+                      {t("Selected:")} {selectedIngredients.length} {t("ingredient(s)")}
+                    </div>
               )}
             </div>
 
             <div>
+<<<<<<< HEAD
               <button className="btn btn-success me-2" onClick={handleAddItem}>
                 Add Item
               </button>
@@ -343,6 +350,23 @@ export default function Items() {
               >
                 Cancel
               </button>
+=======
+                  <button className="btn btn-success me-2" onClick={handleAddItem}>
+                    {t("Add Item")}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewName("");
+                      setNewPrice("");
+                      setNewCategory("");
+                      setSelectedIngredients([]);
+                    }}
+                  >
+                    {t("Cancel")}
+                  </button>
+>>>>>>> translation-feature
             </div>
           </div>
         </div>
@@ -356,7 +380,7 @@ export default function Items() {
               }`}
             onClick={() => setSelectedCategory("All")}
           >
-            All
+            {t("All")}
           </button>
           {categories.map((cat) => (
             <button
@@ -365,7 +389,7 @@ export default function Items() {
                 }`}
               onClick={() => setSelectedCategory(cat)}
             >
-              {cat}
+              {t(cat)}
             </button>
           ))}
         </div>
@@ -373,26 +397,26 @@ export default function Items() {
 
       {/* Items Display */}
       {Object.keys(groupedItems).length === 0 ? (
-        <div className="alert alert-info">No items found</div>
+        <div className="alert alert-info">{t("No items found")}</div>
       ) : (
         Object.keys(groupedItems).map((category) => (
           <div key={category} className="mb-4">
-            <h4 className="border-bottom pb-2">{category}</h4>
+            <h4 className="border-bottom pb-2">{t(category)}</h4>
             <div className="table-responsive">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Actions</th>
+                    <th>{t("ID")}</th>
+                    <th>{t("Name")}</th>
+                    <th>{t("Price")}</th>
+                    <th>{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {groupedItems[category].map((item) => (
                     <tr key={item.id}>
                       <td>{item.id}</td>
-                      <td className="fw-bold">{item.name}</td>
+                      <td className="fw-bold">{t(item.name)}</td>
                       <td>
                         {editingId === item.id ? (
                           <div className="input-group input-group-sm" style={{ width: "150px" }}>
@@ -417,16 +441,17 @@ export default function Items() {
                               className="btn btn-sm btn-success me-2"
                               onClick={() => handleUpdatePrice(item.id)}
                             >
-                              Save
+                                {t("Save")}
                             </button>
                             <button
                               className="btn btn-sm btn-secondary"
                               onClick={cancelEdit}
                             >
-                              Cancel
+                                {t("Cancel")}
                             </button>
                           </>
                         ) : (
+<<<<<<< HEAD
                           <>
                             <button
                               className="btn btn-sm btn-outline-primary me-2"
@@ -441,6 +466,14 @@ export default function Items() {
                               Delete
                             </button>
                           </>
+=======
+                            <button
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() => startEditPrice(item)}
+                            >
+                              {t("Edit Price")}
+                            </button>
+>>>>>>> translation-feature
                         )}
                       </td>
                     </tr>
@@ -457,7 +490,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Total Items</h5>
+              <h5 className="card-title">{t("Total Items")}</h5>
               <p className="display-6">{items.length}</p>
             </div>
           </div>
@@ -465,7 +498,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Categories</h5>
+              <h5 className="card-title">{t("Categories")}</h5>
               <p className="display-6">{categories.length}</p>
             </div>
           </div>
@@ -473,7 +506,7 @@ export default function Items() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Average Price</h5>
+              <h5 className="card-title">{t("Average Price")}</h5>
               <p className="display-6">
                 ${items.length > 0
                   ? (

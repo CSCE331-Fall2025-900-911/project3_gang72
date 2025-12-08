@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Ingredients() {
+  const { t } = useLanguage();
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,15 +49,15 @@ export default function Ingredients() {
   // Add ingredient
   const handleAddIngredient = async () => {
     if (!newName.trim()) {
-      alert("Ingredient name is required");
+      alert(t("Ingredient name is required"));
       return;
     }
     if (!newQuantity || isNaN(Number(newQuantity))) {
-      alert("Valid quantity is required");
+      alert(t("Valid quantity is required"));
       return;
     }
     if (!newUnit.trim()) {
-      alert("Unit is required");
+      alert(t("Unit is required"));
       return;
     }
 
@@ -71,7 +73,7 @@ export default function Ingredients() {
       });
 
       if (res.ok) {
-        alert("Ingredient added successfully!");
+        alert(t("Ingredient added successfully!"));
         setNewName("");
         setNewQuantity("");
         setNewUnit("oz");
@@ -79,10 +81,10 @@ export default function Ingredients() {
         fetchIngredients();
       } else {
         const data = await res.json();
-        alert("Failed to add ingredient: " + (data.error || "Unknown error"));
+        alert(t("Failed to add ingredient:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error adding ingredient: " + err.message);
+      alert(t("Error adding ingredient:") + " " + err.message);
     }
   };
 
@@ -101,7 +103,7 @@ export default function Ingredients() {
   // Update quantity
   const handleUpdateQuantity = async (ingId) => {
     if (!editQuantity || isNaN(Number(editQuantity))) {
-      alert("Valid quantity is required");
+      alert(t("Valid quantity is required"));
       return;
     }
 
@@ -115,21 +117,21 @@ export default function Ingredients() {
       });
 
       if (res.ok) {
-        alert("Quantity updated successfully!");
+        alert(t("Quantity updated successfully!"));
         cancelEdit();
         fetchIngredients();
       } else {
         const data = await res.json();
-        alert("Failed to update quantity: " + (data.error || "Unknown error"));
+        alert(t("Failed to update quantity:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error updating quantity: " + err.message);
+      alert(t("Error updating quantity:") + " " + err.message);
     }
   };
 
   // Delete ingredient
   const handleDeleteIngredient = async (ingId, ingName) => {
-    if (!confirm(`Are you sure you want to delete ${ingName}?`)) {
+    if (!confirm(`${t("Are you sure you want to delete")} ${ingName}?`)) {
       return;
     }
 
@@ -139,14 +141,14 @@ export default function Ingredients() {
       });
 
       if (res.ok) {
-        alert("Ingredient deleted successfully!");
+        alert(t("Ingredient deleted successfully!"));
         fetchIngredients();
       } else {
         const data = await res.json();
-        alert("Failed to delete ingredient: " + (data.error || "Unknown error"));
+        alert(t("Failed to delete ingredient:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error deleting ingredient: " + err.message);
+      alert(t("Error deleting ingredient:") + " " + err.message);
     }
   };
 
@@ -161,14 +163,19 @@ export default function Ingredients() {
       });
 
       if (res.ok) {
-        alert(`Restocked ${ing.name}! New quantity: ${newQuantity} ${ing.unit}`);
+        alert(
+          t("Restocked {name}! New quantity: {qty} {unit}")
+            .replace('{name}', ing.name)
+            .replace('{qty}', newQuantity)
+            .replace('{unit}', ing.unit)
+        );
         fetchIngredients();
       } else {
         const data = await res.json();
-        alert("Failed to restock: " + (data.error || "Unknown error"));
+        alert(t("Failed to restock:") + " " + (data.error || t("Unknown error")));
       }
     } catch (err) {
-      alert("Error restocking: " + err.message);
+      alert(t("Error restocking:") + " " + err.message);
     }
   };
 
@@ -187,12 +194,12 @@ export default function Ingredients() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Inventory Management</h2>
+        <h2>{t("Inventory Management")}</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowAddForm(!showAddForm)}
         >
-          {showAddForm ? "Cancel" : "+ Add Ingredient"}
+          {showAddForm ? t("Cancel") : t("+ Add Ingredient")}
         </button>
       </div>
 
@@ -206,51 +213,51 @@ export default function Ingredients() {
       {showAddForm && (
         <div className="card mb-4">
           <div className="card-body">
-            <h5 className="card-title">Add New Ingredient</h5>
+            <h5 className="card-title">{t("Add New Ingredient")}</h5>
             <div className="row g-3">
               <div className="col-md-4">
-                <label className="form-label">Ingredient Name *</label>
+                <label className="form-label">{t("Ingredient Name *")}</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g., Black Tea Leaves"
+                  placeholder={t("e.g., Black Tea Leaves")}
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Quantity *</label>
+                <label className="form-label">{t("Quantity *")}</label>
                 <input
                   type="number"
                   className="form-control"
                   value={newQuantity}
                   onChange={(e) => setNewQuantity(e.target.value)}
-                  placeholder="e.g., 100"
+                  placeholder={t("e.g., 100")}
                   min="0"
                   step="0.01"
                 />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Unit *</label>
+                <label className="form-label">{t("Unit *")}</label>
                 <select
                   className="form-select"
                   value={newUnit}
                   onChange={(e) => setNewUnit(e.target.value)}
                 >
-                  <option value="oz">oz (ounces)</option>
-                  <option value="lbs">lbs (pounds)</option>
-                  <option value="g">g (grams)</option>
-                  <option value="kg">kg (kilograms)</option>
-                  <option value="ml">ml (milliliters)</option>
-                  <option value="L">L (liters)</option>
-                  <option value="units">units</option>
-                  <option value="cups">cups</option>
+                  <option value="oz">{t("oz (ounces)")}</option>
+                  <option value="lbs">{t("lbs (pounds)")}</option>
+                  <option value="g">{t("g (grams)")}</option>
+                  <option value="kg">{t("kg (kilograms)")}</option>
+                  <option value="ml">{t("ml (milliliters)")}</option>
+                  <option value="L">{t("L (liters)")}</option>
+                  <option value="units">{t("units")}</option>
+                  <option value="cups">{t("cups")}</option>
                 </select>
               </div>
             </div>
             <div className="mt-3">
               <button className="btn btn-success me-2" onClick={handleAddIngredient}>
-                Add Ingredient
+                {t("Add Ingredient")}
               </button>
               <button
                 className="btn btn-secondary"
@@ -261,7 +268,7 @@ export default function Ingredients() {
                   setNewUnit("oz");
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -271,10 +278,10 @@ export default function Ingredients() {
       {/* Low Stock Alert */}
       {ingredients.filter((ing) => Number(ing.quantity) < 20).length > 0 && (
         <div className="alert alert-warning" role="alert">
-          <strong>⚠️ Low Stock Alert:</strong>{" "}
+          <strong>⚠️ {t("Low Stock Alert:")}</strong>{" "}
           {ingredients
             .filter((ing) => Number(ing.quantity) < 20)
-            .map((ing) => ing.name)
+            .map((ing) => t(ing.name))
             .join(", ")}
         </div>
       )}
@@ -283,19 +290,19 @@ export default function Ingredients() {
       <div className="card">
         <div className="card-body">
           {ingredients.length === 0 ? (
-            <p className="text-muted text-center">No ingredients found</p>
+            <p className="text-muted text-center">{t("No ingredients found")}</p>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover">
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Ingredient Name</th>
-                    <th>Quantity</th>
-                    <th>Unit</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
+                        <tr>
+                          <th>{t("ID")}</th>
+                          <th>{t("Ingredient Name")}</th>
+                          <th>{t("Quantity")}</th>
+                          <th>{t("Unit")}</th>
+                          <th>{t("Status")}</th>
+                          <th>{t("Actions")}</th>
+                        </tr>
                 </thead>
                 <tbody>
                   {ingredients.map((ing) => {
@@ -306,7 +313,7 @@ export default function Ingredients() {
                     return (
                       <tr key={ing.id} className={isOutOfStock ? "table-danger" : isLowStock ? "table-warning" : ""}>
                         <td>{ing.id}</td>
-                        <td className="fw-bold">{ing.name}</td>
+                        <td className="fw-bold">{t(ing.name)}</td>
                         <td>
                           {editingId === ing.id ? (
                             <div className="input-group input-group-sm" style={{ width: "150px" }}>
@@ -323,14 +330,14 @@ export default function Ingredients() {
                             <span>{qty.toFixed(2)}</span>
                           )}
                         </td>
-                        <td>{ing.unit}</td>
+                        <td>{t(ing.unit)}</td>
                         <td>
                           {isOutOfStock ? (
-                            <span className="badge bg-danger">Out of Stock</span>
+                            <span className="badge bg-danger">{t("Out of Stock")}</span>
                           ) : isLowStock ? (
-                            <span className="badge bg-warning text-dark">Low Stock</span>
+                            <span className="badge bg-warning text-dark">{t("Low Stock")}</span>
                           ) : (
-                            <span className="badge bg-success">In Stock</span>
+                            <span className="badge bg-success">{t("In Stock")}</span>
                           )}
                         </td>
                         <td>
@@ -340,10 +347,10 @@ export default function Ingredients() {
                                 className="btn btn-sm btn-success me-2"
                                 onClick={() => handleUpdateQuantity(ing.id)}
                               >
-                                Save
+                                {t("Save")}
                               </button>
                               <button className="btn btn-sm btn-secondary" onClick={cancelEdit}>
-                                Cancel
+                                {t("Cancel")}
                               </button>
                             </>
                           ) : (
@@ -351,23 +358,23 @@ export default function Ingredients() {
                               <button
                                 className="btn btn-sm btn-outline-primary me-2"
                                 onClick={() => startEditQuantity(ing)}
-                                title="Edit quantity"
+                                title={t("Edit quantity")}
                               >
-                                Edit Qty
+                                {t("Edit Qty")}
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-success me-2"
                                 onClick={() => handleRestock(ing)}
-                                title="Add 100 units"
+                                title={t("Add 100 units")}
                               >
-                                +100
+                                {t("+100")}
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-danger"
                                 onClick={() => handleDeleteIngredient(ing.id, ing.name)}
-                                title="Delete ingredient"
+                                title={t("Delete ingredient")}
                               >
-                                Delete
+                                {t("Delete")}
                               </button>
                             </>
                           )}
@@ -387,7 +394,7 @@ export default function Ingredients() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Total Ingredients</h5>
+              <h5 className="card-title">{t("Total Ingredients")}</h5>
               <p className="display-6">{ingredients.length}</p>
             </div>
           </div>
@@ -395,7 +402,7 @@ export default function Ingredients() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Low Stock Items</h5>
+              <h5 className="card-title">{t("Low Stock Items")}</h5>
               <p className="display-6 text-warning">
                 {ingredients.filter((ing) => Number(ing.quantity) < 20 && Number(ing.quantity) > 0).length}
               </p>
@@ -405,7 +412,7 @@ export default function Ingredients() {
         <div className="col-md-4">
           <div className="card text-center">
             <div className="card-body">
-              <h5 className="card-title">Out of Stock</h5>
+              <h5 className="card-title">{t("Out of Stock")}</h5>
               <p className="display-6 text-danger">
                 {ingredients.filter((ing) => Number(ing.quantity) === 0).length}
               </p>

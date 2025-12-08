@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Cashier() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [tipPercent, setTipPercent] = useState(0);
@@ -160,16 +162,16 @@ export default function Cashier() {
     const { digits: phoneDigits } = formatPhone(customerPhone);
 
     if (phoneDigits.length === 0) {
-      alert("Customer phone is required!");
+      alert(t("Customer phone is required!"));
       return;
     }
 
     if (phoneDigits.length !== 10) {
-      alert("Phone number must be 10 digits (format xxx-xxx-xxxx).");
+      alert(t("Phone number must be 10 digits (format xxx-xxx-xxxx)."));
       return;
     }
     if (cart.length === 0) {
-      alert("Cart is empty!");
+      alert(t("Cart is empty!"));
       return;
     }
 
@@ -217,11 +219,11 @@ export default function Cashier() {
       if (data.success) {
         if (data.rewardApplied) {
           const isFree = data.discount >= data.subtotal;
-          const rewardLabel = isFree ? "FREE DRINK APPLIED!" : "20% OFF APPLIED!";
-          const rewardLine = isFree ? "This drink is free!" : "20% off applied for multiple drinks.";
-          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\nReceipt #${data.receiptId}\nSubtotal: $${data.subtotal.toFixed(2)}\nDiscount: -$${data.discount.toFixed(2)}\nTotal: $${data.total.toFixed(2)}`);
+          const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
+          const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
+          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\n${t("Receipt #")} ${data.receiptId}\n${t("Subtotal:")} $${data.subtotal.toFixed(2)}\n${t("Discount:")} -$${data.discount.toFixed(2)}\n${t("Total:")} $${data.total.toFixed(2)}`);
         } else {
-          alert(`Order placed successfully!\nReceipt #${data.receiptId}\nTotal: $${data.total.toFixed(2)}`);
+          alert(`${t("Order placed successfully!")}\n${t("Receipt #")} ${data.receiptId}\n${t("Total:")} $${data.total.toFixed(2)}`);
         }
         setCart([]);
         setTipPercent(0);
@@ -230,25 +232,59 @@ export default function Cashier() {
         setCustomerLast("");
         setPaymentMethod("Cash");
         setCurrentItem(null);
-      } else {
-        alert("Order failed: " + data.error);
+        } else {
+        alert(t("Order failed:") + " " + data.error);
       }
     } catch (err) {
       console.error(err);
+<<<<<<< HEAD
       alert("Error placing order");
     } finally {
       setIsSubmitting(false);
+=======
+      alert(t("Error placing order"));
+>>>>>>> translation-feature
     }
   };
 
   const { formatted: formattedPhone } = formatPhone(customerPhone);
 
   return (
+<<<<<<< HEAD
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: '1 1 58%', display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: '#f8f9fa', overflowY: 'auto' }}>
           <h2 style={{ marginBottom: '24px', fontSize: '28px', fontWeight: '600', color: '#333' }}>
             POS - Cashier
+=======
+    <div className="main-content" style={{ 
+      width: '100%', 
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div style={{ 
+        display: 'flex',
+        flex: 1,
+        overflow: 'hidden'
+      }}>
+        {/* Left side - Menu */}
+        <div style={{
+          flex: '1 1 58%',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px',
+          backgroundColor: '#f8f9fa',
+          overflowY: 'auto'
+        }}>
+          <h2 style={{ 
+            marginBottom: '24px',
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#333'
+          }}>
+            {t("POS - Cashier")}
+>>>>>>> translation-feature
           </h2>
 
           <div style={{ marginBottom: '24px' }}>
@@ -268,8 +304,8 @@ export default function Cashier() {
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                >
-                  {cat}
+                  >
+                  {t(cat)}
                 </button>
               ))}
             </div>
@@ -297,8 +333,19 @@ export default function Cashier() {
                     fontSize: '14px'
                   }}
                 >
+<<<<<<< HEAD
                   <div style={{ fontWeight: '600', marginBottom: '8px', textAlign: 'center', wordWrap: 'break-word', width: '100%' }}>
                     {item.name}
+=======
+                  <div style={{ 
+                    fontWeight: '600', 
+                    marginBottom: '8px', 
+                    textAlign: 'center',
+                    wordWrap: 'break-word',
+                    width: '100%'
+                  }}>
+                    {t(item.name)}
+>>>>>>> translation-feature
                   </div>
                   <div style={{ fontSize: '13px', opacity: currentItem?.id === item.id ? 0.9 : 0.7 }}>
                     ${Number(item.price).toFixed(2)}
@@ -309,30 +356,202 @@ export default function Cashier() {
           </div>
         </div>   
 
+<<<<<<< HEAD
         <div style={{ flex: '1 1 42%', display: 'flex', flexDirection: 'column', padding: '24px', backgroundColor: '#fff', borderLeft: '1px solid #e0e0e0', overflowY: 'auto' }}>
           <h4 style={{ marginBottom: '20px', fontSize: '22px', fontWeight: '600', color: '#333' }}>
             Current Order
+=======
+          {/* Item customization panel */}
+          {currentItem && (
+            <div style={{
+              marginTop: '16px',
+              padding: '20px',
+              backgroundColor: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px'
+            }}>
+              <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+                {t(currentItem.name)}
+              </h5>
+              
+              <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  {t("Size:")}
+                </label>
+                <div style={{ display: 'inline-flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setCurrentSize("Small")}
+                    style={{
+                      padding: '8px 20px',
+                      backgroundColor: currentSize === "Small" ? '#583e23' : '#fff',
+                      color: currentSize === "Small" ? '#fff' : '#333',
+                      border: currentSize === "Small" ? 'none' : '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                    >
+                    {t("Small")}
+                  </button>
+                  <button
+                    onClick={() => setCurrentSize("Large")}
+                    style={{
+                      padding: '8px 20px',
+                      backgroundColor: currentSize === "Large" ? '#583e23' : '#fff',
+                      color: currentSize === "Large" ? '#fff' : '#333',
+                      border: currentSize === "Large" ? 'none' : '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                    >
+                    {t("Large") + ' (+$1.00)'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  {t("Toppings:")}
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {availableToppings.map((topping) => (
+                    <button
+                      key={topping.id}
+                      onClick={() => toggleTopping(topping)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff',
+                        color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333',
+                        border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {t(topping.name)}{' (+$' + Number(topping.price).toFixed(2) + ')'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  {t("Sugar Level:")}
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => setCurrentSugar(lvl)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        backgroundColor: currentSugar === lvl ? '#583e23' : '#fff',
+                        color: currentSugar === lvl ? '#fff' : '#333',
+                        border: currentSugar === lvl ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
+                      >
+                      {t(lvl)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  {t("Ice Level:")}
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => setCurrentIce(lvl)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
+                        color: currentIce === lvl ? '#fff' : '#333',
+                        border: currentIce === lvl ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
+                      >
+                      {t(lvl)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={addToCart}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#583e23',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginTop: '8px'
+                }}
+              >
+                {t("Add to Cart")}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right side - Cart & Checkout */}
+        <div style={{
+          flex: '1 1 42%',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px',
+          backgroundColor: '#fff',
+          borderLeft: '1px solid #e0e0e0',
+          overflowY: 'auto'
+        }}>
+          <h4 style={{ 
+            marginBottom: '20px',
+            fontSize: '22px',
+            fontWeight: '600',
+            color: '#333'
+          }}>
+            {t("Current Order")}
+>>>>>>> translation-feature
           </h4>
 
           <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
+<<<<<<< HEAD
               placeholder="Phone Number * (xxx-xxx-xxxx)"
               value={formattedPhone}
+=======
+              placeholder={t("Phone Number *")}
+              value={customerPhone}
+>>>>>>> translation-feature
               onChange={(e) => setCustomerPhone(e.target.value)}
               style={{ width: '100%', padding: '10px 14px', fontSize: '14px', border: '1px solid #ddd', borderRadius: '6px', marginBottom: '12px' }}
             />
             <div style={{ display: 'flex', gap: '12px' }}>
               <input
                 type="text"
-                placeholder="First Name"
+                placeholder={t("First Name")}
                 value={customerFirst}
                 onChange={(e) => setCustomerFirst(e.target.value)}
                 style={{ flex: 1, padding: '10px 14px', fontSize: '14px', border: '1px solid #ddd', borderRadius: '6px' }}
               />
               <input
                 type="text"
-                placeholder="Last Name"
+                placeholder={t("Last Name")}
                 value={customerLast}
                 onChange={(e) => setCustomerLast(e.target.value)}
                 style={{ flex: 1, padding: '10px 14px', fontSize: '14px', border: '1px solid #ddd', borderRadius: '6px' }}
@@ -342,8 +561,18 @@ export default function Cashier() {
 
           <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', padding: '12px', marginBottom: '20px', backgroundColor: '#fafafa' }}>
             {cart.length === 0 ? (
+<<<<<<< HEAD
               <p style={{ textAlign: 'center', color: '#999', marginTop: '20px', fontSize: '14px' }}>
                 No items in cart
+=======
+              <p style={{ 
+                textAlign: 'center',
+                color: '#999',
+                marginTop: '20px',
+                fontSize: '14px'
+              }}>
+                {t("No items in cart")}
+>>>>>>> translation-feature
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -352,15 +581,19 @@ export default function Cashier() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '600', marginBottom: '4px', fontSize: '14px' }}>
-                          {item.name} ({item.size})
+                          {t(item.name)} ({t(item.size)})
                         </div>
                         {item.toppings.length > 0 && (
-                          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-                            {item.toppings.map((t) => t.name).join(", ")}
-                          </div>
-                        )}
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                              {item.toppings.map((tp) => t(tp.name)).join(", ")}
+                            </div>
+                          )}
                         <div style={{ fontSize: '12px', color: '#666' }}>
+<<<<<<< HEAD
                           {item.isHot ? 'Hot' : 'Cold'} | Sugar: {item.sugar} | Ice: {item.ice}
+=======
+                          {t("Sugar")}: {item.sugar} | {t("Ice")}: {item.ice}
+>>>>>>> translation-feature
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', marginLeft: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -384,6 +617,23 @@ export default function Cashier() {
                             +
                           </button>
                         </div>
+<<<<<<< HEAD
+=======
+                          <button
+                          onClick={() => removeFromCart(i)}
+                          style={{
+                            padding: '4px 12px',
+                            backgroundColor: 'transparent',
+                            color: '#dc3545',
+                            border: '1px solid #dc3545',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {t("Remove")}
+                        </button>
+>>>>>>> translation-feature
                       </div>
                     </div>
                   </div>
@@ -394,22 +644,22 @@ export default function Cashier() {
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
-              Payment Method:
+              {t("Payment Method:")}
             </label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               style={{ width: '100%', padding: '10px 14px', fontSize: '14px', border: '1px solid #ddd', borderRadius: '6px', backgroundColor: '#fff', cursor: 'pointer' }}
             >
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="Digital">Digital Wallet</option>
+              <option value="Cash">{t("Cash")}</option>
+              <option value="Card">{t("Card")}</option>
+              <option value="Digital">{t("Digital Wallet")}</option>
             </select>
           </div>
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
-              Tip %:
+              {t("Tip %:")}
             </label>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
@@ -429,14 +679,30 @@ export default function Cashier() {
                 <button
                   key={tip}
                   onClick={() => setTipPercent(tip)}
+<<<<<<< HEAD
                   style={{ flex: 1, padding: '8px', backgroundColor: '#fff', color: '#333', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
                 >
                   {tip === 0 ? 'No Tip' : `${tip}%`}
+=======
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    backgroundColor: '#fff',
+                    color: '#333',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                  >
+                  {tip === 0 ? t("No Tip") : `${tip}%`}
+>>>>>>> translation-feature
                 </button>
               ))}
             </div>
           </div>
 
+<<<<<<< HEAD
           <div style={{ borderTop: '1px solid #ddd', paddingTop: '16px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', color: '#666' }}>
               <span>Subtotal:</span>
@@ -448,6 +714,44 @@ export default function Cashier() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '600', fontSize: '20px', borderTop: '2px solid #333', paddingTop: '12px', color: '#333' }}>
               <span>Total:</span>
+=======
+          {/* Totals */}
+          <div style={{
+            borderTop: '1px solid #ddd',
+            paddingTop: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
+              fontSize: '14px',
+              color: '#666'
+            }}>
+              <span>{t("Subtotal:")}</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
+              fontSize: '14px',
+              color: '#666'
+            }}>
+              <span>{t("Tip")} ({tipPercent}%):</span>
+              <span>${tipAmount.toFixed(2)}</span>
+            </div>
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontWeight: '600',
+              fontSize: '20px',
+              borderTop: '2px solid #333',
+              paddingTop: '12px',
+              color: '#333'
+            }}>
+              <span>{t("Total:")}</span>
+>>>>>>> translation-feature
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
@@ -468,7 +772,11 @@ export default function Cashier() {
                 cursor: (isSubmitting || cart.length === 0 || formatPhone(customerPhone).digits.length !== 10) ? 'not-allowed' : 'pointer'
               }}
             >
+<<<<<<< HEAD
               {isSubmitting ? 'Processing...' : 'Complete Order'}
+=======
+              {t("Complete Order")}
+>>>>>>> translation-feature
             </button>
             <button
               onClick={clearCart}
@@ -485,7 +793,7 @@ export default function Cashier() {
                 cursor: cart.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              Clear Cart
+              {t("Clear Cart")}
             </button>
           </div>
         </div>

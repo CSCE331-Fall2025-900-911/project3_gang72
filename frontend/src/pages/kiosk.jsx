@@ -811,6 +811,7 @@ export default function Kiosk() {
                   width: "150px",
                 }}
               />
+<<<<<<< HEAD
 
               {/* VOICE RECORDER BUTTON (Start/Stop Speaking) */}
               <VoiceRecorder
@@ -818,6 +819,42 @@ export default function Kiosk() {
                 onSilenceTimeout={handleSilence}
                 onFiveMinuteTimeout={handleFiveMinuteTimeout}
               />
+=======
+              <button
+              onClick={startVoiceOrder}
+              style={{
+                backgroundColor: voiceActive ? '#583e23' : '#aaa',
+                color: 'white',
+                padding: '12px 18px',
+                fontSize: '15px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: voiceActive ? 'pointer' : 'not-allowed',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              🎤 {t("Start Voice Order")}
+            </button>
+              {/* Voice Toggle */}
+              <button
+                onClick={() => setVoiceActive(!voiceActive)}
+                style={{
+                  backgroundColor: voiceActive ? '#28a745' : '#dc3545',
+                  color: 'white',
+                  padding: '12px 18px',
+                  fontSize: '15px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {voiceActive ? t('Voice: ON') : t('Voice: OFF')}
+              </button>
+>>>>>>> translation-feature
             </div>
           </div>
 

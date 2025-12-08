@@ -1,7 +1,9 @@
 // pages/xreport.jsx
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function XReport() {
+    const { t, language } = useLanguage();
     const [reportData, setReportData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -55,7 +57,25 @@ export default function XReport() {
     };
 
     const getCurrentDate = () => {
-        return new Date().toLocaleDateString('en-US', {
+        // Map language codes to locale strings
+        const localeMap = {
+            'en': 'en-US',
+            'es': 'es-ES',
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'zh-CN': 'zh-CN',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'ar': 'ar-SA',
+            'hi': 'hi-IN',
+            'pt': 'pt-PT',
+            'ru': 'ru-RU',
+            'it': 'it-IT'
+        };
+        
+        const locale = localeMap[language] || 'en-US';
+        
+        return new Date().toLocaleDateString(locale, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -72,17 +92,17 @@ export default function XReport() {
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2>X-Report (Hourly Sales Today)</h2>
+                    <h2>{t("X-Report (Hourly Sales Today)")}</h2>
                     <p className="text-muted mb-0">{getCurrentDate()}</p>
                 </div>
                 <button className="btn btn-primary" onClick={fetchXReport} disabled={loading}>
-                    {loading ? 'Loading...' : 'Refresh'}
+                    {loading ? t('Loading...') : t('Refresh')}
                 </button>
             </div>
 
             {error && (
                 <div className="alert alert-danger" role="alert">
-                    Error: {error}
+                    {t("Error")}: {error}
                 </div>
             )}
 
@@ -91,7 +111,7 @@ export default function XReport() {
                 <div className="col-md-4">
                     <div className="card bg-primary text-white">
                         <div className="card-body">
-                            <h5 className="card-title">Total Orders</h5>
+                            <h5 className="card-title">{t("Total Orders")}</h5>
                             <h2 className="mb-0">{totalOrders}</h2>
                         </div>
                     </div>
@@ -99,7 +119,7 @@ export default function XReport() {
                 <div className="col-md-4">
                     <div className="card bg-success text-white">
                         <div className="card-body">
-                            <h5 className="card-title">Gross Sales</h5>
+                            <h5 className="card-title">{t("Gross Sales")}</h5>
                             <h2 className="mb-0">{formatCurrency(totalSales)}</h2>
                         </div>
                     </div>
@@ -107,7 +127,7 @@ export default function XReport() {
                 <div className="col-md-4">
                     <div className="card bg-info text-white">
                         <div className="card-body">
-                            <h5 className="card-title">Total Tips</h5>
+                            <h5 className="card-title">{t("Total Tips")}</h5>
                             <h2 className="mb-0">{formatCurrency(totalTips)}</h2>
                         </div>
                     </div>
@@ -117,20 +137,20 @@ export default function XReport() {
             {/* Chart */}
             <div className="card mb-4">
                 <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">Orders per Hour Chart</h5>
+                    <h5 className="mb-0">{t("Orders per Hour Chart")}</h5>
                 </div>
                 <div className="card-body">
                     {loading ? (
                         <div className="text-center py-5">
                             <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
+                                <span className="visually-hidden">{t("Loading...")}</span>
                             </div>
                         </div>
                     ) : reportData.length > 0 ? (
                         <div style={{ height: '400px', overflowX: 'auto' }}>
                             <svg width="100%" height="400" viewBox="0 0 900 400">
                                 {/* Y-axis label */}
-                                <text x="10" y="20" fontSize="12" fill="#666" fontWeight="bold">Number of Orders</text>
+                                <text x="10" y="20" fontSize="12" fill="#666" fontWeight="bold">{t("Number of Orders")}</text>
                                 
                                 {/* Grid lines */}
                                 {[0, 1, 2, 3, 4, 5].map(i => {
@@ -223,7 +243,7 @@ export default function XReport() {
             {/* Detailed Table */}
             <div className="card">
                 <div className="card-header bg-secondary text-white">
-                    <h5 className="mb-0">Detailed Hourly Breakdown</h5>
+                    <h5 className="mb-0">{t("Detailed Hourly Breakdown")}</h5>
                 </div>
                 <div className="card-body">
                     {reportData.length > 0 ? (
@@ -231,11 +251,11 @@ export default function XReport() {
                             <table className="table table-striped table-hover">
                                 <thead className="table-dark">
                                     <tr>
-                                        <th>Hour</th>
-                                        <th>Order Count</th>
-                                        <th>Gross Sales</th>
-                                        <th>Total Tips</th>
-                                        <th>Average Sale</th>
+                                        <th>{t("Hour")}</th>
+                                        <th>{t("Order Count")}</th>
+                                        <th>{t("Gross Sales")}</th>
+                                        <th>{t("Total Tips")}</th>
+                                        <th>{t("Average Sale")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -252,7 +272,7 @@ export default function XReport() {
                                         );
                                     })}
                                     <tr className="table-primary fw-bold">
-                                        <td>TOTAL</td>
+                                        <td>{t("TOTAL")}</td>
                                         <td>{totalOrders}</td>
                                         <td>{formatCurrency(totalSales)}</td>
                                         <td>{formatCurrency(totalTips)}</td>
@@ -263,7 +283,7 @@ export default function XReport() {
                         </div>
                     ) : (
                         !loading && (
-                            <p className="text-muted text-center">No data available</p>
+                            <p className="text-muted text-center">{t("No data available")}</p>
                         )
                     )}
                 </div>

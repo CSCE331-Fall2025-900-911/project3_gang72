@@ -55,75 +55,6 @@ body.manager-page .main-content {
   margin-left: 0 !important;
 }
 
-/* Manager Navbar - Horizontal Top Bar */
-.navbar.manager-navbar {
-  width: 100% !important;
-  min-height: auto !important;
-  position: relative !important;
-  background: var(--dark-teal) !important;
-  flex-direction: row !important;
-  padding: 0 !important;
-}
-
-.navbar.manager-navbar .container {
-  max-width: 100%;
-  padding: 0 1rem;
-}
-
-.navbar.manager-navbar .navbar-brand {
-  padding: 1rem 1.5rem !important;
-  border-bottom: none;
-  font-size: 1.5rem !important;
-  font-weight: 700 !important;
-  color: white !important;
-}
-
-.navbar.manager-navbar .navbar-collapse {
-  flex-direction: row !important;
-}
-
-.navbar.manager-navbar .navbar-nav {
-  flex-direction: row !important;
-  padding: 0 !important;
-  gap: 0.5rem;
-}
-
-.navbar.manager-navbar .nav-link {
-  padding: 1rem 1.25rem !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease;
-}
-
-.navbar.manager-navbar .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
-}
-
-.navbar.manager-navbar .nav-link.active {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  border-bottom: 3px solid var(--peach);
-}
-
-/* Logout button in manager navbar */
-.navbar.manager-navbar .btn-logout {
-  background: var(--peach);
-  color: var(--dark-teal);
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  margin-left: 1rem;
-}
-
-.navbar.manager-navbar .btn-logout:hover {
-  background: #ffa066;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 184, 140, 0.4);
-}
-
 .navbar .container-fluid {
   flex-direction: column !important;
   align-items: stretch !important;
@@ -207,6 +138,13 @@ body > div:first-child {
 /* Main Content Container */
 .main-content {
   flex: 1;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Manager Main Content - offset for left sidebar */
+.manager-main-content {
+  margin-left: 240px;
   min-height: 100vh;
   padding: 2rem;
 }
@@ -517,6 +455,11 @@ body > div:first-child {
 
   .navbar.manager-navbar .nav-link {
     width: 100%;
+  }
+
+  /* Manager main content responsive */
+  .manager-main-content {
+    margin-left: 0 !important;
   }
 }
 
