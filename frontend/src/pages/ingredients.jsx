@@ -15,6 +15,13 @@ export default function Ingredients() {
   const [editingId, setEditingId] = useState(null);
   const [editQuantity, setEditQuantity] = useState("");
 
+  useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+  
   // Fetch ingredients
   const fetchIngredients = async () => {
     try {

@@ -47,7 +47,89 @@ body {
   flex-shrink: 0 !important;
 }
 
+<<<<<<< HEAD
 .navbar.sidebar-nav .container-fluid {
+=======
+/* HIDE SIDEBAR ON MANAGER PAGES */
+body.manager-page .navbar.navbar-expand-lg:not(.manager-navbar) {
+  display: none !important;
+}
+
+body.manager-page .main-content {
+  margin-left: 0 !important;
+}
+
+/* Manager Navbar - Horizontal Top Bar */
+.navbar.manager-navbar {
+  width: 100% !important;
+  min-height: auto !important;
+  position: relative !important;
+  background: var(--dark-teal) !important;
+  flex-direction: row !important;
+  padding: 0 !important;
+}
+
+.navbar.manager-navbar .container {
+  max-width: 100%;
+  padding: 0 1rem;
+}
+
+.navbar.manager-navbar .navbar-brand {
+  padding: 1rem 1.5rem !important;
+  border-bottom: none;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: white !important;
+}
+
+.navbar.manager-navbar .navbar-collapse {
+  flex-direction: row !important;
+}
+
+.navbar.manager-navbar .navbar-nav {
+  flex-direction: row !important;
+  padding: 0 !important;
+  gap: 0.5rem;
+}
+
+.navbar.manager-navbar .nav-link {
+  padding: 1rem 1.25rem !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+}
+
+.navbar.manager-navbar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.navbar.manager-navbar .nav-link.active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-bottom: 3px solid var(--peach);
+}
+
+/* Logout button in manager navbar */
+.navbar.manager-navbar .btn-logout {
+  background: var(--peach);
+  color: var(--dark-teal);
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-left: 1rem;
+}
+
+.navbar.manager-navbar .btn-logout:hover {
+  background: #ffa066;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 184, 140, 0.4);
+}
+
+.navbar .container-fluid {
+>>>>>>> e7abde20c82f9cc2f2bd4bcb38b4f329783dc8a9
   flex-direction: column !important;
   align-items: stretch !important;
   padding: 0 !important;
@@ -332,7 +414,11 @@ body {
 }
 
 @media (max-width: 992px) {
+<<<<<<< HEAD
   .navbar.sidebar-nav {
+=======
+  .navbar.navbar-expand-lg:not(.manager-navbar) {
+>>>>>>> e7abde20c82f9cc2f2bd4bcb38b4f329783dc8a9
     width: 100% !important;
     min-height: auto !important;
     position: relative !important;
@@ -385,6 +471,24 @@ body {
 
   .hero-section p {
     font-size: 1.1rem;
+  }
+
+  /* Manager navbar responsive */
+  .navbar.manager-navbar .navbar-toggler {
+    display: block !important;
+  }
+
+  .navbar.manager-navbar .navbar-collapse {
+    background: var(--dark-teal);
+  }
+
+  .navbar.manager-navbar .navbar-nav {
+    flex-direction: column !important;
+    padding: 1rem 0 !important;
+  }
+
+  .navbar.manager-navbar .nav-link {
+    width: 100%;
   }
 }
 

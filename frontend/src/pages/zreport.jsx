@@ -10,6 +10,13 @@ export default function ZReport() {
         fetchZReport();
     }, []);
 
+    useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+  
     const fetchZReport = () => {
         setLoading(true);
         setError(null);

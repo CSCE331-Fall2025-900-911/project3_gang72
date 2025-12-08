@@ -18,6 +18,14 @@ export default function Employees() {
   const [editLastName, setEditLastName] = useState("");
   const [editPassword, setEditPassword] = useState("");
 
+  useEffect(() => {
+    document.body.classList.add('manager-page');
+    return () => {
+      document.body.classList.remove('manager-page');
+    };
+  }, []);
+
+
   // Fetch employees
   const fetchEmployees = async () => {
     try {
