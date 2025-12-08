@@ -36,13 +36,15 @@ export default function Manager() {
     }, []);
 
     return (
-        <div className="main-content">
+        <>
             <ManagerNavbar />
-            <div className="container mt-4">
-                <h1 className="mb-4">{t("Manager Dashboard")}</h1>
-                {/* Render subpages and pass data via context */}
-                <Outlet context={{ employees, ingredients, sales }} />
+            <div className="manager-main-content">
+                <div className="container mt-4">
+                    <h1 className="mb-4">{t("Manager Dashboard")}</h1>
+                    {/* Render subpages and pass data via context */}
+                    <Outlet context={{ employees, ingredients, sales }} />
+                </div>
             </div>
-        </div>
+        </>
     );
 }

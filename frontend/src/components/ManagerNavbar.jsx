@@ -36,12 +36,17 @@ export default function ManagerNavbar() {
 
     return (
         <nav style={{
-            width: '100%',
-            height: '100%',
+            width: '240px',
+            height: '100vh',
             display: 'flex',
             flexDirection: 'column',
             color: 'white',
-            backgroundColor: '#583e23'
+            backgroundColor: '#583e23',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000
         }}>
             {/* Brand/Logo */}
             <div style={{

@@ -1,12 +1,5 @@
-import ManagerNavbar from './ManagerNavbar';
-
 export default function ManagerLayout({ children }) {
-    return (
-        <>
-            <ManagerNavbar />
-            <div className="main-content">
-                {children}
-            </div>
-        </>
-    );
+    // This component is now just a passthrough since the navbar
+    // is handled at the parent manager route level
+    return children;
 }
