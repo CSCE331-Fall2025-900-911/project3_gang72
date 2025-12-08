@@ -62,7 +62,14 @@ function App() {
           </Route>
           <Route path="/cashier" element={<ProtectedRoute><Cashier /></ProtectedRoute>} />
           <Route path="/kiosk" element={<Kiosk />} />
-          <Route path="/menu" element={<Menu />} />
+          {/* Changed by Hiya */}
+          {/* <Route path="/menu" element={<Menu />} /> */}
+          <Route path="/menu" element={
+            <div className="menu-wrapper">
+              <Menu />
+            </div>
+          } />
+
         </Routes>
       </div>
     </BrowserRouter>

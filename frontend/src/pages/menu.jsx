@@ -47,10 +47,8 @@ export default function MenuBoard() {
 
   if (loading) {
     return (
-      <div className="main-content">
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="animate-spin h-12 w-12 rounded-full border-4 border-gray-400 border-t-transparent"></div>
-        </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin h-12 w-12 rounded-full border-4 border-gray-400 border-t-transparent"></div>
       </div>
     );
   }
@@ -80,45 +78,37 @@ export default function MenuBoard() {
           </div>
         </header>
 
-        {/* NO RESULTS */}
+        {/* No results */}
         {categories.length === 0 ? (
           <div className="text-center py-20">
             <span className="text-7xl block mb-4">😔</span>
             <p className="text-2xl font-bold">{t("No items found")}</p>
-            {searchQuery && (
-              <p className="text-gray-500 mt-2">{t("Try clearing the search filter.")}</p>
-            )}
           </div>
         ) : (
-          // ⭐⭐⭐ TRUE HORIZONTAL MENU BOARD ⭐⭐⭐
-          <div className="flex flex-row gap-10 w-full">
-
+          // ⭐⭐⭐ TRUE HORIZONTAL MENU BOARD — NEVER STACKS ⭐⭐⭐
+          <div
+        className="flex flex-row gap-10 overflow-x-auto pb-6 whitespace-nowrap w-[200vw]"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
             {categories.map((category) => {
               const items = groupedItems[category];
 
               return (
                 <div
                   key={category}
-                  className="flex-1 bg-white rounded-xl p-6 border border-gray-300 shadow-sm flex flex-col"
-                  style={{ minWidth: "0" }}
+                  className="inline-block align-top min-w-[320px] bg-white rounded-xl p-6 border border-gray-300 shadow-sm"
                 >
                   {/* Category Title */}
-                  <h2 className="text-2xl font-bold text-center mb-4">
+                  <h2 className="text-3xl font-bold text-center mb-6">
                     {category}
                   </h2>
 
-                  {/* Items */}
-                  <div className="flex flex-col gap-3 flex-grow">
+                  {/* Category Items */}
+                  <div className="flex flex-col gap-4">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center w-full">
-                        
-                        {/* Name */}
+                      <div key={item.id} className="flex items-center">
                         <span className="text-lg">{item.name}</span>
-
-                        {/* Dotted leader */}
                         <span className="flex-grow border-b border-dotted mx-3 border-gray-400"></span>
-
-                        {/* Price */}
                         <span className="text-lg font-semibold">
                           ${Number(item.price).toFixed(2)}
                         </span>
@@ -128,7 +118,6 @@ export default function MenuBoard() {
                 </div>
               );
             })}
-
           </div>
         )}
 
@@ -141,7 +130,7 @@ export default function MenuBoard() {
         </footer>
       </div>
 
-      {/* Remove ALL bullets */}
+      {/* Remove all bullets */}
       <style>{`
         .menu-board * {
           list-style: none !important;
