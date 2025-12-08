@@ -12,19 +12,16 @@ export default function ZReport() {
         checkZReportStatus();
     }, []);
 
-    // REMOVE this useEffect - it's causing the sidebar to hide
-    // useEffect(() => {
-    //     document.body.classList.add('manager-page');
-    //     return () => {
-    //         document.body.classList.remove('manager-page');
-    //     };
-    // }, []);
-
     const checkZReportStatus = () => {
         setLoading(true);
         setError(null);
         fetch('/api/z-report/status')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Failed to check status');
+                }
+                return res.json();
+            })
             .then(data => {
                 if (data.success) {
                     setAlreadyRun(data.alreadyRun || false);
@@ -36,6 +33,7 @@ export default function ZReport() {
             })
             .catch(err => {
                 console.error('Error checking Z-Report status:', err);
+                setError(err.message);
                 setLoading(false);
             });
     };
@@ -100,7 +98,6 @@ export default function ZReport() {
     const discountLoss = reportData?.total_discounts || 0;
 
     return (
-        <ManagerLayout>
             <div className="container mt-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div>
@@ -265,6 +262,5 @@ export default function ZReport() {
                     </div>
                 )}
             </div>
-        </ManagerLayout>
     );
 }
