@@ -25,14 +25,14 @@ body {
 
 #root {
   min-height: 100vh;
-  display: flex;
   width: 100%;
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
-/* Sidebar Navbar Styles - More specific selector to not affect other navbars */
-.navbar.navbar-expand-lg.sidebar-nav {
+/* Sidebar Navigation for regular pages */
+.navbar.navbar-expand-lg.navbar-dark.bg-dark {
   width: 240px !important;
   background: var(--olive-bark) !important;
   min-height: 100vh !important;
@@ -43,99 +43,19 @@ body {
   flex-direction: column !important;
   padding: 0 !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  flex-shrink: 0 !important;
+  z-index: 1000 !important;
 }
 
-/* HIDE SIDEBAR ON MANAGER PAGES */
-body.manager-page .navbar.navbar-expand-lg:not(.manager-navbar) {
-  display: none !important;
-}
-
-body.manager-page .main-content {
-  margin-left: 0 !important;
-}
-
-/* Manager Navbar - Horizontal Top Bar */
-.navbar.manager-navbar {
-  width: 100% !important;
-  min-height: auto !important;
-  position: relative !important;
-  background: var(--dark-teal) !important;
-  flex-direction: row !important;
-  padding: 0 !important;
-}
-
-.navbar.manager-navbar .container {
-  max-width: 100%;
-  padding: 0 1rem;
-}
-
-.navbar.manager-navbar .navbar-brand {
-  padding: 1rem 1.5rem !important;
-  border-bottom: none;
-  font-size: 1.5rem !important;
-  font-weight: 700 !important;
-  color: white !important;
-}
-
-.navbar.manager-navbar .navbar-collapse {
-  flex-direction: row !important;
-}
-
-.navbar.manager-navbar .navbar-nav {
-  flex-direction: row !important;
-  padding: 0 !important;
-  gap: 0.5rem;
-}
-
-.navbar.manager-navbar .nav-link {
-  padding: 1rem 1.25rem !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease;
-}
-
-.navbar.manager-navbar .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
-}
-
-.navbar.manager-navbar .nav-link.active {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  border-bottom: 3px solid var(--peach);
-}
-
-/* Logout button in manager navbar */
-.navbar.manager-navbar .btn-logout {
-  background: var(--peach);
-  color: var(--dark-teal);
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  margin-left: 1rem;
-}
-
-.navbar.manager-navbar .btn-logout:hover {
-  background: #ffa066;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 184, 140, 0.4);
-}
-
-.navbar .container-fluid {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .container-fluid {
   flex-direction: column !important;
   align-items: stretch !important;
   padding: 0 !important;
   width: 100% !important;
 }
 
-.navbar.sidebar-nav .navbar-brand {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .navbar-brand {
   font-size: 1.5rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.5px;
   padding: 2rem 1.5rem !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
@@ -143,18 +63,13 @@ body.manager-page .main-content {
   width: 100%;
 }
 
-.navbar.sidebar-nav .navbar-toggler {
-  margin: 1rem;
-  display: none;
-}
-
-.navbar.sidebar-nav .navbar-collapse {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .navbar-collapse {
   flex-grow: 1;
   display: flex !important;
   flex-direction: column !important;
 }
 
-.navbar.sidebar-nav .navbar-nav {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .navbar-nav {
   flex-direction: column !important;
   width: 100% !important;
   flex-grow: 1;
@@ -162,12 +77,12 @@ body.manager-page .main-content {
   margin: 0 !important;
 }
 
-.navbar.sidebar-nav .navbar-nav .nav-item {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .nav-item {
   width: 100%;
   margin: 0 !important;
 }
 
-.navbar.sidebar-nav .navbar-nav .nav-link {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .nav-link {
   font-size: 1rem !important;
   font-weight: 500 !important;
   padding: 1rem 1.5rem !important;
@@ -178,27 +93,31 @@ body.manager-page .main-content {
   border-radius: 0 !important;
 }
 
-.navbar.sidebar-nav .navbar-nav .nav-link:hover {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .nav-link:hover {
   background: rgba(255, 255, 255, 0.08) !important;
   color: white !important;
 }
 
-.navbar.sidebar-nav .navbar-nav .nav-link.active {
+.navbar.navbar-expand-lg.navbar-dark.bg-dark .nav-link.active {
   background: rgba(255, 255, 255, 0.15) !important;
   color: white !important;
 }
 
-/* Language Toggle in Sidebar */
-.navbar.sidebar-nav .navbar-nav .nav-item:last-child {
-  margin-top: auto !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 1rem;
+/* Adjust content for sidebar on non-manager pages */
+.container-fluid.mt-4 {
+  margin-left: 240px !important;
+  width: calc(100% - 240px) !important;
+  max-width: none !important;
+}
+
+/* Voice button and high contrast toggle positioning */
+body > div:first-child {
+  position: relative;
 }
 
 /* Main Content Container */
 .main-content {
   flex: 1;
-  margin-left: 240px;
   min-height: 100vh;
   padding: 2rem;
 }
@@ -410,42 +329,7 @@ body.manager-page .main-content {
 }
 
 @media (max-width: 992px) {
-  .navbar.navbar-expand-lg:not(.manager-navbar) {
-    width: 100% !important;
-    min-height: auto !important;
-    position: relative !important;
-  }
-
-  .navbar.sidebar-nav .container-fluid {
-    flex-direction: row !important;
-  }
-
-  .navbar.sidebar-nav .navbar-brand {
-    padding: 1rem 1.5rem !important;
-    border-bottom: none;
-    text-align: left;
-  }
-
-  .navbar.sidebar-nav .navbar-toggler {
-    display: block !important;
-  }
-
-  .navbar.sidebar-nav .navbar-collapse {
-    background: var(--olive-bark);
-  }
-
-  .navbar.sidebar-nav .navbar-nav {
-    padding: 1rem 0 !important;
-  }
-
-  .navbar.sidebar-nav .navbar-nav .nav-item:last-child {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 0.5rem !important;
-  }
-
   .main-content {
-    margin-left: 0;
-    width: 100%;
     padding: 2rem 1.5rem;
   }
 
@@ -463,24 +347,6 @@ body.manager-page .main-content {
 
   .hero-section p {
     font-size: 1.1rem;
-  }
-
-  /* Manager navbar responsive */
-  .navbar.manager-navbar .navbar-toggler {
-    display: block !important;
-  }
-
-  .navbar.manager-navbar .navbar-collapse {
-    background: var(--dark-teal);
-  }
-
-  .navbar.manager-navbar .navbar-nav {
-    flex-direction: column !important;
-    padding: 1rem 0 !important;
-  }
-
-  .navbar.manager-navbar .nav-link {
-    width: 100%;
   }
 }
 

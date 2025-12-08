@@ -35,6 +35,7 @@ export default function Kiosk() {
     pendingDrink: null,
   });
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceActive, setVoiceActive] = useState(true);
 
   
   // SPEECH UTTER

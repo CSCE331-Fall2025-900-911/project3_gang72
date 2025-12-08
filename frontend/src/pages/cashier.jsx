@@ -10,7 +10,7 @@ export default function Cashier() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [currentSugar, setCurrentSugar] = useState("100%");
-const [currentIce, setCurrentIce] = useState("100%");
+  const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   // Current item being customized
@@ -168,25 +168,57 @@ const [currentIce, setCurrentIce] = useState("100%");
   };
 
   return (
-    <div className="container-fluid" style={{ height: "100vh", overflow: "hidden" }}>
-      <div className="row h-100">
+    <div className="main-content" style={{ 
+      width: '100%', 
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div style={{ 
+        display: 'flex',
+        flex: 1,
+        overflow: 'hidden'
+      }}>
         {/* Left side - Menu */}
-        <div className="col-md-7 h-100 d-flex flex-column p-3 bg-light">
-          <h2 className="mb-3">POS - Cashier</h2>
+        <div style={{
+          flex: '1 1 58%',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px',
+          backgroundColor: '#f8f9fa',
+          overflowY: 'auto'
+        }}>
+          <h2 style={{ 
+            marginBottom: '24px',
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#333'
+          }}>
+            POS - Cashier
+          </h2>
 
           {/* Category tabs */}
-          <div className="mb-3">
-            <div className="btn-group" role="group">
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ 
+              display: 'inline-flex',
+              gap: '8px',
+              flexWrap: 'wrap'
+            }}>
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  type="button"
-                  className={`btn ${
-                    selectedCategory === cat
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
                   onClick={() => setSelectedCategory(cat)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: selectedCategory === cat ? '#583e23' : '#fff',
+                    color: selectedCategory === cat ? '#fff' : '#333',
+                    border: selectedCategory === cat ? 'none' : '1px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   {cat}
                 </button>
@@ -195,102 +227,169 @@ const [currentIce, setCurrentIce] = useState("100%");
           </div>
 
           {/* Menu grid */}
-          <div className="flex-grow-1 overflow-auto">
-            <div className="row g-2">
+          <div style={{ 
+            flex: 1,
+            overflowY: 'auto',
+            marginBottom: '16px'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+              gap: '12px'
+            }}>
               {filteredItems.map((item) => (
-                <div key={item.id} className="col-6 col-lg-4">
-                  <button
-                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${
-                      currentItem?.id === item.id
-                        ? "btn-success"
-                        : "btn-outline-secondary"
-                    }`}
-                    onClick={() => selectItem(item)}
-                    style={{ minHeight: "80px" }}
-                  >
-                    <div className="fw-bold">{item.name}</div>
-                    <div className="text-muted small">
-                      ${Number(item.price).toFixed(2)}
-                    </div>
-                  </button>
-                </div>
+                <button
+                  key={item.id}
+                  onClick={() => selectItem(item)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    minHeight: '120px',
+                    backgroundColor: currentItem?.id === item.id ? '#28a745' : '#fff',
+                    color: currentItem?.id === item.id ? '#fff' : '#333',
+                    border: currentItem?.id === item.id ? 'none' : '1px solid #ddd',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontSize: '14px'
+                  }}
+                >
+                  <div style={{ fontWeight: '600', marginBottom: '8px', textAlign: 'center' }}>
+                    {item.name}
+                  </div>
+                  <div style={{ 
+                    fontSize: '13px',
+                    opacity: currentItem?.id === item.id ? 0.9 : 0.7
+                  }}>
+                    ${Number(item.price).toFixed(2)}
+                  </div>
+                </button>
               ))}
             </div>
           </div>
 
           {/* Item customization panel */}
           {currentItem && (
-            <div className="mt-3 p-3 border rounded bg-white">
-              <h5>{currentItem.name}</h5>
+            <div style={{
+              marginTop: '16px',
+              padding: '20px',
+              backgroundColor: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px'
+            }}>
+              <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+                {currentItem.name}
+              </h5>
               
-              <div className="mb-2">
-                <label className="form-label fw-bold">Size:</label>
-                <div className="btn-group ms-2" role="group">
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  Size:
+                </label>
+                <div style={{ display: 'inline-flex', gap: '8px' }}>
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
-                    }`}
                     onClick={() => setCurrentSize("Small")}
+                    style={{
+                      padding: '8px 20px',
+                      backgroundColor: currentSize === "Small" ? '#583e23' : '#fff',
+                      color: currentSize === "Small" ? '#fff' : '#333',
+                      border: currentSize === "Small" ? 'none' : '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
                   >
                     Small
                   </button>
                   <button
-                    className={`btn btn-sm ${
-                      currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
-                    }`}
                     onClick={() => setCurrentSize("Large")}
+                    style={{
+                      padding: '8px 20px',
+                      backgroundColor: currentSize === "Large" ? '#583e23' : '#fff',
+                      color: currentSize === "Large" ? '#fff' : '#333',
+                      border: currentSize === "Large" ? 'none' : '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
                   >
                     Large (+$1.00)
                   </button>
                 </div>
               </div>
 
-              <div className="mb-2">
-                <label className="form-label fw-bold">Toppings:</label>
-                <div className="d-flex flex-wrap gap-1">
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  Toppings:
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {availableToppings.map((topping) => (
                     <button
                       key={topping.id}
-                      className={`btn btn-sm ${
-                        currentToppings.find((t) => t.id === topping.id)
-                          ? "btn-success"
-                          : "btn-outline-secondary"
-                      }`}
                       onClick={() => toggleTopping(topping)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff',
+                        color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333',
+                        border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
                     >
                       {topping.name} (+${Number(topping.price).toFixed(2)})
                     </button>
                   ))}
                 </div>
               </div>
-              {/*Add Sugar Level*/}
-              <div className="mb-2">
-                <label className="form-label fw-bold">Sugar Level:</label>
-                <div className="btn-group w-100" role="group">
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  Sugar Level:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
                       onClick={() => setCurrentSugar(lvl)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        backgroundColor: currentSugar === lvl ? '#583e23' : '#fff',
+                        color: currentSugar === lvl ? '#fff' : '#333',
+                        border: currentSugar === lvl ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
                     >
                       {lvl}
                     </button>
                   ))}
                 </div>
               </div>
-              {/*Add Ice Level*/}
-              <div className="mb-2">
-                <label className="form-label fw-bold">Ice Level:</label>
-                <div className="btn-group w-100" role="group">
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                  Ice Level:
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
                       key={lvl}
-                      className={`btn btn-sm ${
-                        currentIce === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
                       onClick={() => setCurrentIce(lvl)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
+                        color: currentIce === lvl ? '#fff' : '#333',
+                        border: currentIce === lvl ? 'none' : '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer'
+                      }}
                     >
                       {lvl}
                     </button>
@@ -299,8 +398,19 @@ const [currentIce, setCurrentIce] = useState("100%");
               </div>
 
               <button
-                className="btn btn-primary w-100 mt-2"
                 onClick={addToCart}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#583e23',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginTop: '8px'
+                }}
               >
                 Add to Cart
               </button>
@@ -309,78 +419,130 @@ const [currentIce, setCurrentIce] = useState("100%");
         </div>
 
         {/* Right side - Cart & Checkout */}
-        <div className="col-md-5 h-100 d-flex flex-column p-3 bg-white border-start">
-          <h4 className="mb-3">Current Order</h4>
+        <div style={{
+          flex: '1 1 42%',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px',
+          backgroundColor: '#fff',
+          borderLeft: '1px solid #e0e0e0',
+          overflowY: 'auto'
+        }}>
+          <h4 style={{ 
+            marginBottom: '20px',
+            fontSize: '22px',
+            fontWeight: '600',
+            color: '#333'
+          }}>
+            Current Order
+          </h4>
 
           {/* Customer info */}
-          <div className="mb-3">
+          <div style={{ marginBottom: '20px' }}>
             <input
               type="text"
               placeholder="Phone Number *"
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              className="form-control mb-2"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                marginBottom: '12px'
+              }}
             />
-            <div className="row g-2">
-              <div className="col-6">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={customerFirst}
-                  onChange={(e) => setCustomerFirst(e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div className="col-6">
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={customerLast}
-                  onChange={(e) => setCustomerLast(e.target.value)}
-                  className="form-control"
-                />
-              </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <input
+                type="text"
+                placeholder="First Name"
+                value={customerFirst}
+                onChange={(e) => setCustomerFirst(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px'
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Last Name"
+                value={customerLast}
+                onChange={(e) => setCustomerLast(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px'
+                }}
+              />
             </div>
           </div>
 
           {/* Cart items */}
-          <div className="flex-grow-1 overflow-auto border rounded p-2 mb-3">
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '20px',
+            backgroundColor: '#fafafa'
+          }}>
             {cart.length === 0 ? (
-              <p className="text-muted text-center mt-3">No items in cart</p>
+              <p style={{ 
+                textAlign: 'center',
+                color: '#999',
+                marginTop: '20px',
+                fontSize: '14px'
+              }}>
+                No items in cart
+              </p>
             ) : (
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {cart.map((item, i) => (
-                  <div key={i} className="card mb-2">
-                    <div className="card-body p-2">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div className="flex-grow-1">
-                          <div className="fw-bold">
-                            {item.name} ({item.size})
-                          </div>
-                          {item.toppings.length > 0 && (
-                            <div className="text-muted small">
-                              {item.toppings.map((t) => t.name).join(", ")}
-                            </div>
-                          )}
-                          <div className="text-muted small">
-                            Sugar: {item.sugar} | Ice: {item.ice}
-                          </div>
+                  <div key={i} style={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: '600', marginBottom: '4px', fontSize: '14px' }}>
+                          {item.name} ({item.size})
                         </div>
-                        <div className="text-end">
-                          <div className="fw-bold">
-                            $
-                            {(
-                              item.price +
-                              item.toppings.reduce((s, t) => s + t.price, 0)
-                            ).toFixed(2)}
+                        {item.toppings.length > 0 && (
+                          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                            {item.toppings.map((t) => t.name).join(", ")}
                           </div>
-                          <button
-                            className="btn btn-sm btn-outline-danger mt-1"
-                            onClick={() => removeFromCart(i)}
-                          >
-                            Remove
-                          </button>
+                        )}
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          Sugar: {item.sugar} | Ice: {item.ice}
                         </div>
+                      </div>
+                      <div style={{ textAlign: 'right', marginLeft: '12px' }}>
+                        <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '15px' }}>
+                          ${(item.price + item.toppings.reduce((s, t) => s + t.price, 0)).toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(i)}
+                          style={{
+                            padding: '4px 12px',
+                            backgroundColor: 'transparent',
+                            color: '#dc3545',
+                            border: '1px solid #dc3545',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -390,12 +552,22 @@ const [currentIce, setCurrentIce] = useState("100%");
           </div>
 
           {/* Payment options */}
-          <div className="mb-3">
-            <label className="form-label fw-bold">Payment Method:</label>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
+              Payment Method:
+            </label>
             <select
-              className="form-select"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                backgroundColor: '#fff',
+                cursor: 'pointer'
+              }}
             >
               <option value="Cash">Cash</option>
               <option value="Card">Card</option>
@@ -404,76 +576,132 @@ const [currentIce, setCurrentIce] = useState("100%");
           </div>
 
           {/* Tip */}
-          <div className="mb-3">
-            <label className="form-label fw-bold">Tip %:</label>
-            <div className="input-group">
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '14px' }}>
+              Tip %:
+            </label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
                 type="number"
                 value={tipPercent}
                 onChange={(e) => setTipPercent(e.target.value)}
-                className="form-control"
                 min="0"
                 max="100"
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px'
+                }}
               />
-              <span className="input-group-text">%</span>
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 14px',
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}>
+                %
+              </span>
             </div>
-            <div className="btn-group w-100 mt-2" role="group">
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(10)}
-              >
-                10%
-              </button>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(15)}
-              >
-                15%
-              </button>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(20)}
-              >
-                20%
-              </button>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(0)}
-              >
-                No Tip
-              </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[10, 15, 20, 0].map((tip) => (
+                <button
+                  key={tip}
+                  onClick={() => setTipPercent(tip)}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    backgroundColor: '#fff',
+                    color: '#333',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {tip === 0 ? 'No Tip' : `${tip}%`}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Totals */}
-          <div className="border-top pt-3 mb-3">
-            <div className="d-flex justify-content-between mb-1">
+          <div style={{
+            borderTop: '1px solid #ddd',
+            paddingTop: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
+              fontSize: '14px',
+              color: '#666'
+            }}>
               <span>Subtotal:</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <div className="d-flex justify-content-between mb-1">
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
+              fontSize: '14px',
+              color: '#666'
+            }}>
               <span>Tip ({tipPercent}%):</span>
               <span>${tipAmount.toFixed(2)}</span>
             </div>
-            <div className="d-flex justify-content-between fw-bold fs-5 border-top pt-2">
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontWeight: '600',
+              fontSize: '20px',
+              borderTop: '2px solid #333',
+              paddingTop: '12px',
+              color: '#333'
+            }}>
               <span>Total:</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
 
           {/* Action buttons */}
-          <div className="d-grid gap-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
-              className="btn btn-success btn-lg"
               onClick={submitOrder}
               disabled={cart.length === 0 || !customerPhone}
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: (cart.length === 0 || !customerPhone) ? '#ccc' : '#28a745',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: (cart.length === 0 || !customerPhone) ? 'not-allowed' : 'pointer'
+              }}
             >
               Complete Order
             </button>
             <button
-              className="btn btn-outline-danger"
               onClick={clearCart}
               disabled={cart.length === 0}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: 'transparent',
+                color: cart.length === 0 ? '#ccc' : '#dc3545',
+                border: `1px solid ${cart.length === 0 ? '#ccc' : '#dc3545'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: cart.length === 0 ? 'not-allowed' : 'pointer'
+              }}
             >
               Clear Cart
             </button>
