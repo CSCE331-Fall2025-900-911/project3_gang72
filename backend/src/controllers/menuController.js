@@ -15,18 +15,19 @@ const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env
 /**
  * Fetch all items from the `item` table and return as an array of objects.
  * Only returns items where is_visible is true.
- * Each object: { id, name, category, price}
+ * Each object: { id, name, category, price, hotAvail }
  */
 async function getAllItems() {
   const client = await pool.connect();
   try {
-    const query = `SELECT item_id, item_name, category, price FROM item WHERE is_visible = true ORDER BY item_id`;
+    const query = `SELECT item_id, item_name, category, price, COALESCE(hot_avail, false) as hot_avail FROM item WHERE is_visible = true ORDER BY item_id`;
     const res = await client.query(query);
     const items = res.rows.map((r) => ({
       id: r.item_id == null ? null : Number(r.item_id),
       name: r.item_name || null,
       category: r.category || null,
       price: r.price == null ? null : Number(r.price),
+      hotAvail: r.hot_avail === true,
     }));
     return items;
   } catch (err) {
@@ -125,7 +126,7 @@ async function getIngredients(req, res) {
 async function addItem(req, res) {
   const client = await pool.connect();
   try {
-    const { name, price, category, ingredientIDs } = req.body;
+    const { name, price, category, hotAvail, ingredientIDs } = req.body;
 
     if (!name || !price || !category || !Array.isArray(ingredientIDs) || ingredientIDs.length === 0) {
       return res.status(400).json({ success: false, error: 'Missing required fields.' });
@@ -137,10 +138,10 @@ async function addItem(req, res) {
     const idResult = await client.query('SELECT COALESCE(MAX(item_id), 0) + 1 AS next_id FROM item;');
     const nextItemId = idResult.rows[0].next_id;
 
-    // Insert item
+    // Insert item with hot_avail (default to false if not provided)
     await client.query(
-      'INSERT INTO item (item_id, item_name, category, price, is_visible) VALUES ($1, $2, $3, $4, $5)',
-      [nextItemId, name, category, price, true]
+      'INSERT INTO item (item_id, item_name, category, price, hot_avail, is_visible) VALUES ($1, $2, $3, $4, $5, $6)',
+      [nextItemId, name, category, price, hotAvail === true, true]
     );
 
     // Insert recipe
