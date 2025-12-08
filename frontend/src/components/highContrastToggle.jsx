@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 
 export default function HighContrastToggle() {
@@ -39,13 +38,13 @@ export default function HighContrastToggle() {
             style={{
                 position: 'fixed',
                 bottom: '20px',
-                left: '90px', // Next to voice button
+                left: '90px',
                 width: '60px',
                 height: '60px',
                 borderRadius: '50%',
-                backgroundColor: isHighContrast ? '#000' : '#757575',
+                backgroundColor: '#000', // Always black
                 color: 'white',
-                border: isHighContrast ? '3px solid #fff' : 'none',
+                border: '3px solid #fff', // Always white border
                 fontSize: '28px',
                 cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.3)',

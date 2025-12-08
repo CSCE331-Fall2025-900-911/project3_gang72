@@ -1,8 +1,36 @@
 /* High Contrast Mode - Optimized for low vision users */
-body.high-contrast-mode {
+body.high-contrast-mode,
+body.high-contrast-mode #root,
+body.high-contrast-mode #root>*,
+html.high-contrast-mode {
     /* Force high contrast colors */
     background-color: #000 !important;
     color: #fff !important;
+}
+
+/* Nuclear option - force EVERYTHING to black */
+body.high-contrast-mode *,
+body.high-contrast-mode *::before,
+body.high-contrast-mode *::after {
+    background-color: #000 !important;
+    background-image: none !important;
+}
+
+/* Specifically target sidebar-nav class */
+body.high-contrast-mode .sidebar-nav,
+body.high-contrast-mode .sidebar-nav *,
+body.high-contrast-mode nav,
+body.high-contrast-mode nav * {
+    background-color: #000 !important;
+}
+
+/* Override all Bootstrap background utilities */
+body.high-contrast-mode [class*="bg-"],
+body.high-contrast-mode .bg-dark,
+body.high-contrast-mode .bg-secondary,
+body.high-contrast-mode .bg-light,
+body.high-contrast-mode .bg-primary {
+    background-color: #000 !important;
 }
 
 /* Text and content - More selective targeting */
@@ -17,12 +45,33 @@ body.high-contrast-mode *:not(.navbar):not(.navbar *) {
     background-image: none !important;
 }
 
-/* Navbar specific - keep it functional */
+/* Navbar and sidebar specific - keep it functional */
 body.high-contrast-mode .navbar,
-body.high-contrast-mode .navbar * {
+body.high-contrast-mode .navbar *,
+body.high-contrast-mode .sidebar,
+body.high-contrast-mode .sidebar *,
+body.high-contrast-mode .bg-dark,
+body.high-contrast-mode .navbar-dark,
+body.high-contrast-mode .navbar.navbar-expand-lg.navbar-dark.bg-dark,
+body.high-contrast-mode .sidebar-nav {
     background-color: #000 !important;
+    background: #000 !important;
     color: #fff !important;
     border-color: #fff !important;
+}
+
+/* Ensure sidebar takes full height */
+body.high-contrast-mode .navbar,
+body.high-contrast-mode .sidebar,
+body.high-contrast-mode .navbar.navbar-expand-lg.navbar-dark.bg-dark {
+    min-height: 100vh !important;
+}
+
+/* Override Bootstrap's bg-dark specifically */
+body.high-contrast-mode .bg-dark,
+body.high-contrast-mode .navbar.navbar-expand-lg.navbar-dark.bg-dark {
+    background-color: #000 !important;
+    background: #000 !important;
 }
 
 body.high-contrast-mode .navbar {
@@ -306,4 +355,28 @@ body.high-contrast-mode .language-toggle select {
     background-color: #000 !important;
     color: #fff !important;
     border: 2px solid #fff !important;
+}
+
+/* Accessibility buttons area - fix brown background */
+body.high-contrast-mode .accessibility-controls,
+body.high-contrast-mode .btn-group {
+    background-color: #000 !important;
+}
+
+/* Circular accessibility buttons - override inline styles */
+body.high-contrast-mode button[style*="position: fixed"],
+body.high-contrast-mode button[style*="border-radius: 50%"],
+body.high-contrast-mode button[style*="bottom: 20px"],
+body.high-contrast-mode .accessibility-controls button,
+body.high-contrast-mode .accessibility-controls .btn {
+    background-color: #000 !important;
+    border: 3px solid #fff !important;
+}
+
+/* Target specific background colors used in voice/contrast buttons */
+body.high-contrast-mode button[style*="#757575"],
+body.high-contrast-mode button[style*="rgb(117, 117, 117)"],
+body.high-contrast-mode button[style*="#4CAF50"] {
+    background-color: #000 !important;
+    border-color: #fff !important;
 }

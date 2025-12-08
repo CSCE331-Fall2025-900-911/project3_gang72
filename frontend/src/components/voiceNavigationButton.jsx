@@ -3,6 +3,7 @@ import VoiceNavigationController from '../services/voiceNavigationController';
 
 export default function VoiceNavigationButton() {
     const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
+    const [isHighContrast, setIsHighContrast] = useState(false);
 
     useEffect(() => {
         console.log('🎤 Initializing voice navigation...');
@@ -19,8 +20,20 @@ export default function VoiceNavigationButton() {
             setIsVoiceEnabled(true);
         }
 
+        // Check for high contrast mode
+        const checkHighContrast = () => {
+            setIsHighContrast(document.body.classList.contains('high-contrast-mode'));
+        };
+
+        checkHighContrast();
+
+        // Listen for high contrast changes
+        const observer = new MutationObserver(checkHighContrast);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
         return () => {
             controller.stop();
+            observer.disconnect();
         };
     }, []);
 
@@ -38,11 +51,23 @@ export default function VoiceNavigationButton() {
         }
     };
 
+    // Get background color based on state
+    const getBackgroundColor = () => {
+        if (isHighContrast) return '#000';
+        return isVoiceEnabled ? '#4CAF50' : '#757575';
+    };
+
+    // Get border based on state
+    const getBorder = () => {
+        if (isHighContrast) return '3px solid #fff';
+        return 'none';
+    };
+
     return (
         <>
             <button
                 onClick={toggleVoiceNavigation}
-                tabIndex={-1}   // <-- FIXED
+                tabIndex={-1}
                 style={{
                     position: 'fixed',
                     bottom: '20px',
@@ -50,9 +75,9 @@ export default function VoiceNavigationButton() {
                     width: '60px',
                     height: '60px',
                     borderRadius: '50%',
-                    backgroundColor: isVoiceEnabled ? '#4CAF50' : '#757575',
+                    backgroundColor: getBackgroundColor(),
                     color: 'white',
-                    border: 'none',
+                    border: getBorder(),
                     fontSize: '28px',
                     cursor: 'pointer',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
