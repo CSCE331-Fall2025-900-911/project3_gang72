@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
-// Mock VoiceRecorder component
+// Mock VoiceRecorder component (keeps existing app structure until real recorder is wired)
 const VoiceRecorder = ({ onText, onSilenceTimeout, onFiveMinuteTimeout }) => {
   return <div style={{ display: 'none' }} />;
 };
 
-// Mock translation function
-const t = (key) => key;
-
 export default function Kiosk() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [availableToppings, setAvailableToppings] = useState([]);
 
