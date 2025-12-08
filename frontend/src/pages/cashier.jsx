@@ -89,9 +89,11 @@ export default function Cashier() {
       })),
       sugar: currentSugar,
       ice: currentIce,
+      quantity: 1,
     };
 
     setCart((prev) => [...prev, cartItem]);
+    
     setCurrentItem(null);
     setCurrentSize("Small");
     setCurrentToppings([]);
@@ -103,6 +105,26 @@ export default function Cashier() {
     setCart((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const addMoreOfItem = (index) => {
+    setCart((prev) => {
+      const newCart = [...prev];
+      newCart[index] = { ...newCart[index], quantity: newCart[index].quantity + 1 };
+      return newCart;
+    });
+  };
+
+  const decreaseItemQuantity = (index) => {
+    setCart((prev) => {
+      const newCart = [...prev];
+      if (newCart[index].quantity > 1) {
+        newCart[index] = { ...newCart[index], quantity: newCart[index].quantity - 1 };
+        return newCart;
+      } else {
+        return prev.filter((_, i) => i !== index);
+      }
+    });
+  };
+
   const clearCart = () => {
     setCart([]);
     setTipPercent(0);
@@ -111,7 +133,7 @@ export default function Cashier() {
   // Calculate totals
   const subtotal = cart.reduce(
     (sum, item) =>
-      sum + item.price + item.toppings.reduce((s, t) => s + t.price, 0),
+      sum + (item.price + item.toppings.reduce((s, t) => s + t.price, 0)) * item.quantity,
     0
   );
   const tipAmount = subtotal * (Number(tipPercent) / 100);
@@ -134,18 +156,20 @@ export default function Cashier() {
       return;
     }
 
-    const items = cart.flatMap((item) => [
-      {
-        itemId: item.id,
-        name: `${item.name} (${item.size})`,
-        price: item.price,
-      },
-      ...item.toppings.map((t) => ({
-        itemId: t.id,
-        name: t.name,
-        price: t.price,
-      })),
-    ]);
+    const items = cart.flatMap((item) => 
+      Array(item.quantity).fill(null).flatMap(() => [
+        {
+          itemId: item.id,
+          name: `${item.name} (${item.size})`,
+          price: item.price,
+        },
+        ...item.toppings.map((t) => ({
+          itemId: t.id,
+          name: t.name,
+          price: t.price,
+        })),
+      ])
+    );
 
     const payload = {
       customer: {
@@ -303,150 +327,168 @@ export default function Cashier() {
 
           {/* Item customization panel */}
           {currentItem && (
-            <div style={{
-              marginTop: '16px',
-              padding: '20px',
-              backgroundColor: '#fff',
-              border: '1px solid #ddd',
-              borderRadius: '8px'
-            }}>
-              <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
-                {currentItem.name}
-              </h5>
-              
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Size:
-                </label>
-                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                  <button
-                    onClick={() => setCurrentSize("Small")}
-                    style={{
-                      padding: '8px 20px',
-                      backgroundColor: currentSize === "Small" ? '#583e23' : '#fff',
-                      color: currentSize === "Small" ? '#fff' : '#333',
-                      border: currentSize === "Small" ? 'none' : '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Small
-                  </button>
-                  <button
-                    onClick={() => setCurrentSize("Large")}
-                    style={{
-                      padding: '8px 20px',
-                      backgroundColor: currentSize === "Large" ? '#583e23' : '#fff',
-                      color: currentSize === "Large" ? '#fff' : '#333',
-                      border: currentSize === "Large" ? 'none' : '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Large (+$1.00)
-                  </button>
-                </div>
-              </div>
+            <>
+              {/* Popup panel */}
+              <div style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 9999,
+                width: "90%",
+                maxWidth: "420px",
+                padding: "20px",
+                backgroundColor: "#fff",
+                border: "1px solid #ddd",
+                borderRadius: "12px",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.3)"
+              }}>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Toppings:
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {availableToppings.map((topping) => (
+                <h5 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+                  {currentItem.name}
+                </h5>
+                
+                {/* Size selector */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                    Size:
+                  </label>
+                  <div style={{ display: 'inline-flex', gap: '8px' }}>
                     <button
-                      key={topping.id}
-                      onClick={() => toggleTopping(topping)}
+                      onClick={() => setCurrentSize("Small")}
                       style={{
-                        padding: '6px 12px',
-                        backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff',
-                        color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333',
-                        border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd',
+                        padding: '8px 20px',
+                        backgroundColor: currentSize === "Small" ? '#583e23' : '#fff',
+                        color: currentSize === "Small" ? '#fff' : '#333',
+                        border: currentSize === "Small" ? 'none' : '1px solid #ddd',
                         borderRadius: '6px',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         cursor: 'pointer'
                       }}
                     >
-                      {topping.name} (+${Number(topping.price).toFixed(2)})
+                      Small
                     </button>
-                  ))}
-                </div>
-              </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Sugar Level:
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
                     <button
-                      key={lvl}
-                      onClick={() => setCurrentSugar(lvl)}
+                      onClick={() => setCurrentSize("Large")}
                       style={{
-                        flex: 1,
-                        padding: '8px',
-                        backgroundColor: currentSugar === lvl ? '#583e23' : '#fff',
-                        color: currentSugar === lvl ? '#fff' : '#333',
-                        border: currentSugar === lvl ? 'none' : '1px solid #ddd',
+                        padding: '8px 20px',
+                        backgroundColor: currentSize === "Large" ? '#583e23' : '#fff',
+                        color: currentSize === "Large" ? '#fff' : '#333',
+                        border: currentSize === "Large" ? 'none' : '1px solid #ddd',
                         borderRadius: '6px',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         cursor: 'pointer'
                       }}
                     >
-                      {lvl}
+                      Large (+$1.00)
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
-                  Ice Level:
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      onClick={() => setCurrentIce(lvl)}
-                      style={{
-                        flex: 1,
-                        padding: '8px',
-                        backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
-                        color: currentIce === lvl ? '#fff' : '#333',
-                        border: currentIce === lvl ? 'none' : '1px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
+                {/* Toppings */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                    Toppings:
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {availableToppings.map((topping) => (
+                      <button
+                        key={topping.id}
+                        onClick={() => toggleTopping(topping)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: currentToppings.find((t) => t.id === topping.id) ? '#28a745' : '#fff',
+                          color: currentToppings.find((t) => t.id === topping.id) ? '#fff' : '#333',
+                          border: currentToppings.find((t) => t.id === topping.id) ? 'none' : '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {topping.name} (+${Number(topping.price).toFixed(2)})
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <button
-                onClick={addToCart}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#583e23',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  marginTop: '8px'
-                }}
-              >
-                Add to Cart
-              </button>
-            </div>
+                {/* Sugar level */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                    Sugar Level:
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {["0%", "25%", "50%", "75%", "100%", "125%"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        onClick={() => setCurrentSugar(lvl)}
+                        style={{
+                          flex: 1,
+                          padding: '8px',
+                          backgroundColor: currentSugar === lvl ? '#583e23' : '#fff',
+                          color: currentSugar === lvl ? '#fff' : '#333',
+                          border: currentSugar === lvl ? 'none' : '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ice level */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                    Ice Level:
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {["0%", "25%", "50%", "75%", "100%", "125%"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        onClick={() => setCurrentIce(lvl)}
+                        style={{
+                          flex: 1,
+                          padding: '8px',
+                          backgroundColor: currentIce === lvl ? '#583e23' : '#fff',
+                          color: currentIce === lvl ? '#fff' : '#333',
+                          border: currentIce === lvl ? 'none' : '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add to Cart */}
+                <button
+                  onClick={addToCart}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: '#583e23',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    marginTop: '8px'
+                  }}
+                >
+                  Add to Cart
+                </button>
+
+              </div>
+            </>
           )}
-        </div>
+        </div>   
 
         {/* Right side - Cart & Checkout */}
         <div style={{
@@ -555,24 +597,50 @@ export default function Cashier() {
                           Sugar: {item.sugar} | Ice: {item.ice}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right', marginLeft: '12px' }}>
-                        <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '15px' }}>
-                          ${(item.price + item.toppings.reduce((s, t) => s + t.price, 0)).toFixed(2)}
+                      <div style={{ textAlign: 'right', marginLeft: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontWeight: '600', fontSize: '15px' }}>
+                          ${((item.price + item.toppings.reduce((s, t) => s + t.price, 0)) * item.quantity).toFixed(2)}
                         </div>
-                        <button
-                          onClick={() => removeFromCart(i)}
-                          style={{
-                            padding: '4px 12px',
-                            backgroundColor: 'transparent',
-                            color: '#dc3545',
-                            border: '1px solid #dc3545',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Remove
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <button
+                            onClick={() => decreaseItemQuantity(i)}
+                            style={{
+                              padding: '4px 10px',
+                              backgroundColor: '#dc3545',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            −
+                          </button>
+                          <span style={{ 
+                            fontSize: '16px', 
+                            fontWeight: '600',
+                            minWidth: '24px',
+                            textAlign: 'center'
+                          }}>
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => addMoreOfItem(i)}
+                            style={{
+                              padding: '4px 10px',
+                              backgroundColor: '#28a745',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
