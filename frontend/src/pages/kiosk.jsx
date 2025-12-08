@@ -731,7 +731,7 @@ export default function Kiosk() {
                 gap: '8px'
               }}
             >
-              🎤 Start Voice Order
+              🎤 {t("Start Voice Order")}
             </button>
               {/* Voice Toggle */}
               <button
@@ -747,7 +747,7 @@ export default function Kiosk() {
                   fontWeight: '600'
                 }}
               >
-                {voiceActive ? 'Voice: ON' : 'Voice: OFF'}
+                {voiceActive ? t('Voice: ON') : t('Voice: OFF')}
               </button>
             </div>
           </div>
