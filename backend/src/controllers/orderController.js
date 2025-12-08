@@ -101,7 +101,7 @@ async function createReceiptWithTip(client, employeeId, customerId, tipPercent, 
 async function insertOrdersAndConsumeIngredients(client, receiptId, items) {
   // 1) get topping item_ids (case-insensitive)
   const toppingIdsRes = await client.query(
-    `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+    `SELECT item_id FROM item WHERE LOWER(category) = 'toppings'`
   );
   const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
 
@@ -237,7 +237,7 @@ async function createOrder(req, res) {
         // 10th order: apply reward based on drinks in this order
         // Get topping IDs to exclude from drink count
         const toppingIdsRes = await client.query(
-          `SELECT item_id FROM item WHERE LOWER(category) = 'topping'`
+          `SELECT item_id FROM item WHERE LOWER(category) = 'toppings'`
         );
         const toppingIdSet = new Set(toppingIdsRes.rows.map(r => r.item_id));
 
