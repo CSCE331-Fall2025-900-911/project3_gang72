@@ -1,11 +1,13 @@
 // frontend/src/components/VoiceRecorder.jsx
 import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function VoiceRecorder({
   onText,
   onSilenceTimeout,
   onFiveMinuteTimeout,
 }) {
+  const { t } = useLanguage();
   const [recording, setRecording] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -80,7 +82,7 @@ export default function VoiceRecorder({
           return;
         }
 
-        setStatus("Processing speech...");
+        setStatus(t("Processing speech..."));
 
         const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
@@ -111,10 +113,10 @@ export default function VoiceRecorder({
 
       mediaRecorder.start();
       setRecording(true);
-      setStatus("Listening… 🎤");
+      setStatus(t("Listening… 🎤"));
     } catch (err) {
       console.error("Microphone error:", err);
-      alert("Microphone access denied or error starting recording.");
+      alert(t("Microphone access denied or error starting recording."));
     }
   };
 
@@ -167,7 +169,7 @@ export default function VoiceRecorder({
           fontWeight: 600,
         }}
       >
-        {recording ? "⏹ Stop Speaking" : "🎤 Start Speaking"}
+        {recording ? `⏹ ${t("Stop Speaking")}` : `🎤 ${t("Start Speaking")}`}
       </button>
       {status && (
         <div className="mt-2 text-muted" style={{ fontSize: "0.9rem" }}>
