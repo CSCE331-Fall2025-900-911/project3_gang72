@@ -186,8 +186,8 @@ export default function Cashier() {
                   key={cat}
                   type="button"
                   className={`btn ${selectedCategory === cat
-                      ? "btn-primary"
-                      : "btn-outline-primary"
+                    ? "btn-primary"
+                    : "btn-outline-primary"
                     }`}
                   onClick={() => setSelectedCategory(cat)}
                 >
@@ -204,8 +204,8 @@ export default function Cashier() {
                 <div key={item.id} className="col-6 col-lg-4">
                   <button
                     className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${currentItem?.id === item.id
-                        ? "btn-success"
-                        : "btn-outline-secondary"
+                      ? "btn-success"
+                      : "btn-outline-secondary"
                       }`}
                     onClick={() => selectItem(item)}
                     style={{ minHeight: "80px" }}
@@ -252,8 +252,8 @@ export default function Cashier() {
                     <button
                       key={topping.id}
                       className={`btn btn-sm ${currentToppings.find((t) => t.id === topping.id)
-                          ? "btn-success"
-                          : "btn-outline-secondary"
+                        ? "btn-success"
+                        : "btn-outline-secondary"
                         }`}
                       onClick={() => toggleTopping(topping)}
                     >
