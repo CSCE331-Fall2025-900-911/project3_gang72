@@ -7,7 +7,6 @@ const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || `http://localhost:3000/o
 
 // Fail fast with a clear error message when required env is missing.
 if (!CLIENT_ID) {
-    // Throw during module load so the server fails to mount OAuth routes with a clear message.
     throw new Error(
         'GOOGLE_CLIENT_ID is not set. Add `GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com` to backend/.env and restart the server.'
     );
@@ -47,9 +46,31 @@ async function oauthCallbackHandler(req, res) {
         const role = email === MANAGER_EMAIL ? 'manager' : 'staff';
         const redirect = role === 'manager' ? '/manager' : '/';
 
-        // Return a small HTML page that posts the verified payload (including role/redirect) to the opener
-        const safePayload = JSON.stringify({ payload, role, redirect, tokens: { hasRefresh: !!tokens.refresh_token } });
-        const html = `<!doctype html><html><body><script>\n      (function(){\n        try {\n          const data = ${safePayload};\n          if (window.opener && typeof window.opener.postMessage === 'function') {\n            window.opener.postMessage({ type: 'GOOGLE_AUTH', data }, '*');\n            window.close();\n          } else {\n            document.body.innerText = 'Authentication complete. You may close this window.';\n            console.log('Auth data', data);\n          }\n        } catch (e) { document.body.innerText = 'Auth error'; console.error(e) }\n      })();\n    </script></body></html>`;
+        // FIX: Include the actual id_token in the response so the frontend can verify it
+        const safePayload = JSON.stringify({
+            payload,
+            role,
+            redirect,
+            tokens: {
+                id_token: tokens.id_token,  // Add this line
+                hasRefresh: !!tokens.refresh_token
+            }
+        });
+
+        const html = `<!doctype html><html><body><script>
+      (function(){
+        try {
+          const data = ${safePayload};
+          if (window.opener && typeof window.opener.postMessage === 'function') {
+            window.opener.postMessage({ type: 'GOOGLE_AUTH', data }, '*');
+            window.close();
+          } else {
+            document.body.innerText = 'Authentication complete. You may close this window.';
+            console.log('Auth data', data);
+          }
+        } catch (e) { document.body.innerText = 'Auth error'; console.error(e) }
+      })();
+    </script></body></html>`;
 
         res.set('Content-Type', 'text/html');
         return res.send(html);

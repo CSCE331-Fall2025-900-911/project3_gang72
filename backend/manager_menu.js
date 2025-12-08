@@ -8,7 +8,23 @@ const app = express();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
 process.env.GOOGLE_APPLICATION_CREDENTIALS = './google-key.json'
-app.use(cors());
+
+// IMPORTANT: Configure CORS to allow credentials and proper headers
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Add security headers BEFORE other middleware
+// FIXED: Use unsafe-none to allow postMessage between popup and opener
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  next();
+});
+
 app.use(express.json());
 
 // Load controllers safely
@@ -150,6 +166,11 @@ if (authCtrl && typeof authCtrl.verifyTokenHandler === 'function') {
   console.log('✅ Mounted: POST /api/auth/google');
 } else {
   console.warn('⚠️  /api/auth/google not mounted (authController.verifyTokenHandler missing)');
+  // Fallback handler to help debug
+  app.post('/api/auth/google', (req, res) => {
+    console.error('❌ authController.verifyTokenHandler not available');
+    res.status(500).json({ error: 'Authentication handler not configured' });
+  });
 }
 
 if (authCtrl && typeof authCtrl.logoutHandler === 'function') {
@@ -200,34 +221,6 @@ app.get('/api/weather', async (req, res) => {
 app.post('/api/translate', translationCtrl.translateHandler);
 app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
 
-//==========WEATHER=============
-app.get('/api/weather', async (req, res) => {
-  try {
-    // College Station example
-    const lat = 30.61;
-    const lon = -96.34;
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&temperature_unit=fahrenheit`;
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    res.json({
-      temperature: data.current.temperature_2m,
-      weatherCode: data.current.weathercode
-    });
-
-  } catch (err) {
-    console.error("Weather API error:", err);
-    res.status(500).json({ error: "Weather fetch failed" });
-  }
-});
-
-// Translation routes
-app.post('/api/translate', translationCtrl.translateHandler);
-app.post('/api/translate/batch', translationCtrl.batchTranslateHandler);
-
-
 // ===== Speech-to-Text =====
 const multer = require("multer");
 const upload = multer();
@@ -238,14 +231,11 @@ app.post(
   speechCtrl.transcribeSpeech
 );
 
-
-// Serve frontend
+// Serve frontend - MUST BE LAST
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
-
-
 
 // Start server
 app.listen(PORT, () => {
@@ -266,4 +256,7 @@ app.listen(PORT, () => {
   console.log('  GET  /api/reports/aov-by-category');
   console.log('  POST /api/translate');
   console.log('  POST /api/translate/batch');
+  console.log('  POST /api/auth/google');
+  console.log('  GET  /auth/google');
+  console.log('  GET  /oauth2/callback');
 });
