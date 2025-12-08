@@ -249,7 +249,10 @@ export default function Kiosk() {
 
   // HELPERS
   function matchExactTopping(words) {
-    return availableToppings.filter((t) => words.includes(t.name.toLowerCase()));
+    if (!Array.isArray(words)) return [];
+    return availableToppings.filter((t) =>
+      words.includes(t.name.toLowerCase())
+    );
   }
 
   function parseSpeech(text) {
@@ -279,7 +282,7 @@ export default function Kiosk() {
 
     const toppingWords = availableToppings.map((t) => t.name.toLowerCase());
     const toppingHits = words.filter((w) => toppingWords.includes(w));
-    const toppings = matchExactTopping(toppingHits);
+    const toppings = matchExactTopping(toppingHits) || [];
 
     return { drink, size, toppings, phone };
   }
@@ -296,11 +299,12 @@ export default function Kiosk() {
       price,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
-      toppings: toppings.map((t) => ({
+      toppings: (toppings || []).map((t) => ({
         id: t.id,
         name: t.name,
         price: Number(t.price),
       })),
+
     };
 
     setCart((prev) => [...prev, drink]);
@@ -566,10 +570,16 @@ export default function Kiosk() {
   };
 
   const toggleTopping = (t) => {
-    setSelectedToppings((prev) =>
-      prev.find((x) => x.id === t.id) ? prev.filter((x) => x.id !== t.id) : [...prev, t]
-    );
-  };
+  if (!t || !t.id || !t.name) {
+    console.warn("Invalid topping:", t);
+    return;
+  }
+  setSelectedToppings((prev) =>
+    prev.some((x) => x.id === t.id)
+      ? prev.filter((x) => x.id !== t.id)
+      : [...prev, t]
+  );
+};
 
   const categories = Object.keys(groupedItems);
 
