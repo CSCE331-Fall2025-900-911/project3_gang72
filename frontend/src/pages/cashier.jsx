@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../Cashier.css";
 
 export default function Cashier() {
   const [menuItems, setMenuItems] = useState([]);
@@ -10,7 +11,7 @@ export default function Cashier() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [availableToppings, setAvailableToppings] = useState([]);
   const [currentSugar, setCurrentSugar] = useState("100%");
-const [currentIce, setCurrentIce] = useState("100%");
+  const [currentIce, setCurrentIce] = useState("100%");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
   // Current item being customized
@@ -168,206 +169,175 @@ const [currentIce, setCurrentIce] = useState("100%");
   };
 
   return (
-    <div className="container-fluid" style={{ height: "100vh", overflow: "hidden" }}>
-      <div className="row h-100">
-        {/* Left side - Menu */}
-        <div className="col-md-7 h-100 d-flex flex-column p-3 bg-light">
-          <h2 className="mb-3">POS - Cashier</h2>
+    <div className="main-content">
+      <div className="cashier-container">
+        <div className="cashier-layout">
+          {/* Left side - Menu */}
+          <div className="menu-section">
+            <div className="section-header">
+              <h2 className="page-title">🧋 Point of Sale</h2>
+            </div>
 
-          {/* Category tabs */}
-          <div className="mb-3">
-            <div className="btn-group" role="group">
+            {/* Category tabs */}
+            <div className="category-tabs">
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  type="button"
-                  className={`btn ${
-                    selectedCategory === cat
-                      ? "btn-primary"
-                      : "btn-outline-primary"
-                  }`}
+                  className={`category-tab ${selectedCategory === cat ? "active" : ""}`}
                   onClick={() => setSelectedCategory(cat)}
                 >
                   {cat}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Menu grid */}
-          <div className="flex-grow-1 overflow-auto">
-            <div className="row g-2">
+            {/* Menu grid */}
+            <div className="menu-grid">
               {filteredItems.map((item) => (
-                <div key={item.id} className="col-6 col-lg-4">
-                  <button
-                    className={`btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 ${
-                      currentItem?.id === item.id
-                        ? "btn-success"
-                        : "btn-outline-secondary"
-                    }`}
-                    onClick={() => selectItem(item)}
-                    style={{ minHeight: "80px" }}
-                  >
-                    <div className="fw-bold">{item.name}</div>
-                    <div className="text-muted small">
-                      ${Number(item.price).toFixed(2)}
-                    </div>
-                  </button>
-                </div>
+                <button
+                  key={item.id}
+                  className={`menu-item ${currentItem?.id === item.id ? "selected" : ""}`}
+                  onClick={() => selectItem(item)}
+                >
+                  <div className="menu-item-name">{item.name}</div>
+                  <div className="menu-item-price">
+                    ${Number(item.price).toFixed(2)}
+                  </div>
+                </button>
               ))}
             </div>
+
+            {/* Item customization panel */}
+            {currentItem && (
+              <div className="customization-panel">
+                <h5 className="customize-title">{currentItem.name}</h5>
+
+                <div className="customize-section">
+                  <label className="customize-label">Size:</label>
+                  <div className="button-group">
+                    <button
+                      className={`option-btn ${currentSize === "Small" ? "active" : ""}`}
+                      onClick={() => setCurrentSize("Small")}
+                    >
+                      Small
+                    </button>
+                    <button
+                      className={`option-btn ${currentSize === "Large" ? "active" : ""}`}
+                      onClick={() => setCurrentSize("Large")}
+                    >
+                      Large (+$1.00)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="customize-section">
+                  <label className="customize-label">Toppings:</label>
+                  <div className="toppings-grid">
+                    {availableToppings.map((topping) => (
+                      <button
+                        key={topping.id}
+                        className={`topping-btn ${currentToppings.find((t) => t.id === topping.id) ? "active" : ""
+                          }`}
+                        onClick={() => toggleTopping(topping)}
+                      >
+                        {topping.name} (+${Number(topping.price).toFixed(2)})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="customize-section">
+                  <label className="customize-label">Sugar Level:</label>
+                  <div className="button-group">
+                    {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        className={`option-btn small ${currentSugar === lvl ? "active" : ""}`}
+                        onClick={() => setCurrentSugar(lvl)}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="customize-section">
+                  <label className="customize-label">Ice Level:</label>
+                  <div className="button-group">
+                    {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        className={`option-btn small ${currentIce === lvl ? "active" : ""}`}
+                        onClick={() => setCurrentIce(lvl)}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="add-to-cart-btn" onClick={addToCart}>
+                  Add to Cart
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Item customization panel */}
-          {currentItem && (
-            <div className="mt-3 p-3 border rounded bg-white">
-              <h5>{currentItem.name}</h5>
-              
-              <div className="mb-2">
-                <label className="form-label fw-bold">Size:</label>
-                <div className="btn-group ms-2" role="group">
-                  <button
-                    className={`btn btn-sm ${
-                      currentSize === "Small" ? "btn-primary" : "btn-outline-primary"
-                    }`}
-                    onClick={() => setCurrentSize("Small")}
-                  >
-                    Small
-                  </button>
-                  <button
-                    className={`btn btn-sm ${
-                      currentSize === "Large" ? "btn-primary" : "btn-outline-primary"
-                    }`}
-                    onClick={() => setCurrentSize("Large")}
-                  >
-                    Large (+$1.00)
-                  </button>
-                </div>
-              </div>
+          {/* Right side - Cart & Checkout */}
+          <div className="cart-section">
+            <h4 className="cart-title">Current Order</h4>
 
-              <div className="mb-2">
-                <label className="form-label fw-bold">Toppings:</label>
-                <div className="d-flex flex-wrap gap-1">
-                  {availableToppings.map((topping) => (
-                    <button
-                      key={topping.id}
-                      className={`btn btn-sm ${
-                        currentToppings.find((t) => t.id === topping.id)
-                          ? "btn-success"
-                          : "btn-outline-secondary"
-                      }`}
-                      onClick={() => toggleTopping(topping)}
-                    >
-                      {topping.name} (+${Number(topping.price).toFixed(2)})
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/*Add Sugar Level*/}
-              <div className="mb-2">
-                <label className="form-label fw-bold">Sugar Level:</label>
-                <div className="btn-group w-100" role="group">
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      className={`btn btn-sm ${
-                        currentSugar === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
-                      onClick={() => setCurrentSugar(lvl)}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/*Add Ice Level*/}
-              <div className="mb-2">
-                <label className="form-label fw-bold">Ice Level:</label>
-                <div className="btn-group w-100" role="group">
-                  {["0%", "25%", "50%", "75%", "100%"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      className={`btn btn-sm ${
-                        currentIce === lvl ? "btn-primary" : "btn-outline-primary"
-                      }`}
-                      onClick={() => setCurrentIce(lvl)}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                className="btn btn-primary w-100 mt-2"
-                onClick={addToCart}
-              >
-                Add to Cart
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right side - Cart & Checkout */}
-        <div className="col-md-5 h-100 d-flex flex-column p-3 bg-white border-start">
-          <h4 className="mb-3">Current Order</h4>
-
-          {/* Customer info */}
-          <div className="mb-3">
-            <input
-              type="text"
-              placeholder="Phone Number *"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              className="form-control mb-2"
-            />
-            <div className="row g-2">
-              <div className="col-6">
+            {/* Customer info */}
+            <div className="customer-info">
+              <input
+                type="text"
+                placeholder="Phone Number *"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="input-field"
+              />
+              <div className="input-row">
                 <input
                   type="text"
                   placeholder="First Name"
                   value={customerFirst}
                   onChange={(e) => setCustomerFirst(e.target.value)}
-                  className="form-control"
+                  className="input-field half"
                 />
-              </div>
-              <div className="col-6">
                 <input
                   type="text"
                   placeholder="Last Name"
                   value={customerLast}
                   onChange={(e) => setCustomerLast(e.target.value)}
-                  className="form-control"
+                  className="input-field half"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Cart items */}
-          <div className="flex-grow-1 overflow-auto border rounded p-2 mb-3">
-            {cart.length === 0 ? (
-              <p className="text-muted text-center mt-3">No items in cart</p>
-            ) : (
-              <div>
-                {cart.map((item, i) => (
-                  <div key={i} className="card mb-2">
-                    <div className="card-body p-2">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div className="flex-grow-1">
-                          <div className="fw-bold">
+            {/* Cart items */}
+            <div className="cart-items">
+              {cart.length === 0 ? (
+                <p className="empty-cart">No items in cart</p>
+              ) : (
+                <div>
+                  {cart.map((item, i) => (
+                    <div key={i} className="cart-item">
+                      <div className="cart-item-content">
+                        <div className="cart-item-details">
+                          <div className="cart-item-name">
                             {item.name} ({item.size})
                           </div>
                           {item.toppings.length > 0 && (
-                            <div className="text-muted small">
+                            <div className="cart-item-toppings">
                               {item.toppings.map((t) => t.name).join(", ")}
                             </div>
                           )}
-                          <div className="text-muted small">
+                          <div className="cart-item-options">
                             Sugar: {item.sugar} | Ice: {item.ice}
                           </div>
                         </div>
-                        <div className="text-end">
-                          <div className="fw-bold">
+                        <div className="cart-item-actions">
+                          <div className="cart-item-price">
                             $
                             {(
                               item.price +
@@ -375,7 +345,7 @@ const [currentIce, setCurrentIce] = useState("100%");
                             ).toFixed(2)}
                           </div>
                           <button
-                            className="btn btn-sm btn-outline-danger mt-1"
+                            className="remove-btn"
                             onClick={() => removeFromCart(i)}
                           >
                             Remove
@@ -383,100 +353,88 @@ const [currentIce, setCurrentIce] = useState("100%");
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Payment options */}
+            <div className="payment-section">
+              <label className="section-label">Payment Method:</label>
+              <select
+                className="select-field"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="Digital">Digital Wallet</option>
+              </select>
+            </div>
+
+            {/* Tip */}
+            <div className="tip-section">
+              <label className="section-label">Tip %:</label>
+              <div className="tip-input-group">
+                <input
+                  type="number"
+                  value={tipPercent}
+                  onChange={(e) => setTipPercent(e.target.value)}
+                  className="input-field tip-input"
+                  min="0"
+                  max="100"
+                />
+                <span className="tip-suffix">%</span>
               </div>
-            )}
-          </div>
-
-          {/* Payment options */}
-          <div className="mb-3">
-            <label className="form-label fw-bold">Payment Method:</label>
-            <select
-              className="form-select"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            >
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="Digital">Digital Wallet</option>
-            </select>
-          </div>
-
-          {/* Tip */}
-          <div className="mb-3">
-            <label className="form-label fw-bold">Tip %:</label>
-            <div className="input-group">
-              <input
-                type="number"
-                value={tipPercent}
-                onChange={(e) => setTipPercent(e.target.value)}
-                className="form-control"
-                min="0"
-                max="100"
-              />
-              <span className="input-group-text">%</span>
+              <div className="tip-buttons">
+                <button className="tip-btn" onClick={() => setTipPercent(10)}>
+                  10%
+                </button>
+                <button className="tip-btn" onClick={() => setTipPercent(15)}>
+                  15%
+                </button>
+                <button className="tip-btn" onClick={() => setTipPercent(20)}>
+                  20%
+                </button>
+                <button className="tip-btn" onClick={() => setTipPercent(0)}>
+                  No Tip
+                </button>
+              </div>
             </div>
-            <div className="btn-group w-100 mt-2" role="group">
+
+            {/* Totals */}
+            <div className="totals-section">
+              <div className="total-row">
+                <span>Subtotal:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Tip ({tipPercent}%):</span>
+                <span>${tipAmount.toFixed(2)}</span>
+              </div>
+              <div className="total-row grand-total">
+                <span>Total:</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="action-buttons">
               <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(10)}
+                className="complete-order-btn"
+                onClick={submitOrder}
+                disabled={cart.length === 0 || !customerPhone}
               >
-                10%
+                Complete Order
               </button>
               <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(15)}
+                className="clear-cart-btn"
+                onClick={clearCart}
+                disabled={cart.length === 0}
               >
-                15%
-              </button>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(20)}
-              >
-                20%
-              </button>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => setTipPercent(0)}
-              >
-                No Tip
+                Clear Cart
               </button>
             </div>
-          </div>
-
-          {/* Totals */}
-          <div className="border-top pt-3 mb-3">
-            <div className="d-flex justify-content-between mb-1">
-              <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="d-flex justify-content-between mb-1">
-              <span>Tip ({tipPercent}%):</span>
-              <span>${tipAmount.toFixed(2)}</span>
-            </div>
-            <div className="d-flex justify-content-between fw-bold fs-5 border-top pt-2">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="d-grid gap-2">
-            <button
-              className="btn btn-success btn-lg"
-              onClick={submitOrder}
-              disabled={cart.length === 0 || !customerPhone}
-            >
-              Complete Order
-            </button>
-            <button
-              className="btn btn-outline-danger"
-              onClick={clearCart}
-              disabled={cart.length === 0}
-            >
-              Clear Cart
-            </button>
           </div>
         </div>
       </div>
