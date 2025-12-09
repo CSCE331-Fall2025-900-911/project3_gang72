@@ -19,6 +19,10 @@ export default function Cashier() {
   const [currentSize, setCurrentSize] = useState("Small");
   const [currentToppings, setCurrentToppings] = useState([]);
   const [currentIsHot, setCurrentIsHot] = useState(false);
+  
+  // Order confirmation modal
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [orderConfirmationData, setOrderConfirmationData] = useState(null);
 
   const formatPhone = (value = "") => {
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -283,16 +287,40 @@ export default function Cashier() {
       const data = await res.json();
       if (data.success) {
         const estimatedTime = calculateEstimatedTime();
-        const ingredientDetails = getOrderIngredientDetails();
+        const isFree = data.rewardApplied && data.discount >= data.subtotal;
         
-        if (data.rewardApplied) {
-          const isFree = data.discount >= data.subtotal;
-          const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
-          const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
-          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\n${t("Receipt #")} ${data.receiptId}\n${t("Subtotal:")} $${data.subtotal.toFixed(2)}\n${t("Discount:")} -$${data.discount.toFixed(2)}\n${t("Total:")} $${data.total.toFixed(2)}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`);
-        } else {
-          alert(`${t("Order placed successfully!")}\n${t("Receipt #")} ${data.receiptId}\n${t("Total:")} $${data.total.toFixed(2)}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`);
-        }
+        // Build order items with ingredients
+        const orderItems = cart.map(cartItem => {
+          const menuItem = menuItems.find(m => m.id === cartItem.id);
+          return {
+            name: cartItem.name,
+            size: cartItem.size,
+            quantity: cartItem.quantity,
+            ingredients: menuItem?.ingredients || [],
+            toppings: cartItem.toppings.map(topping => {
+              const toppingItem = menuItems.find(m => m.id === topping.id);
+              return {
+                name: topping.name,
+                ingredients: toppingItem?.ingredients || []
+              };
+            })
+          };
+        });
+
+        const confirmationData = {
+          receiptId: data.receiptId,
+          estimatedTime,
+          orderItems,
+          rewardApplied: data.rewardApplied || false,
+          isFree,
+          subtotal: data.subtotal,
+          discount: data.discount,
+          total: data.total
+        };
+
+        setOrderConfirmationData(confirmationData);
+        setShowOrderConfirmation(true);
+        
         setCart([]);
         setTipPercent(0);
         setCustomerPhone("");
@@ -697,6 +725,184 @@ export default function Cashier() {
             </button>
           </div>
         </>
+      )}
+
+      {/* ORDER CONFIRMATION MODAL */}
+      {showOrderConfirmation && orderConfirmationData && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: "20px",
+          }}
+          onClick={() => setShowOrderConfirmation(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "20px",
+              maxWidth: "600px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                background: orderConfirmationData.rewardApplied 
+                  ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                  : "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
+                padding: "32px",
+                textAlign: "center",
+                color: "white",
+              }}
+            >
+              <h2 style={{ margin: "0 0 8px 0", fontSize: "28px", fontWeight: "700" }}>
+                {orderConfirmationData.rewardApplied
+                  ? (orderConfirmationData.isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!"))
+                  : t("Order Placed!")}
+              </h2>
+              {orderConfirmationData.rewardApplied && (
+                <p style={{ margin: 0, fontSize: "16px", opacity: 0.95 }}>
+                  {orderConfirmationData.isFree
+                    ? t("This drink is free!")
+                    : t("20% off applied for multiple drinks.")}
+                </p>
+              )}
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
+              {/* Receipt Info */}
+              <div style={{
+                backgroundColor: "#f8f9fa",
+                padding: "20px",
+                borderRadius: "12px",
+                marginBottom: "24px",
+                border: "2px solid #e9ecef"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "16px", color: "#666", fontWeight: "500" }}>
+                    {t("Receipt")} #
+                  </span>
+                  <span style={{ fontSize: "20px", fontWeight: "700", color: "#333" }}>
+                    {orderConfirmationData.receiptId}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "16px", color: "#666", fontWeight: "500" }}>
+                    {t("Estimated wait time")}
+                  </span>
+                  <span style={{ fontSize: "18px", fontWeight: "700", color: "#28a745" }}>
+                    {orderConfirmationData.estimatedTime}
+                  </span>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div style={{ marginBottom: "24px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px", color: "#333" }}>
+                  {t("Order Details")}
+                </h3>
+                {orderConfirmationData.orderItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={{ fontWeight: "600", fontSize: "16px", color: "#333", marginBottom: "8px" }}>
+                      {t(item.name)} ({t(item.size)}) x{item.quantity}
+                    </div>
+                    {item.ingredients.length > 0 && (
+                      <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px", paddingLeft: "12px" }}>
+                        <span style={{ fontWeight: "500" }}>{t("Ingredients")}:</span>{" "}
+                        {item.ingredients.map(ing => t(ing)).join(", ")}
+                      </div>
+                    )}
+                    {item.toppings.length > 0 && (
+                      <div style={{ paddingLeft: "12px", marginTop: "8px" }}>
+                        {item.toppings.map((topping, tIdx) => (
+                          <div key={tIdx} style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
+                            <span style={{ fontWeight: "500" }}>+ {t(topping.name)}</span>
+                            {topping.ingredients.length > 0 && (
+                              <span style={{ fontSize: "13px" }}>
+                                {" "}({topping.ingredients.map(ing => t(ing)).join(", ")})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Pricing */}
+              {orderConfirmationData.rewardApplied && (
+                <div style={{
+                  backgroundColor: "#f8f9fa",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  border: "2px solid #e9ecef"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "15px" }}>
+                    <span>{t("Subtotal")}:</span>
+                    <span>${orderConfirmationData.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "15px", color: "#28a745", fontWeight: "600" }}>
+                    <span>{t("Discount")}:</span>
+                    <span>-${orderConfirmationData.discount.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "8px", borderTop: "2px solid #dee2e6", fontSize: "18px", fontWeight: "700" }}>
+                    <span>{t("Total")}:</span>
+                    <span>${orderConfirmationData.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Button */}
+            <div style={{ padding: "24px", borderTop: "1px solid #e0e0e0", backgroundColor: "#fafafa" }}>
+              <button
+                onClick={() => setShowOrderConfirmation(false)}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  backgroundColor: "#333",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#555"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#333"}
+              >
+                {t("Close")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

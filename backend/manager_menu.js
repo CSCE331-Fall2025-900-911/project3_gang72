@@ -45,6 +45,7 @@ try {
 console.log('employeeController exports:', Object.keys(empCtrl));
 console.log('reportController exports:', Object.keys(reportCtrl));
 console.log('inventoryController exports:', Object.keys(invCtrl));
+console.log('menuController exports:', Object.keys(menuCtrl));
 console.log('orderController exports:', Object.keys(orderCtrl));
 
 // ===== Employee Routes =====
