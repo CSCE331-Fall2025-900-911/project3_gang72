@@ -265,70 +265,70 @@ export default function ManagerNavbar() {
                 >
                     📊 {t("Z-Report")}
                 </Link>
-            </div>
 
-            {/* Language Toggle */}
-            <div style={{
-                padding: '1rem 1.5rem',
-                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                marginTop: 'auto'
-            }}>
-                <div style={{
-                    fontSize: '0.85rem',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    marginBottom: '0.5rem'
-                }}>
-                    {t("Language")}
-                </div>
-                <LanguageToggle />
-            </div>
-
-            {/* User Info & Logout */}
-            {user && (
+                {/* Language Toggle */}
                 <div style={{
                     padding: '1rem 1.5rem',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginTop: '1rem'
                 }}>
                     <div style={{
                         fontSize: '0.85rem',
                         color: 'rgba(255, 255, 255, 0.6)',
                         marginBottom: '0.5rem'
                     }}>
-                        {t("Signed in as")}
+                        {t("Language")}
                     </div>
-                    <div style={{
-                        fontSize: '0.9rem',
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        marginBottom: '0.75rem',
-                        wordBreak: 'break-word'
-                    }}>
-                        {user.email}
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            width: '100%',
-                            padding: '0.75rem',
-                            backgroundColor: '#FFB88C',
-                            color: '#583e23',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '0.95rem',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#FFA366';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#FFB88C';
-                        }}
-                    >
-                        🚪 {t("Logout")}
-                    </button>
+                    <LanguageToggle />
                 </div>
-            )}
+
+                {/* User Info & Logout */}
+                {user && (
+                    <div style={{
+                        padding: '1rem 1.5rem',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                        <div style={{
+                            fontSize: '0.85rem',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            marginBottom: '0.5rem'
+                        }}>
+                            {t("Signed in as")}
+                        </div>
+                        <div style={{
+                            fontSize: '0.9rem',
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            marginBottom: '0.75rem',
+                            wordBreak: 'break-word'
+                        }}>
+                            {user.email}
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                backgroundColor: '#FFB88C',
+                                color: '#583e23',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '0.95rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#FFA366';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = '#FFB88C';
+                            }}
+                        >
+                            🚪 {t("Logout")}
+                        </button>
+                    </div>
+                )}
+            </div>
         </nav>
     );
 }
