@@ -158,6 +158,71 @@ export default function Cashier() {
   const tipAmount = subtotal * (Number(tipPercent) / 100);
   const total = subtotal + tipAmount;
 
+  // Generate ingredient details for order confirmation
+  const getOrderIngredientDetails = () => {
+    let details = "\n\n━━━━━ Order Details ━━━━━\n";
+    
+    cart.forEach((item, idx) => {
+      const menuItem = menuItems.find(mi => mi.id === item.id);
+      details += `\n${idx + 1}. ${item.name} (${item.size}) x${item.quantity}\n`;
+      
+      if (menuItem && menuItem.ingredients && menuItem.ingredients.length > 0) {
+        details += `   Ingredients: ${menuItem.ingredients.join(", ")}\n`;
+      }
+      
+      if (item.toppings && item.toppings.length > 0) {
+        item.toppings.forEach((topping) => {
+          const toppingItem = menuItems.find(mi => mi.id === topping.id);
+          details += `   + ${topping.name}`;
+          if (toppingItem && toppingItem.ingredients && toppingItem.ingredients.length > 0) {
+            details += ` (${toppingItem.ingredients.join(", ")})`;
+          }
+          details += "\n";
+        });
+      }
+    });
+    
+    return details;
+  };
+
+  // Calculate estimated preparation time
+  const calculateEstimatedTime = () => {
+    let totalItems = 0;
+    
+    cart.forEach((item) => {
+      for (let i = 0; i < item.quantity; i++) {
+        // Find the menu item to get actual ingredient count
+        const menuItem = menuItems.find(mi => mi.id === item.id);
+        const ingredientCount = menuItem?.ingredientCount || 3; // fallback to 3 if not found
+        
+        // Count base drink ingredients
+        totalItems += ingredientCount;
+        
+        // Add toppings count (each topping has its own ingredient count)
+        if (item.toppings && item.toppings.length > 0) {
+          item.toppings.forEach((topping) => {
+            const toppingItem = menuItems.find(mi => mi.id === topping.id);
+            const toppingIngredientCount = toppingItem?.ingredientCount || 1; // fallback to 1 for toppings
+            totalItems += toppingIngredientCount;
+          });
+        }
+      }
+    });
+    
+    // 30 seconds per item
+    const totalSeconds = totalItems * 30;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (minutes === 0) {
+      return `${seconds} ${t("seconds")}`;
+    } else if (seconds === 0) {
+      return `${minutes} ${minutes === 1 ? t("minute") : t("minutes")}`;
+    } else {
+      return `${minutes} ${minutes === 1 ? t("minute") : t("minutes")} ${seconds} ${t("seconds")}`;
+    }
+  };
+
   const submitOrder = async () => {
     const { digits: phoneDigits } = formatPhone(customerPhone);
 
@@ -217,13 +282,16 @@ export default function Cashier() {
       });
       const data = await res.json();
       if (data.success) {
+        const estimatedTime = calculateEstimatedTime();
+        const ingredientDetails = getOrderIngredientDetails();
+        
         if (data.rewardApplied) {
           const isFree = data.discount >= data.subtotal;
           const rewardLabel = isFree ? t("FREE DRINK APPLIED!") : t("20% OFF APPLIED!");
           const rewardLine = isFree ? t("This drink is free!") : t("20% off applied for multiple drinks.");
-          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\n${t("Receipt #")} ${data.receiptId}\n${t("Subtotal:")} $${data.subtotal.toFixed(2)}\n${t("Discount:")} -$${data.discount.toFixed(2)}\n${t("Total:")} $${data.total.toFixed(2)}`);
+          alert(`🎉 ${rewardLabel} 🎉\n\n${rewardLine}\n\n${t("Receipt #")} ${data.receiptId}\n${t("Subtotal:")} $${data.subtotal.toFixed(2)}\n${t("Discount:")} -$${data.discount.toFixed(2)}\n${t("Total:")} $${data.total.toFixed(2)}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`);
         } else {
-          alert(`${t("Order placed successfully!")}\n${t("Receipt #")} ${data.receiptId}\n${t("Total:")} $${data.total.toFixed(2)}`);
+          alert(`${t("Order placed successfully!")}\n${t("Receipt #")} ${data.receiptId}\n${t("Total:")} $${data.total.toFixed(2)}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`);
         }
         setCart([]);
         setTipPercent(0);

@@ -15,19 +15,56 @@ const pool = new Pool(process.env.DATABASE_URL ? { connectionString: process.env
 /**
  * Fetch all items from the `item` table and return as an array of objects.
  * Only returns items where is_visible is true.
- * Each object: { id, name, category, price, hotAvail }
+ * Each object: { id, name, category, price, hotAvail, ingredientCount, ingredients }
  */
 async function getAllItems() {
   const client = await pool.connect();
   try {
-    const query = `SELECT item_id, item_name, category, price, COALESCE(hot_avail, false) as hot_avail FROM item WHERE is_visible = true ORDER BY item_id`;
+    // First get all items with ingredient count
+    const query = `
+      SELECT 
+        i.item_id, 
+        i.item_name, 
+        i.category, 
+        i.price, 
+        COALESCE(i.hot_avail, false) as hot_avail,
+        COUNT(r.ingredient_id) as ingredient_count
+      FROM item i
+      LEFT JOIN recipe r ON i.item_id = r.item_id
+      WHERE i.is_visible = true
+      GROUP BY i.item_id, i.item_name, i.category, i.price, i.hot_avail
+      ORDER BY i.item_id
+    `;
     const res = await client.query(query);
+    
+    // Then get ingredient names for each item
+    const ingredientsQuery = `
+      SELECT 
+        r.item_id,
+        ing.ingredient_name
+      FROM recipe r
+      JOIN ingredient ing ON r.ingredient_id = ing.ingredient_id
+      ORDER BY r.item_id, ing.ingredient_name
+    `;
+    const ingredientsRes = await client.query(ingredientsQuery);
+    
+    // Group ingredients by item_id
+    const ingredientsByItem = {};
+    ingredientsRes.rows.forEach(row => {
+      if (!ingredientsByItem[row.item_id]) {
+        ingredientsByItem[row.item_id] = [];
+      }
+      ingredientsByItem[row.item_id].push(row.ingredient_name);
+    });
+    
     const items = res.rows.map((r) => ({
       id: r.item_id == null ? null : Number(r.item_id),
       name: r.item_name || null,
       category: r.category || null,
       price: r.price == null ? null : Number(r.price),
       hotAvail: r.hot_avail === true,
+      ingredientCount: r.ingredient_count == null ? 0 : Number(r.ingredient_count),
+      ingredients: ingredientsByItem[r.item_id] || [],
     }));
     return items;
   } catch (err) {

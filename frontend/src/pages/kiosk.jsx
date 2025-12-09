@@ -359,6 +359,69 @@ export default function Kiosk() {
     setSelectedIsHot(false);
   }
 
+  // Generate ingredient details for order confirmation
+  const getOrderIngredientDetails = () => {
+    let details = "\n\n━━━━━ Order Details ━━━━━\n";
+    
+    cart.forEach((drink, idx) => {
+      const menuItem = menuItems.find(item => item.id === drink.id);
+      details += `\n${idx + 1}. ${drink.name} (${drink.size})\n`;
+      
+      if (menuItem && menuItem.ingredients && menuItem.ingredients.length > 0) {
+        details += `   Ingredients: ${menuItem.ingredients.join(", ")}\n`;
+      }
+      
+      if (drink.toppings && drink.toppings.length > 0) {
+        drink.toppings.forEach((topping) => {
+          const toppingItem = menuItems.find(item => item.id === topping.id);
+          details += `   + ${topping.name}`;
+          if (toppingItem && toppingItem.ingredients && toppingItem.ingredients.length > 0) {
+            details += ` (${toppingItem.ingredients.join(", ")})`;
+          }
+          details += "\n";
+        });
+      }
+    });
+    
+    return details;
+  };
+
+  // Calculate estimated preparation time
+  const calculateEstimatedTime = () => {
+    let totalItems = 0;
+    
+    cart.forEach((drink) => {
+      // Find the menu item to get actual ingredient count
+      const menuItem = menuItems.find(item => item.id === drink.id);
+      const ingredientCount = menuItem?.ingredientCount || 3; // fallback to 3 if not found
+      
+      // Count base drink ingredients
+      totalItems += ingredientCount;
+      
+      // Add toppings count (each topping has its own ingredient count)
+      if (drink.toppings && drink.toppings.length > 0) {
+        drink.toppings.forEach((topping) => {
+          const toppingItem = menuItems.find(item => item.id === topping.id);
+          const toppingIngredientCount = toppingItem?.ingredientCount || 1; // fallback to 1 for toppings
+          totalItems += toppingIngredientCount;
+        });
+      }
+    });
+    
+    // 30 seconds per item
+    const totalSeconds = totalItems * 30;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (minutes === 0) {
+      return `${seconds} ${t("seconds")}`;
+    } else if (seconds === 0) {
+      return `${minutes} ${minutes === 1 ? t("minute") : t("minutes")}`;
+    } else {
+      return `${minutes} ${minutes === 1 ? t("minute") : t("minutes")} ${seconds} ${t("seconds")}`;
+    }
+  };
+
   const submitOrder = async () => {
     let phone = customerPhone;
     let phoneDigits = formatPhone(phone).digits;
@@ -426,6 +489,9 @@ export default function Kiosk() {
 
       const data = await res.json();
       if (data.success) {
+        const estimatedTime = calculateEstimatedTime();
+        const ingredientDetails = getOrderIngredientDetails();
+        
         if (data.rewardApplied) {
           const isFree = data.discount >= data.subtotal;
           const rewardSpeech = isFree
@@ -445,11 +511,13 @@ export default function Kiosk() {
               2
             )}\nDiscount: -$${data.discount.toFixed(
               2
-            )}\nTotal: $${data.total.toFixed(2)}`
+            )}\nTotal: $${data.total.toFixed(2)}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`
           );
         } else {
           speak(t("Your order has been placed."));
-          alert(t("Order placed!") + ` ${t("Receipt")} #${data.receiptId}`);
+          alert(
+            `${t("Order placed!")} ${t("Receipt")} #${data.receiptId}\n\n${t("Estimated wait time")}: ${estimatedTime}${ingredientDetails}`
+          );
         }
         setCart([]);
         setTipPercent(0);
