@@ -344,6 +344,7 @@ export default function Kiosk() {
       name: selectedItem.name,
       size: selectedSize,
       price,
+      quantity: 1,
       sugarLevel: sugarLevel,
       iceLevel: iceLevel,
       isHot: selectedIsHot,
@@ -364,6 +365,18 @@ export default function Kiosk() {
     setSelectedItem(null);
     setSelectedIsHot(false);
   }
+
+  const updateCartQuantity = (index, delta) => {
+    setCart((prev) => {
+      const newCart = [...prev];
+      const newQuantity = newCart[index].quantity + delta;
+      if (newQuantity <= 0) {
+        return prev.filter((_, idx) => idx !== index);
+      }
+      newCart[index] = { ...newCart[index], quantity: newQuantity };
+      return newCart;
+    });
+  };
 
   // Generate ingredient details for order confirmation
   const getOrderIngredientDetails = () => {
@@ -397,6 +410,8 @@ export default function Kiosk() {
     let totalItems = 0;
     
     cart.forEach((drink) => {
+      const quantity = drink.quantity || 1;
+      
       // Find the menu item to get actual ingredient count
       const menuItem = menuItems.find(item => item.id === drink.id);
       // Filter out Cup and Straw from ingredient count
@@ -405,10 +420,10 @@ export default function Kiosk() {
       );
       const ingredientCount = filteredIngredients.length || 1; // fallback to 1 if not found
       
-      console.log(`Drink: ${drink.name}, ID: ${drink.id}, Ingredient Count: ${ingredientCount} (excluding Cup/Straw)`);
+      console.log(`Drink: ${drink.name} x${quantity}, ID: ${drink.id}, Ingredient Count: ${ingredientCount} (excluding Cup/Straw)`);
       
-      // Count base drink ingredients
-      totalItems += ingredientCount;
+      // Count base drink ingredients times quantity
+      totalItems += ingredientCount * quantity;
       
       // Add toppings count (each topping has its own ingredient count)
       if (drink.toppings && drink.toppings.length > 0) {
@@ -419,7 +434,7 @@ export default function Kiosk() {
           );
           const toppingIngredientCount = filteredToppingIngredients.length || 1; // fallback to 1 for toppings
           console.log(`  Topping: ${topping.name}, ID: ${topping.id}, Ingredient Count: ${toppingIngredientCount} (excluding Cup/Straw)`);
-          totalItems += toppingIngredientCount;
+          totalItems += toppingIngredientCount * quantity;
         });
       }
     });
@@ -474,19 +489,29 @@ export default function Kiosk() {
 
     setIsSubmitting(true);
 
-    const items = cart.flatMap((d) => [
-      {
-        itemId: d.id,
-        name: `${d.name} (${d.size})`,
-        price: d.price,
-        customization: d.customization,
-      },
-      ...(d.toppings || []).map((top) => ({
-        itemId: top.id,
-        name: top.name,
-        price: top.price,
-      })),
-    ]);
+    const items = cart.flatMap((d) => {
+      const itemsArray = [];
+      const quantity = d.quantity || 1;
+      
+      for (let i = 0; i < quantity; i++) {
+        itemsArray.push({
+          itemId: d.id,
+          name: `${d.name} (${d.size})`,
+          price: d.price,
+          customization: d.customization,
+        });
+        
+        (d.toppings || []).forEach((top) => {
+          itemsArray.push({
+            itemId: top.id,
+            name: top.name,
+            price: top.price,
+          });
+        });
+      }
+      
+      return itemsArray;
+    });
 
     const payload = {
       customer: {
@@ -513,6 +538,7 @@ export default function Kiosk() {
           return {
             name: drink.name,
             size: drink.size,
+            quantity: drink.quantity || 1,
             ingredients: menuItem?.ingredients || [],
             toppings: drink.toppings.map((topping) => {
               const toppingItem = menuItems.find(item => item.id === topping.id);
@@ -698,13 +724,15 @@ export default function Kiosk() {
     }, {});
 
   const subtotal = cart.reduce(
-    (sum, d) =>
-      sum +
-      Number(d.price || 0) +
-      (d.toppings?.reduce(
-        (s, t) => s + Number(t.price || 0),
-        0
-      ) || 0),
+    (sum, d) => {
+      const quantity = d.quantity || 1;
+      return sum +
+        (Number(d.price || 0) * quantity) +
+        (d.toppings?.reduce(
+          (s, t) => s + Number(t.price || 0),
+          0
+        ) || 0) * quantity;
+    },
     0
   );
   const tipAmount = subtotal * (Number(tipPercent || 0) / 100);
@@ -1086,7 +1114,7 @@ export default function Kiosk() {
                         marginBottom: "6px",
                       }}
                     >
-                      {t("Sugar")}: {drink.sugarLevel} {" | "} {t("Ice")}:{" "}
+                      {drink.isHot ? t("Hot") : t("Cold")} {" | "} {t("Sugar")}: {drink.sugarLevel} {" | "} {t("Ice")}:{" "}
                       {drink.iceLevel}
                     </div>
                     <div
@@ -1117,25 +1145,49 @@ export default function Kiosk() {
                       </div>
                     )}
 
-                    <button
-                      onClick={() =>
-                        setCart((prev) =>
-                          prev.filter((_, idx) => idx !== i)
-                        )
-                      }
-                      style={{
-                        backgroundColor: "transparent",
-                        color: "#dc3545",
-                        border: "1px solid #dc3545",
-                        padding: "6px 12px",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {t("Remove")}
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button
+                        onClick={() => updateCartQuantity(i, -1)}
+                        style={{
+                          backgroundColor: "#dc3545",
+                          border: "none",
+                          borderRadius: "6px",
+                          width: "32px",
+                          height: "32px",
+                          cursor: "pointer",
+                          fontSize: "18px",
+                          fontWeight: "600",
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        −
+                      </button>
+                      <span style={{ fontSize: "14px", fontWeight: "600", minWidth: "20px", textAlign: "center" }}>
+                        {drink.quantity || 1}
+                      </span>
+                      <button
+                        onClick={() => updateCartQuantity(i, 1)}
+                        style={{
+                          backgroundColor: "#28a745",
+                          border: "none",
+                          borderRadius: "6px",
+                          width: "32px",
+                          height: "32px",
+                          cursor: "pointer",
+                          fontSize: "18px",
+                          fontWeight: "600",
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1745,7 +1797,7 @@ export default function Kiosk() {
                       }}
                     >
                       <div style={{ fontWeight: "600", fontSize: "16px", color: "#333", marginBottom: "8px" }}>
-                        {idx + 1}. {t(item.name)} ({t(item.size)})
+                        {idx + 1}. {t(item.name)} ({t(item.size)}) x{item.quantity}
                       </div>
                       {item.toppings.length > 0 && (
                         <div style={{ paddingLeft: "12px", marginTop: "8px" }}>
