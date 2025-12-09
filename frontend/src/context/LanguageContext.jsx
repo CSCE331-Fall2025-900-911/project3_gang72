@@ -38,7 +38,10 @@ export const LanguageProvider = ({ children }) => {
 
     try {
       setIsTranslating(true);
-      const response = await fetch('http://localhost:3000/api/translate', {
+
+      const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+
+      const response = await fetch(`${apiBase}/api/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, targetLang }),

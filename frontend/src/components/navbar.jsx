@@ -5,6 +5,7 @@ import { useLanguage } from "../context/LanguageContext";
 export default function Navbar() {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const userStr = sessionStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
@@ -62,17 +63,69 @@ export default function Navbar() {
             <Link className="nav-link" to="/cashier">{t("Cashier")}</Link>
             <Link className="nav-link" to="/kiosk">{t("Kiosk")}</Link>
             <Link className="nav-link" to="/menu">{t("Menu")}</Link>
-            <li className="nav-item ms-2">
+            
+            {/* Language Toggle */}
+            <li className="nav-item" style={{
+              padding: '0.5rem 1rem',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+              marginLeft: '1rem',
+              borderBottom: user && location.pathname === '/cashier' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+              paddingBottom: user && location.pathname === '/cashier' ? '1rem' : '0.5rem'
+            }}>
+              <div style={{
+                fontSize: '0.85rem',
+                color: 'rgba(255, 255, 255, 0.6)',
+                marginBottom: '0.25rem'
+              }}>
+                {t("Language")}
+              </div>
               <LanguageToggle />
             </li>
-            {user && (
-              <li className="nav-item ms-3">
+            
+            {/* User Info & Logout - Only show on cashier view */}
+            {user && location.pathname === '/cashier' && (
+              <li className="nav-item" style={{
+                padding: '0.5rem 1rem',
+                paddingTop: '1rem',
+                marginLeft: '1rem'
+              }}>
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  marginBottom: '0.25rem'
+                }}>
+                  {t("Signed in as")}
+                </div>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  marginBottom: '0.5rem',
+                  wordBreak: 'break-word',
+                  maxWidth: '200px'
+                }}>
+                  {user.email}
+                </div>
                 <button
-                  className="btn btn-outline-light btn-sm"
                   onClick={handleLogout}
-                  title={user.email}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#FFB88C',
+                    color: '#583e23',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#FFA366';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#FFB88C';
+                  }}
                 >
-                  {t("Logout")}
+                  🚪 {t("Logout")}
                 </button>
               </li>
             )}
