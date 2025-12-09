@@ -197,7 +197,11 @@ export default function Cashier() {
       for (let i = 0; i < item.quantity; i++) {
         // Find the menu item to get actual ingredient count
         const menuItem = menuItems.find(mi => mi.id === item.id);
-        const ingredientCount = menuItem?.ingredientCount || 3; // fallback to 3 if not found
+        // Filter out Cup and Straw from ingredient count
+        const filteredIngredients = (menuItem?.ingredients || []).filter(
+          ing => ing !== "Cup" && ing !== "Straw"
+        );
+        const ingredientCount = filteredIngredients.length || 1; // fallback to 1 if not found
         
         // Count base drink ingredients
         totalItems += ingredientCount;
@@ -206,7 +210,10 @@ export default function Cashier() {
         if (item.toppings && item.toppings.length > 0) {
           item.toppings.forEach((topping) => {
             const toppingItem = menuItems.find(mi => mi.id === topping.id);
-            const toppingIngredientCount = toppingItem?.ingredientCount || 1; // fallback to 1 for toppings
+            const filteredToppingIngredients = (toppingItem?.ingredients || []).filter(
+              ing => ing !== "Cup" && ing !== "Straw"
+            );
+            const toppingIngredientCount = filteredToppingIngredients.length || 1; // fallback to 1 for toppings
             totalItems += toppingIngredientCount;
           });
         }
@@ -831,22 +838,11 @@ export default function Cashier() {
                     <div style={{ fontWeight: "600", fontSize: "16px", color: "#333", marginBottom: "8px" }}>
                       {t(item.name)} ({t(item.size)}) x{item.quantity}
                     </div>
-                    {item.ingredients.length > 0 && (
-                      <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px", paddingLeft: "12px" }}>
-                        <span style={{ fontWeight: "500" }}>{t("Ingredients")}:</span>{" "}
-                        {item.ingredients.map(ing => t(ing)).join(", ")}
-                      </div>
-                    )}
                     {item.toppings.length > 0 && (
                       <div style={{ paddingLeft: "12px", marginTop: "8px" }}>
                         {item.toppings.map((topping, tIdx) => (
                           <div key={tIdx} style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
                             <span style={{ fontWeight: "500" }}>+ {t(topping.name)}</span>
-                            {topping.ingredients.length > 0 && (
-                              <span style={{ fontSize: "13px" }}>
-                                {" "}({topping.ingredients.map(ing => t(ing)).join(", ")})
-                              </span>
-                            )}
                           </div>
                         ))}
                       </div>

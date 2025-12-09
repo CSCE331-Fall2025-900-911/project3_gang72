@@ -399,9 +399,13 @@ export default function Kiosk() {
     cart.forEach((drink) => {
       // Find the menu item to get actual ingredient count
       const menuItem = menuItems.find(item => item.id === drink.id);
-      const ingredientCount = menuItem?.ingredientCount || 3; // fallback to 3 if not found
+      // Filter out Cup and Straw from ingredient count
+      const filteredIngredients = (menuItem?.ingredients || []).filter(
+        ing => ing !== "Cup" && ing !== "Straw"
+      );
+      const ingredientCount = filteredIngredients.length || 1; // fallback to 1 if not found
       
-      console.log(`Drink: ${drink.name}, ID: ${drink.id}, Ingredient Count: ${ingredientCount}, Ingredients:`, menuItem?.ingredients);
+      console.log(`Drink: ${drink.name}, ID: ${drink.id}, Ingredient Count: ${ingredientCount} (excluding Cup/Straw)`);
       
       // Count base drink ingredients
       totalItems += ingredientCount;
@@ -410,8 +414,11 @@ export default function Kiosk() {
       if (drink.toppings && drink.toppings.length > 0) {
         drink.toppings.forEach((topping) => {
           const toppingItem = menuItems.find(item => item.id === topping.id);
-          const toppingIngredientCount = toppingItem?.ingredientCount || 1; // fallback to 1 for toppings
-          console.log(`  Topping: ${topping.name}, ID: ${topping.id}, Ingredient Count: ${toppingIngredientCount}, Ingredients:`, toppingItem?.ingredients);
+          const filteredToppingIngredients = (toppingItem?.ingredients || []).filter(
+            ing => ing !== "Cup" && ing !== "Straw"
+          );
+          const toppingIngredientCount = filteredToppingIngredients.length || 1; // fallback to 1 for toppings
+          console.log(`  Topping: ${topping.name}, ID: ${topping.id}, Ingredient Count: ${toppingIngredientCount} (excluding Cup/Straw)`);
           totalItems += toppingIngredientCount;
         });
       }
@@ -1740,22 +1747,11 @@ export default function Kiosk() {
                       <div style={{ fontWeight: "600", fontSize: "16px", color: "#333", marginBottom: "8px" }}>
                         {idx + 1}. {t(item.name)} ({t(item.size)})
                       </div>
-                      {item.ingredients.length > 0 && (
-                        <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px", paddingLeft: "12px" }}>
-                          <span style={{ fontWeight: "500" }}>{t("Ingredients")}:</span>{" "}
-                          {item.ingredients.map(ing => t(ing)).join(", ")}
-                        </div>
-                      )}
                       {item.toppings.length > 0 && (
                         <div style={{ paddingLeft: "12px", marginTop: "8px" }}>
                           {item.toppings.map((topping, tIdx) => (
                             <div key={tIdx} style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
                               <span style={{ fontWeight: "500" }}>+ {t(topping.name)}</span>
-                              {topping.ingredients.length > 0 && (
-                                <span style={{ fontSize: "13px" }}>
-                                  {" "}({topping.ingredients.map(ing => t(ing)).join(", ")})
-                                </span>
-                              )}
                             </div>
                           ))}
                         </div>
