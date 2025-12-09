@@ -1,0 +1,595 @@
+/* ============================================ */
+/* MODERN SALES DASHBOARD STYLES */
+/* ============================================ */
+
+.sales-dashboard {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--olive-bark);
+    margin: 0;
+}
+
+/* Date Range Section */
+.date-range-section {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.date-filters {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.date-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--olive-bark);
+}
+
+.date-input {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    min-width: 160px;
+    color: var(--olive-bark);
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--warm-brown);
+    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+}
+
+.date-separator {
+    color: #999;
+    font-weight: 500;
+    padding-bottom: 0.5rem;
+}
+
+.refresh-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--olive-bark);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: var(--warm-brown);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
+}
+
+/* KPI Cards Grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-revenue {
+    background: linear-gradient(135deg, #8B7355 0%, #A0896C 100%);
+}
+
+.kpi-orders {
+    background: linear-gradient(135deg, #6B8E7B 0%, #7FA88F 100%);
+}
+
+.kpi-aov {
+    background: linear-gradient(135deg, #5A9AAA 0%, #6DB0C0 100%);
+}
+
+.kpi-peak {
+    background: linear-gradient(135deg, #C8A882 0%, #D9BC96 100%);
+}
+
+.kpi-label {
+    font-size: 0.9rem;
+    opacity: 0.95;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.peak-hours-value {
+    font-size: 1.5rem !important;
+}
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+}
+
+.dashboard-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card-half {
+    grid-column: span 3;
+    min-height: 450px;
+}
+
+.popular-items-card,
+.peak-hours-card,
+.aov-card {
+    min-height: 500px;
+    max-height: 600px;
+}
+
+.card-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.card-title-custom {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--olive-bark);
+    margin: 0;
+}
+
+.chart-container {
+    padding: 1rem 0;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-data-container {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.no-data {
+    text-align: center;
+    color: #999;
+    padding: 2rem;
+    margin: 0;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+.no-data-hint {
+    text-align: center;
+    color: #bbb;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Popular Items List */
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.items-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.items-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 10px;
+}
+
+.items-list::-webkit-scrollbar-thumb {
+    background: var(--warm-brown);
+    border-radius: 10px;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--light-bg);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.item-row:hover {
+    background: var(--soft-beige);
+    transform: translateX(4px);
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-rank {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--warm-brown);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.item-name {
+    font-weight: 600;
+    color: var(--olive-bark);
+}
+
+.item-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.item-quantity {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--warm-brown);
+}
+
+/* Peak Hours */
+.peak-hours-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.peak-hours-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.peak-hours-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 10px;
+}
+
+.peak-hours-list::-webkit-scrollbar-thumb {
+    background: var(--warm-brown);
+    border-radius: 10px;
+}
+
+.peak-hour-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.hour-time {
+    min-width: 70px;
+    font-weight: 600;
+    color: var(--olive-bark);
+    font-size: 0.95rem;
+}
+
+.hour-bar-container {
+    flex: 1;
+    height: 28px;
+    background: var(--light-bg);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.hour-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #8B7355 0%, #A0896C 100%);
+    border-radius: 14px;
+    transition: width 0.4s ease;
+}
+
+.hour-count {
+    min-width: 90px;
+    text-align: right;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Average Order Value by Category */
+.aov-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.aov-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.aov-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 10px;
+}
+
+.aov-list::-webkit-scrollbar-thumb {
+    background: var(--warm-brown);
+    border-radius: 10px;
+}
+
+.aov-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: var(--light-bg);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.aov-item:hover {
+    background: var(--soft-beige);
+    transform: translateX(4px);
+}
+
+.aov-category {
+    font-weight: 600;
+    color: var(--olive-bark);
+    text-transform: capitalize;
+    font-size: 1rem;
+}
+
+.aov-value {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--warm-brown);
+}
+
+/* Toggle View Button */
+.toggle-view-btn {
+    padding: 0.75rem 2rem;
+    background: var(--peach);
+    color: var(--dark-teal);
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(255, 184, 140, 0.3);
+}
+
+.toggle-view-btn:hover {
+    background: #ffa066;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 184, 140, 0.4);
+}
+
+/* Sales List View */
+.sales-list-view {
+    margin-top: 2rem;
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    background: var(--olive-bark);
+    color: white;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modern-table thead th:first-child {
+    border-radius: 8px 0 0 0;
+}
+
+.modern-table thead th:last-child {
+    border-radius: 0 8px 0 0;
+}
+
+.modern-table tbody tr {
+    background: white;
+    transition: all 0.2s;
+}
+
+.modern-table tbody tr:hover {
+    background: var(--light-bg);
+    transform: scale(1.01);
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--olive-bark);
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:last-child td:first-child {
+    border-radius: 0 0 0 8px;
+}
+
+.modern-table tbody tr:last-child td:last-child {
+    border-radius: 0 0 8px 0;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 1400px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-card-half {
+        grid-column: span 2;
+    }
+
+    .popular-items-card,
+    .peak-hours-card,
+    .aov-card {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 992px) {
+    .sales-dashboard {
+        padding: 1rem;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .date-filters {
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .date-input-group {
+        width: 100%;
+    }
+
+    .date-input {
+        width: 100%;
+    }
+
+    .date-separator {
+        text-align: center;
+        padding: 0.5rem 0;
+    }
+
+    .refresh-btn {
+        width: 100%;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card-half {
+        grid-column: span 1;
+    }
+
+    .popular-items-card,
+    .peak-hours-card,
+    .aov-card {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+
+    .kpi-card {
+        padding: 1.5rem;
+    }
+
+    .kpi-value {
+        font-size: 1.75rem;
+    }
+
+    .card-title-custom {
+        font-size: 1.1rem;
+    }
+}

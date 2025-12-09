@@ -2,6 +2,7 @@
 import { useOutletContext } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import "../sales.css";
 
 export default function Sales() {
     const { t } = useLanguage();
@@ -22,12 +23,12 @@ export default function Sales() {
     const [showReports, setShowReports] = useState(true);
 
     useEffect(() => {
-    document.body.classList.add('manager-page');
-    return () => {
-      document.body.classList.remove('manager-page');
-    };
-  }, []);
-  
+        document.body.classList.add('manager-page');
+        return () => {
+            document.body.classList.remove('manager-page');
+        };
+    }, []);
+
     // Fetch all report data
     const fetchReportData = () => {
         const params = new URLSearchParams({ startDate, endDate });
@@ -71,7 +72,10 @@ export default function Sales() {
 
         fetch(`/api/reports/revenue-chart?${params}`)
             .then(res => res.json())
-            .then(data => setRevenueChart(data || []))
+            .then(data => {
+                console.log('Revenue chart data:', data); // Debug log
+                setRevenueChart(data || []);
+            })
             .catch(console.error);
 
         fetch(`/api/reports/aov-by-category?${params}`)
@@ -107,11 +111,11 @@ export default function Sales() {
     };
 
     return (
-        <div className="container">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>{t("Sales Dashboard")}</h2>
+        <div className="sales-dashboard">
+            <div className="dashboard-header">
+                <h1 className="dashboard-title">{t("Sales Dashboard")}</h1>
                 <button
-                    className="btn btn-outline-primary"
+                    className="toggle-view-btn"
                     onClick={() => setShowReports(!showReports)}
                 >
                     {showReports ? t('Show Sales List') : t('Show Reports')}
@@ -121,333 +125,265 @@ export default function Sales() {
             {showReports ? (
                 <>
                     {/* Date Range Selector */}
-                    <div className="card mb-4">
-                        <div className="card-body">
-                            <div className="row align-items-end">
-                                <div className="col-md-4">
-                                    <label className="form-label">{t("Start Date")}</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                    />
-                                </div>
-                                <div className="col-md-4">
-                                    <label className="form-label">{t("End Date")}</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                    />
-                                </div>
-                                <div className="col-md-4">
-                                    <button
-                                        className="btn btn-primary w-100"
-                                        onClick={fetchReportData}
-                                    >
-                                        {t("Apply Date Range")}
-                                    </button>
-                                </div>
+                    <div className="date-range-section">
+                        <div className="date-filters">
+                            <div className="date-input-group">
+                                <label>{t("Start Date")}</label>
+                                <input
+                                    type="date"
+                                    className="date-input"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <span className="date-separator">to</span>
+                            <div className="date-input-group">
+                                <label>{t("End Date")}</label>
+                                <input
+                                    type="date"
+                                    className="date-input"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                className="refresh-btn"
+                                onClick={fetchReportData}
+                            >
+                                {t("Apply Date Range")}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* KPI Cards */}
+                    <div className="kpi-grid">
+                        <div className="kpi-card kpi-revenue">
+                            <div className="kpi-label">{t("Total Revenue")}</div>
+                            <div className="kpi-value">{formatCurrency(totalRevenue)}</div>
+                        </div>
+                        <div className="kpi-card kpi-orders">
+                            <div className="kpi-label">{t("Total Orders")}</div>
+                            <div className="kpi-value">{totalOrders}</div>
+                        </div>
+                        <div className="kpi-card kpi-aov">
+                            <div className="kpi-label">{t("Avg Order Value")}</div>
+                            <div className="kpi-value">{formatCurrency(avgOrderValue)}</div>
+                        </div>
+                        <div className="kpi-card kpi-peak">
+                            <div className="kpi-label">{t("Peak Hours")}</div>
+                            <div className="kpi-value peak-hours-value">
+                                {peakHours.length > 0
+                                    ? peakHours.map(h => h.formatted).join(', ')
+                                    : t('N/A')}
                             </div>
                         </div>
                     </div>
 
-                    {/* Summary Statistics */}
-                    <div className="row mb-4">
-                        <div className="col-md-3">
-                            <div className="card text-center bg-primary text-white">
-                                <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">{t("Total Revenue")}</h6>
-                                    <h3 className="card-title">{formatCurrency(totalRevenue)}</h3>
-                                </div>
+                    {/* Dashboard Grid */}
+                    <div className="dashboard-grid">
+                        {/* Popular Items */}
+                        <div className="dashboard-card popular-items-card">
+                            <div className="card-header-custom">
+                                <h3 className="card-title-custom">{t("Most Popular Items")}</h3>
                             </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card text-center bg-success text-white">
-                                <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">{t("Total Orders")}</h6>
-                                    <h3 className="card-title">{totalOrders}</h3>
+                            {popularItems.length > 0 ? (
+                                <div className="items-list">
+                                    {popularItems.slice(0, 10).map((item, idx) => (
+                                        <div key={idx} className="item-row">
+                                            <div className="item-info">
+                                                <div className="item-rank">{idx + 1}</div>
+                                                <div className="item-name">{t(item.name)}</div>
+                                            </div>
+                                            <div className="item-stats">
+                                                <div className="item-quantity">{item.totalSold} {t("sold")}</div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card text-center bg-info text-white">
-                                <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">{t("Avg Order Value")}</h6>
-                                    <h3 className="card-title">{formatCurrency(avgOrderValue)}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-md-3">
-                            <div className="card text-center bg-warning text-dark">
-                                <div className="card-body">
-                                    <h6 className="card-subtitle mb-2">{t("Peak Hours")}</h6>
-                                    <h3 className="card-title" style={{ fontSize: '1.2rem' }}>
-                                        {peakHours.length > 0
-                                            ? peakHours.map(h => h.formatted).join(', ')
-                                            : t('N/A')}
-                                    </h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Popular Items and Orders by Hour */}
-                    <div className="row mb-4">
-                        <div className="col-md-6">
-                            <div className="card">
-                                <div className="card-header bg-dark text-white">
-                                    <h5 className="mb-0">{t("Most Popular Items")}</h5>
-                                </div>
-                                <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                    {popularItems.length > 0 ? (
-                                        <ul className="list-group">
-                                            {popularItems.slice(0, 10).map((item, idx) => (
-                                                <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span>
-                                                        <strong>#{idx + 1}</strong> {t(item.name)}
-                                                    </span>
-                                                    <span className="badge bg-primary rounded-pill">{item.totalSold} {t("sold")}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-muted">{t("No data available")}</p>
-                                    )}
-                                </div>
-                            </div>
+                            ) : (
+                                <p className="no-data">{t("No data available")}</p>
+                            )}
                         </div>
 
-                        {/* Orders by Hour Chart */}
-                        <div className="col-md-6">
-                            <div className="card">
-                                <div className="card-header bg-dark text-white">
-                                    <h5 className="mb-0">{t("Orders by Hour")}</h5>
+                        {/* Orders by Hour */}
+                        <div className="dashboard-card peak-hours-card">
+                            <div className="card-header-custom">
+                                <h3 className="card-title-custom">{t("Orders by Hour")}</h3>
+                            </div>
+                            {ordersByHour.length > 0 ? (
+                                <div className="peak-hours-list">
+                                    {ordersByHour.map((item, idx) => {
+                                        const maxCount = Math.max(...ordersByHour.map(d => d.count));
+                                        const widthPercent = (item.count / maxCount) * 100;
+
+                                        return (
+                                            <div key={idx} className="peak-hour-item">
+                                                <div className="hour-time">{item.hour}</div>
+                                                <div className="hour-bar-container">
+                                                    <div
+                                                        className="hour-bar"
+                                                        style={{ width: `${widthPercent}%` }}
+                                                    />
+                                                </div>
+                                                <div className="hour-count">{item.count} orders</div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="card-body">
-                                    <div style={{ height: '350px', overflowX: 'auto' }}>
-                                        {ordersByHour.length > 0 ? (
-                                            <svg width="100%" height="340" viewBox="0 0 600 340">
-                                                {/* Y-axis label */}
-                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Orders")}</text>
+                            ) : (
+                                <p className="no-data">{t("No data available")}</p>
+                            )}
+                        </div>
 
-                                                {ordersByHour.map((item, idx) => {
-                                                    const maxCount = Math.max(...ordersByHour.map(d => d.count));
-                                                    const barHeight = (item.count / maxCount) * 250;
-                                                    const x = idx * (600 / ordersByHour.length) + 20;
-                                                    const barWidth = (600 / ordersByHour.length) - 5;
+                        {/* AOV by Category */}
+                        <div className="dashboard-card aov-card">
+                            <div className="card-header-custom">
+                                <h3 className="card-title-custom">{t("Average Order Value by Category")}</h3>
+                            </div>
+                            {aovByCategory.length > 0 ? (
+                                <div className="aov-list">
+                                    {aovByCategory.map((item, idx) => (
+                                        <div key={idx} className="aov-item">
+                                            <div className="aov-category">{item.category}</div>
+                                            <div className="aov-value">{formatCurrency(item.avgPrice)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="no-data">{t("No data available")}</p>
+                            )}
+                        </div>
 
-                                                    return (
-                                                        <g key={idx}>
-                                                            <rect
-                                                                x={x}
-                                                                y={290 - barHeight}
-                                                                width={barWidth}
-                                                                height={barHeight}
-                                                                fill="#0d6efd"
-                                                                opacity="0.8"
-                                                            />
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={310}
-                                                                fontSize="9"
-                                                                textAnchor="middle"
-                                                            >
-                                                                {item.hour}
-                                                            </text>
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={285 - barHeight}
-                                                                fontSize="10"
-                                                                textAnchor="middle"
-                                                                fontWeight="bold"
-                                                            >
-                                                                {item.count}
-                                                            </text>
-                                                        </g>
-                                                    );
-                                                })}
-                                            </svg>
-                                        ) : (
-                                            <p className="text-muted">{t("No data available")}</p>
-                                        )}
+                        {/* Order Volume Chart */}
+                        <div className="dashboard-card chart-card-half">
+                            <div className="card-header-custom">
+                                <h3 className="card-title-custom">{t("Order Volume Over Time")}</h3>
+                            </div>
+                            <div className="chart-container">
+                                {orderVolume && orderVolume.length > 0 ? (
+                                    <svg width="100%" height="350" viewBox="0 0 1000 350" preserveAspectRatio="xMidYMid meet">
+                                        {/* Y-axis label */}
+                                        <text x="20" y="30" fontSize="14" fill="#666" fontWeight="600">
+                                            {t("Orders")}
+                                        </text>
+
+                                        {/* Bars */}
+                                        {orderVolume.map((item, idx) => {
+                                            const maxOrders = Math.max(...orderVolume.map(d => parseFloat(d.orderCount || d.count) || 0));
+                                            const count = parseFloat(item.orderCount || item.count) || 0;
+                                            const barHeight = maxOrders > 0 ? (count / maxOrders) * 250 : 0;
+                                            const barWidth = Math.min((1000 - 100) / orderVolume.length - 10, 40);
+                                            const x = idx * ((1000 - 100) / orderVolume.length) + 60;
+
+                                            return (
+                                                <g key={idx}>
+                                                    {/* Bar */}
+                                                    <rect
+                                                        x={x}
+                                                        y={300 - barHeight}
+                                                        width={barWidth}
+                                                        height={Math.max(barHeight, 1)}
+                                                        fill="#6B8E7B"
+                                                        opacity="0.9"
+                                                        rx="2"
+                                                    />
+                                                    {/* X-axis label - rotated 45 degrees */}
+                                                    <text
+                                                        x={x + barWidth / 2}
+                                                        y={320}
+                                                        fontSize="9"
+                                                        textAnchor="end"
+                                                        fill="#666"
+                                                        transform={`rotate(-45, ${x + barWidth / 2}, 320)`}
+                                                    >
+                                                        {item.period}
+                                                    </text>
+                                                </g>
+                                            );
+                                        })}
+
+                                        {/* X-axis line */}
+                                        <line x1="50" y1="305" x2="980" y2="305" stroke="#ddd" strokeWidth="2" />
+                                    </svg>
+                                ) : (
+                                    <div className="no-data-container">
+                                        <p className="no-data">{t("No order volume data available")}</p>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Order Volume Chart */}
-                    <div className="row mb-4">
-                        <div className="col-md-6">
-                            <div className="card">
-                                <div className="card-header bg-success text-white">
-                                    <h5 className="mb-0">{t("Order Volume Over Time")}</h5>
-                                </div>
-                                <div className="card-body">
-                                    <div style={{ height: '350px', overflowX: 'auto' }}>
-                                        {orderVolume.length > 0 ? (
-                                            <svg width="100%" height="340" viewBox="0 0 600 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Orders")}</text>
-
-                                                {orderVolume.map((item, idx) => {
-                                                    const maxCount = Math.max(...orderVolume.map(d => d.orderCount));
-                                                    const barHeight = (item.orderCount / maxCount) * 250;
-                                                    const x = idx * (600 / orderVolume.length) + 20;
-                                                    const barWidth = (600 / orderVolume.length) - 5;
-
-                                                    return (
-                                                        <g key={idx}>
-                                                            <rect
-                                                                x={x}
-                                                                y={290 - barHeight}
-                                                                width={barWidth}
-                                                                height={barHeight}
-                                                                fill="#198754"
-                                                                opacity="0.8"
-                                                            />
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={310}
-                                                                fontSize="8"
-                                                                textAnchor="middle"
-                                                                transform={`rotate(-45, ${x + barWidth / 2}, 310)`}
-                                                            >
-                                                                {item.period}
-                                                            </text>
-                                                        </g>
-                                                    );
-                                                })}
-                                            </svg>
-                                        ) : (
-                                            <p className="text-muted">{t("No data available")}</p>
-                                        )}
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Revenue Chart */}
-                        <div className="col-md-6">
-                            <div className="card">
-                                <div className="card-header bg-warning text-dark">
-                                    <h5 className="mb-0">{t("Revenue Over Time")}</h5>
-                                </div>
-                                <div className="card-body">
-                                    <div style={{ height: '350px', overflowX: 'auto' }}>
-                                        {revenueChart.length > 0 ? (
-                                            <svg width="100%" height="340" viewBox="0 0 600 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Revenue")} ($)</text>
-
-                                                {revenueChart.map((item, idx) => {
-                                                    const maxRevenue = Math.max(...revenueChart.map(d => parseFloat(d.revenue)));
-                                                    const barHeight = (parseFloat(item.revenue) / maxRevenue) * 250;
-                                                    const x = idx * (600 / revenueChart.length) + 20;
-                                                    const barWidth = (600 / revenueChart.length) - 5;
-
-                                                    return (
-                                                        <g key={idx}>
-                                                            <rect
-                                                                x={x}
-                                                                y={290 - barHeight}
-                                                                width={barWidth}
-                                                                height={barHeight}
-                                                                fill="#ffc107"
-                                                                opacity="0.8"
-                                                            />
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={310}
-                                                                fontSize="8"
-                                                                textAnchor="middle"
-                                                                transform={`rotate(-45, ${x + barWidth / 2}, 310)`}
-                                                            >
-                                                                {item.period}
-                                                            </text>
-                                                        </g>
-                                                    );
-                                                })}
-                                            </svg>
-                                        ) : (
-                                            <p className="text-muted">{t("No data available")}</p>
-                                        )}
-                                    </div>
-                                </div>
+                        {/* Revenue Trend Chart */}
+                        <div className="dashboard-card chart-card-half">
+                            <div className="card-header-custom">
+                                <h3 className="card-title-custom">{t("Revenue Over Time")}</h3>
                             </div>
-                        </div>
-                    </div>
+                            <div className="chart-container">
+                                {revenueChart && revenueChart.length > 0 ? (
+                                    <svg width="100%" height="350" viewBox="0 0 1000 350" preserveAspectRatio="xMidYMid meet">
+                                        {/* Y-axis label */}
+                                        <text x="20" y="30" fontSize="14" fill="#666" fontWeight="600">
+                                            {t("Revenue")} ($)
+                                        </text>
 
-                    {/* AOV by Category Chart */}
-                    <div className="row mb-4">
-                        <div className="col-md-12">
-                            <div className="card">
-                                <div className="card-header bg-danger text-white">
-                                    <h5 className="mb-0">{t("Average Order Value by Category")}</h5>
-                                </div>
-                                <div className="card-body">
-                                    <div style={{ height: '350px', overflowX: 'auto' }}>
-                                        {aovByCategory.length > 0 ? (
-                                            <svg width="100%" height="340" viewBox="0 0 800 340">
-                                                <text x="10" y="20" fontSize="12" fill="#666">{t("Avg Price")} ($)</text>
+                                        {/* Bars */}
+                                        {revenueChart.map((item, idx) => {
+                                            const maxRevenue = Math.max(...revenueChart.map(d => parseFloat(d.revenue) || 0));
+                                            const revenue = parseFloat(item.revenue) || 0;
+                                            const barHeight = maxRevenue > 0 ? (revenue / maxRevenue) * 250 : 0;
+                                            const barWidth = Math.min((1000 - 100) / revenueChart.length - 10, 40);
+                                            const x = idx * ((1000 - 100) / revenueChart.length) + 60;
 
-                                                {aovByCategory.map((item, idx) => {
-                                                    const maxPrice = Math.max(...aovByCategory.map(d => parseFloat(d.avgPrice)));
-                                                    const barHeight = (parseFloat(item.avgPrice) / maxPrice) * 250;
-                                                    const x = idx * (800 / aovByCategory.length) + 50;
-                                                    const barWidth = (800 / aovByCategory.length) - 60;
+                                            return (
+                                                <g key={idx}>
+                                                    {/* Bar */}
+                                                    <rect
+                                                        x={x}
+                                                        y={300 - barHeight}
+                                                        width={barWidth}
+                                                        height={Math.max(barHeight, 1)}
+                                                        fill="#C8A882"
+                                                        opacity="0.9"
+                                                        rx="2"
+                                                    />
+                                                    {/* X-axis label - rotated 45 degrees */}
+                                                    <text
+                                                        x={x + barWidth / 2}
+                                                        y={320}
+                                                        fontSize="9"
+                                                        textAnchor="end"
+                                                        fill="#666"
+                                                        transform={`rotate(-45, ${x + barWidth / 2}, 320)`}
+                                                    >
+                                                        {item.period}
+                                                    </text>
+                                                </g>
+                                            );
+                                        })}
 
-                                                    return (
-                                                        <g key={idx}>
-                                                            <rect
-                                                                x={x}
-                                                                y={290 - barHeight}
-                                                                width={barWidth}
-                                                                height={barHeight}
-                                                                fill="#dc3545"
-                                                                opacity="0.8"
-                                                            />
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={310}
-                                                                fontSize="12"
-                                                                textAnchor="middle"
-                                                            >
-                                                                {item.category}
-                                                            </text>
-                                                            <text
-                                                                x={x + barWidth / 2}
-                                                                y={285 - barHeight}
-                                                                fontSize="10"
-                                                                textAnchor="middle"
-                                                                fontWeight="bold"
-                                                            >
-                                                                {formatCurrency(item.avgPrice)}
-                                                            </text>
-                                                        </g>
-                                                    );
-                                                })}
-                                            </svg>
-                                        ) : (
-                                            <p className="text-muted">{t("No data available")}</p>
-                                        )}
+                                        {/* X-axis line */}
+                                        <line x1="50" y1="305" x2="980" y2="305" stroke="#ddd" strokeWidth="2" />
+                                    </svg>
+                                ) : (
+                                    <div className="no-data-container">
+                                        <p className="no-data">{t("No revenue data available for this period")}</p>
+                                        <p className="no-data-hint">{t("Try selecting a different date range")}</p>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </>
             ) : (
                 /* Sales List View */
-                <div className="card">
-                    <div className="card-header bg-dark text-white">
-                        <h5 className="mb-0">{t("Recent Sales")}</h5>
-                    </div>
-                    <div className="card-body">
-                        {sales && sales.length > 0 ? (
-                            <div className="table-responsive">
-                                <table className="table table-striped table-hover">
+                <div className="sales-list-view">
+                    <div className="dashboard-card">
+                        <div className="card-header-custom">
+                            <h3 className="card-title-custom">{t("Recent Sales")}</h3>
+                        </div>
+                        <div className="card-body-custom">
+                            {sales && sales.length > 0 ? (
+                                <table className="modern-table">
                                     <thead>
                                         <tr>
                                             <th>{t("Receipt #")}</th>
@@ -473,10 +409,10 @@ export default function Sales() {
                                         ))}
                                     </tbody>
                                 </table>
-                            </div>
-                        ) : (
-                            <p className="text-muted">{t("No sales data found")}</p>
-                        )}
+                            ) : (
+                                <p className="no-data">{t("No sales data found")}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
